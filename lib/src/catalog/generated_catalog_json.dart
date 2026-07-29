@@ -1,0 +1,6818 @@
+// GENERATED FROM avatar-generator-v4.1.html. Do not edit manually.
+const String kV41CatalogJson = r'''
+{
+  "categories": [
+    {
+      "id": "body",
+      "label": "Budowa ciała i ramiona",
+      "group": "anatomy",
+      "presets": {
+        "compact": {
+          "body.type": "compact",
+          "body.width": 32,
+          "body.mass": 2,
+          "shoulders.shape": "narrow",
+          "shoulders.width": 32,
+          "shoulders.slope": 2,
+          "torso.shape": "taperedDown"
+        },
+        "balanced": {
+          "body.type": "standard",
+          "body.width": 38,
+          "body.mass": 3,
+          "shoulders.shape": "straight",
+          "shoulders.width": 38,
+          "shoulders.slope": 2,
+          "torso.shape": "rectangle"
+        },
+        "broad": {
+          "body.type": "broad",
+          "body.width": 44,
+          "body.mass": 5,
+          "shoulders.shape": "broad",
+          "shoulders.width": 45,
+          "shoulders.slope": 1,
+          "torso.shape": "wideChest"
+        },
+        "delicate": {
+          "body.type": "petite",
+          "body.width": 31,
+          "body.mass": 1,
+          "shoulders.shape": "rounded",
+          "shoulders.width": 33,
+          "shoulders.slope": 3,
+          "torso.shape": "taperedDown"
+        }
+      },
+      "fields": [
+        {
+          "id": "body.type",
+          "label": "Typ sylwetki",
+          "type": "select",
+          "options": [
+            {
+              "value": "verySlim",
+              "label": "verySlim"
+            },
+            {
+              "value": "slim",
+              "label": "slim"
+            },
+            {
+              "value": "standard",
+              "label": "standard"
+            },
+            {
+              "value": "broad",
+              "label": "broad"
+            },
+            {
+              "value": "massive",
+              "label": "massive"
+            },
+            {
+              "value": "muscular",
+              "label": "muscular"
+            },
+            {
+              "value": "petite",
+              "label": "petite"
+            },
+            {
+              "value": "compact",
+              "label": "compact"
+            },
+            {
+              "value": "tallNarrow",
+              "label": "tallNarrow"
+            },
+            {
+              "value": "shortWide",
+              "label": "shortWide"
+            }
+          ]
+        },
+        {
+          "id": "body.width",
+          "label": "Szerokość sylwetki",
+          "type": "range",
+          "min": 26,
+          "max": 47,
+          "step": 1,
+          "auto": [
+            30,
+            44
+          ]
+        },
+        {
+          "id": "body.mass",
+          "label": "Masa",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "body.heightBias",
+          "label": "Bias wysokości",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "body.verticalPosition",
+          "label": "Pozycja pionowa",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "body.armVisibility",
+          "label": "Widoczność ramion",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            2,
+            5
+          ]
+        },
+        {
+          "id": "shoulders.shape",
+          "label": "Kształt ramion",
+          "type": "select",
+          "options": [
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "sloping",
+              "label": "sloping"
+            },
+            {
+              "value": "raised",
+              "label": "raised"
+            },
+            {
+              "value": "narrow",
+              "label": "narrow"
+            },
+            {
+              "value": "broad",
+              "label": "broad"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            },
+            {
+              "value": "angular",
+              "label": "angular"
+            },
+            {
+              "value": "muscular",
+              "label": "muscular"
+            },
+            {
+              "value": "delicate",
+              "label": "delicate"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            }
+          ]
+        },
+        {
+          "id": "shoulders.width",
+          "label": "Szerokość ramion",
+          "type": "range",
+          "min": 28,
+          "max": 47,
+          "step": 1,
+          "auto": [
+            32,
+            45
+          ]
+        },
+        {
+          "id": "shoulders.slope",
+          "label": "Spadek ramion",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "shoulders.roundness",
+          "label": "Zaokrąglenie ramion",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "shoulders.height",
+          "label": "Wysokość ramion",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "shoulders.asymmetry",
+          "label": "Asymetria ramion",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "torso.shape",
+          "label": "Kształt torsu",
+          "type": "select",
+          "options": [
+            {
+              "value": "rectangle",
+              "label": "rectangle"
+            },
+            {
+              "value": "trapezoid",
+              "label": "trapezoid"
+            },
+            {
+              "value": "taperedUp",
+              "label": "taperedUp"
+            },
+            {
+              "value": "taperedDown",
+              "label": "taperedDown"
+            },
+            {
+              "value": "wideChest",
+              "label": "wideChest"
+            },
+            {
+              "value": "delicate",
+              "label": "delicate"
+            },
+            {
+              "value": "muscular",
+              "label": "muscular"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            }
+          ]
+        },
+        {
+          "id": "torso.widthTop",
+          "label": "Szerokość góry torsu",
+          "type": "range",
+          "min": 24,
+          "max": 45,
+          "step": 1,
+          "auto": [
+            30,
+            43
+          ]
+        },
+        {
+          "id": "torso.widthBottom",
+          "label": "Szerokość dołu torsu",
+          "type": "range",
+          "min": 24,
+          "max": 48,
+          "step": 1,
+          "auto": [
+            32,
+            47
+          ]
+        },
+        {
+          "id": "torso.height",
+          "label": "Wysokość torsu",
+          "type": "range",
+          "min": 9,
+          "max": 15,
+          "step": 1,
+          "auto": [
+            10,
+            14
+          ]
+        },
+        {
+          "id": "torso.taper",
+          "label": "Zwężenie torsu",
+          "type": "range",
+          "min": -6,
+          "max": 8,
+          "step": 1,
+          "auto": [
+            -3,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neck",
+      "label": "Szyja",
+      "group": "anatomy",
+      "presets": {
+        "short": {
+          "neck.variant": "short",
+          "neck.length": 3,
+          "neck.widthTop": 7,
+          "neck.widthBottom": 8
+        },
+        "long": {
+          "neck.variant": "long",
+          "neck.length": 9,
+          "neck.widthTop": 6,
+          "neck.widthBottom": 7
+        },
+        "wide": {
+          "neck.variant": "wide",
+          "neck.length": 5,
+          "neck.widthTop": 10,
+          "neck.widthBottom": 12
+        },
+        "tapered": {
+          "neck.variant": "tapered",
+          "neck.length": 6,
+          "neck.widthTop": 6,
+          "neck.widthBottom": 9
+        }
+      },
+      "fields": [
+        {
+          "id": "neck.variant",
+          "label": "Wariant szyi",
+          "type": "select",
+          "options": [
+            {
+              "value": "veryShort",
+              "label": "veryShort"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "standard",
+              "label": "standard"
+            },
+            {
+              "value": "long",
+              "label": "long"
+            },
+            {
+              "value": "veryLong",
+              "label": "veryLong"
+            },
+            {
+              "value": "thin",
+              "label": "thin"
+            },
+            {
+              "value": "wide",
+              "label": "wide"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "tapered",
+              "label": "tapered"
+            },
+            {
+              "value": "flared",
+              "label": "flared"
+            },
+            {
+              "value": "tilted",
+              "label": "tilted"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            }
+          ]
+        },
+        {
+          "id": "neck.length",
+          "label": "Długość szyi",
+          "type": "range",
+          "min": 3,
+          "max": 10,
+          "step": 1,
+          "auto": [
+            4,
+            8
+          ]
+        },
+        {
+          "id": "neck.widthTop",
+          "label": "Szerokość u góry",
+          "type": "range",
+          "min": 4,
+          "max": 12,
+          "step": 1,
+          "auto": [
+            5,
+            10
+          ]
+        },
+        {
+          "id": "neck.widthBottom",
+          "label": "Szerokość u dołu",
+          "type": "range",
+          "min": 5,
+          "max": 14,
+          "step": 1,
+          "auto": [
+            6,
+            11
+          ]
+        },
+        {
+          "id": "neck.taper",
+          "label": "Zwężenie",
+          "type": "range",
+          "min": -3,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -2,
+            2
+          ]
+        },
+        {
+          "id": "neck.offsetX",
+          "label": "Przesunięcie X",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "neck.shadowDepth",
+          "label": "Głębokość cienia",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "head",
+      "label": "Głowa, szczęka i podbródek",
+      "group": "anatomy",
+      "presets": {
+        "soft": {
+          "head.shape": "softOval",
+          "head.width": 23,
+          "head.height": 26,
+          "head.cheekWidth": 23,
+          "head.jawWidth": 17,
+          "head.chinWidth": 9,
+          "head.roundness": 5,
+          "head.angularity": 0
+        },
+        "angular": {
+          "head.shape": "angular",
+          "head.width": 24,
+          "head.height": 26,
+          "head.cheekWidth": 23,
+          "head.jawWidth": 21,
+          "head.chinWidth": 10,
+          "head.roundness": 1,
+          "head.angularity": 5
+        },
+        "broad": {
+          "head.shape": "broad",
+          "head.width": 28,
+          "head.height": 24,
+          "head.cheekWidth": 28,
+          "head.jawWidth": 24,
+          "head.chinWidth": 13
+        },
+        "narrow": {
+          "head.shape": "elongated",
+          "head.width": 19,
+          "head.height": 30,
+          "head.cheekWidth": 19,
+          "head.jawWidth": 14,
+          "head.chinWidth": 7
+        }
+      },
+      "fields": [
+        {
+          "id": "head.shape",
+          "label": "Rodzina kształtu",
+          "type": "select",
+          "options": [
+            {
+              "value": "round",
+              "label": "round"
+            },
+            {
+              "value": "oval",
+              "label": "oval"
+            },
+            {
+              "value": "elongated",
+              "label": "elongated"
+            },
+            {
+              "value": "broad",
+              "label": "broad"
+            },
+            {
+              "value": "square",
+              "label": "square"
+            },
+            {
+              "value": "rectangular",
+              "label": "rectangular"
+            },
+            {
+              "value": "triangle",
+              "label": "triangle"
+            },
+            {
+              "value": "invertedTriangle",
+              "label": "invertedTriangle"
+            },
+            {
+              "value": "diamond",
+              "label": "diamond"
+            },
+            {
+              "value": "heart",
+              "label": "heart"
+            },
+            {
+              "value": "pear",
+              "label": "pear"
+            },
+            {
+              "value": "egg",
+              "label": "egg"
+            },
+            {
+              "value": "wideJaw",
+              "label": "wideJaw"
+            },
+            {
+              "value": "narrowJaw",
+              "label": "narrowJaw"
+            },
+            {
+              "value": "strongChin",
+              "label": "strongChin"
+            },
+            {
+              "value": "softOval",
+              "label": "softOval"
+            },
+            {
+              "value": "highSkull",
+              "label": "highSkull"
+            },
+            {
+              "value": "flatTop",
+              "label": "flatTop"
+            },
+            {
+              "value": "angular",
+              "label": "angular"
+            }
+          ]
+        },
+        {
+          "id": "head.width",
+          "label": "Szerokość głowy",
+          "type": "range",
+          "min": 18,
+          "max": 30,
+          "step": 1,
+          "auto": [
+            20,
+            28
+          ]
+        },
+        {
+          "id": "head.height",
+          "label": "Wysokość głowy",
+          "type": "range",
+          "min": 21,
+          "max": 31,
+          "step": 1,
+          "auto": [
+            23,
+            29
+          ]
+        },
+        {
+          "id": "head.topWidth",
+          "label": "Szerokość czaszki",
+          "type": "range",
+          "min": 12,
+          "max": 30,
+          "step": 1,
+          "auto": [
+            17,
+            27
+          ]
+        },
+        {
+          "id": "head.templeWidth",
+          "label": "Szerokość skroni",
+          "type": "range",
+          "min": 14,
+          "max": 30,
+          "step": 1,
+          "auto": [
+            18,
+            27
+          ]
+        },
+        {
+          "id": "head.cheekWidth",
+          "label": "Szerokość policzków",
+          "type": "range",
+          "min": 16,
+          "max": 31,
+          "step": 1,
+          "auto": [
+            19,
+            28
+          ]
+        },
+        {
+          "id": "head.jawWidth",
+          "label": "Szerokość szczęki",
+          "type": "range",
+          "min": 10,
+          "max": 28,
+          "step": 1,
+          "auto": [
+            14,
+            23
+          ]
+        },
+        {
+          "id": "head.chinWidth",
+          "label": "Szerokość podbródka",
+          "type": "range",
+          "min": 4,
+          "max": 18,
+          "step": 1,
+          "auto": [
+            6,
+            14
+          ]
+        },
+        {
+          "id": "head.chinDepth",
+          "label": "Głębokość podbródka",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "head.roundness",
+          "label": "Zaokrąglenie",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "head.angularity",
+          "label": "Kanciastość",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        },
+        {
+          "id": "head.asymmetry",
+          "label": "Asymetria",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forehead",
+      "label": "Czoło",
+      "group": "anatomy",
+      "presets": {
+        "low": {
+          "forehead.shape": "low",
+          "forehead.height": 4
+        },
+        "high": {
+          "forehead.shape": "high",
+          "forehead.height": 9
+        },
+        "wide": {
+          "forehead.shape": "wide",
+          "forehead.width": 24
+        },
+        "rounded": {
+          "forehead.shape": "rounded",
+          "forehead.roundness": 4
+        }
+      },
+      "fields": [
+        {
+          "id": "forehead.shape",
+          "label": "Kształt czoła",
+          "type": "select",
+          "options": [
+            {
+              "value": "low",
+              "label": "low"
+            },
+            {
+              "value": "standard",
+              "label": "standard"
+            },
+            {
+              "value": "high",
+              "label": "high"
+            },
+            {
+              "value": "veryHigh",
+              "label": "veryHigh"
+            },
+            {
+              "value": "wide",
+              "label": "wide"
+            },
+            {
+              "value": "narrow",
+              "label": "narrow"
+            },
+            {
+              "value": "sloped",
+              "label": "sloped"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            }
+          ]
+        },
+        {
+          "id": "forehead.height",
+          "label": "Wysokość czoła",
+          "type": "range",
+          "min": 4,
+          "max": 10,
+          "step": 1,
+          "auto": [
+            5,
+            9
+          ]
+        },
+        {
+          "id": "forehead.width",
+          "label": "Szerokość czoła",
+          "type": "range",
+          "min": 12,
+          "max": 28,
+          "step": 1,
+          "auto": [
+            17,
+            25
+          ]
+        },
+        {
+          "id": "forehead.slope",
+          "label": "Nachylenie",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "forehead.roundness",
+          "label": "Zaokrąglenie",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ears",
+      "label": "Uszy ludzkie i fantastyczne",
+      "group": "anatomy",
+      "presets": {
+        "human": {
+          "ears.shape": "humanOval",
+          "ears.width": 3,
+          "ears.height": 6,
+          "ears.tipLength": 0
+        },
+        "elf": {
+          "ears.shape": "elfLong",
+          "ears.width": 4,
+          "ears.height": 7,
+          "ears.tipLength": 7,
+          "ears.tipSharpness": 4
+        },
+        "goblin": {
+          "ears.shape": "goblin",
+          "ears.width": 5,
+          "ears.height": 6,
+          "ears.tipLength": 5
+        },
+        "animal": {
+          "ears.shape": "cat",
+          "ears.width": 5,
+          "ears.height": 7,
+          "ears.tipLength": 4
+        }
+      },
+      "fields": [
+        {
+          "id": "ears.shape",
+          "label": "Rodzaj uszu",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "humanTiny",
+              "label": "humanTiny"
+            },
+            {
+              "value": "humanSmall",
+              "label": "humanSmall"
+            },
+            {
+              "value": "humanOval",
+              "label": "humanOval"
+            },
+            {
+              "value": "humanRound",
+              "label": "humanRound"
+            },
+            {
+              "value": "humanRect",
+              "label": "humanRect"
+            },
+            {
+              "value": "humanLong",
+              "label": "humanLong"
+            },
+            {
+              "value": "humanWide",
+              "label": "humanWide"
+            },
+            {
+              "value": "attached",
+              "label": "attached"
+            },
+            {
+              "value": "protruding",
+              "label": "protruding"
+            },
+            {
+              "value": "lowSet",
+              "label": "lowSet"
+            },
+            {
+              "value": "highSet",
+              "label": "highSet"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            },
+            {
+              "value": "elfShort",
+              "label": "elfShort"
+            },
+            {
+              "value": "elfMedium",
+              "label": "elfMedium"
+            },
+            {
+              "value": "elfLong",
+              "label": "elfLong"
+            },
+            {
+              "value": "elfUp",
+              "label": "elfUp"
+            },
+            {
+              "value": "elfSide",
+              "label": "elfSide"
+            },
+            {
+              "value": "goblin",
+              "label": "goblin"
+            },
+            {
+              "value": "fairy",
+              "label": "fairy"
+            },
+            {
+              "value": "bat",
+              "label": "bat"
+            },
+            {
+              "value": "cat",
+              "label": "cat"
+            },
+            {
+              "value": "fox",
+              "label": "fox"
+            },
+            {
+              "value": "rabbit",
+              "label": "rabbit"
+            },
+            {
+              "value": "demon",
+              "label": "demon"
+            },
+            {
+              "value": "fin",
+              "label": "fin"
+            },
+            {
+              "value": "mechanical",
+              "label": "mechanical"
+            }
+          ]
+        },
+        {
+          "id": "ears.width",
+          "label": "Szerokość",
+          "type": "range",
+          "min": 2,
+          "max": 9,
+          "step": 1,
+          "auto": [
+            2,
+            6
+          ]
+        },
+        {
+          "id": "ears.height",
+          "label": "Wysokość",
+          "type": "range",
+          "min": 3,
+          "max": 12,
+          "step": 1,
+          "auto": [
+            4,
+            9
+          ]
+        },
+        {
+          "id": "ears.positionY",
+          "label": "Pozycja pionowa",
+          "type": "range",
+          "min": -3,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -2,
+            2
+          ]
+        },
+        {
+          "id": "ears.angle",
+          "label": "Kąt",
+          "type": "range",
+          "min": -4,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            -2,
+            2
+          ]
+        },
+        {
+          "id": "ears.protrusion",
+          "label": "Odstawanie",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "ears.tipLength",
+          "label": "Długość czubka",
+          "type": "range",
+          "min": 0,
+          "max": 9,
+          "step": 1,
+          "auto": [
+            0,
+            6
+          ]
+        },
+        {
+          "id": "ears.tipSharpness",
+          "label": "Ostrość czubka",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        },
+        {
+          "id": "ears.innerDetail",
+          "label": "Detal wewnętrzny",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "singleLine",
+              "label": "singleLine"
+            },
+            {
+              "value": "doubleLine",
+              "label": "doubleLine"
+            },
+            {
+              "value": "shadow",
+              "label": "shadow"
+            },
+            {
+              "value": "highlight",
+              "label": "highlight"
+            },
+            {
+              "value": "shell",
+              "label": "shell"
+            }
+          ]
+        },
+        {
+          "id": "ears.asymmetry",
+          "label": "Asymetria",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eyes",
+      "label": "Oczy, powieki, źrenice i rzęsy",
+      "group": "anatomy",
+      "presets": {
+        "soft": {
+          "eyes.shape": "almond",
+          "eyes.width": 5,
+          "eyes.height": 2,
+          "eyes.eyelid": "upper",
+          "eyes.lashes": "outerShort"
+        },
+        "sharp": {
+          "eyes.shape": "upturned",
+          "eyes.width": 5,
+          "eyes.height": 2,
+          "eyes.eyelid": "heavy",
+          "eyes.lashes": "outerLong"
+        },
+        "sleepy": {
+          "eyes.shape": "narrow",
+          "eyes.width": 5,
+          "eyes.height": 1,
+          "eyes.eyelid": "heavy",
+          "eyes.lashes": "none"
+        },
+        "wide": {
+          "eyes.shape": "cartoon",
+          "eyes.width": 6,
+          "eyes.height": 4,
+          "eyes.irisSize": 3,
+          "eyes.pupilSize": 2
+        },
+        "robotic": {
+          "eyes.shape": "robotic",
+          "eyes.width": 5,
+          "eyes.height": 2,
+          "eyes.irisStyle": "glow",
+          "eyes.pupilStyle": "square"
+        }
+      },
+      "fields": [
+        {
+          "id": "eyes.shape",
+          "label": "Kształt oczu",
+          "type": "select",
+          "options": [
+            {
+              "value": "dot",
+              "label": "dot"
+            },
+            {
+              "value": "twoPixel",
+              "label": "twoPixel"
+            },
+            {
+              "value": "round",
+              "label": "round"
+            },
+            {
+              "value": "oval",
+              "label": "oval"
+            },
+            {
+              "value": "horizontal",
+              "label": "horizontal"
+            },
+            {
+              "value": "vertical",
+              "label": "vertical"
+            },
+            {
+              "value": "almond",
+              "label": "almond"
+            },
+            {
+              "value": "narrow",
+              "label": "narrow"
+            },
+            {
+              "value": "wide",
+              "label": "wide"
+            },
+            {
+              "value": "rectangular",
+              "label": "rectangular"
+            },
+            {
+              "value": "triangular",
+              "label": "triangular"
+            },
+            {
+              "value": "downturned",
+              "label": "downturned"
+            },
+            {
+              "value": "upturned",
+              "label": "upturned"
+            },
+            {
+              "value": "deepSet",
+              "label": "deepSet"
+            },
+            {
+              "value": "cartoon",
+              "label": "cartoon"
+            },
+            {
+              "value": "realistic",
+              "label": "realistic"
+            },
+            {
+              "value": "solidBlack",
+              "label": "solidBlack"
+            },
+            {
+              "value": "robotic",
+              "label": "robotic"
+            }
+          ]
+        },
+        {
+          "id": "eyes.width",
+          "label": "Szerokość oka",
+          "type": "range",
+          "min": 1,
+          "max": 7,
+          "step": 1,
+          "auto": [
+            2,
+            6
+          ]
+        },
+        {
+          "id": "eyes.height",
+          "label": "Wysokość oka",
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "eyes.spacing",
+          "label": "Rozstaw",
+          "type": "range",
+          "min": 2,
+          "max": 12,
+          "step": 1,
+          "auto": [
+            4,
+            10
+          ]
+        },
+        {
+          "id": "eyes.positionY",
+          "label": "Pozycja pionowa",
+          "type": "range",
+          "min": -3,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -2,
+            2
+          ]
+        },
+        {
+          "id": "eyes.outerAngle",
+          "label": "Kąt zewnętrzny",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "eyes.eyelid",
+          "label": "Powieki",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "upper",
+              "label": "upper"
+            },
+            {
+              "value": "lower",
+              "label": "lower"
+            },
+            {
+              "value": "both",
+              "label": "both"
+            },
+            {
+              "value": "heavy",
+              "label": "heavy"
+            },
+            {
+              "value": "drooping",
+              "label": "drooping"
+            },
+            {
+              "value": "double",
+              "label": "double"
+            }
+          ]
+        },
+        {
+          "id": "eyes.lidThickness",
+          "label": "Grubość powieki",
+          "type": "range",
+          "min": 0,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "eyes.irisStyle",
+          "label": "Tęczówka",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "pixel",
+              "label": "pixel"
+            },
+            {
+              "value": "small",
+              "label": "small"
+            },
+            {
+              "value": "medium",
+              "label": "medium"
+            },
+            {
+              "value": "large",
+              "label": "large"
+            },
+            {
+              "value": "full",
+              "label": "full"
+            },
+            {
+              "value": "ring",
+              "label": "ring"
+            },
+            {
+              "value": "twoTone",
+              "label": "twoTone"
+            },
+            {
+              "value": "glow",
+              "label": "glow"
+            }
+          ]
+        },
+        {
+          "id": "eyes.irisSize",
+          "label": "Rozmiar tęczówki",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "eyes.pupilStyle",
+          "label": "Źrenica",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "dot",
+              "label": "dot"
+            },
+            {
+              "value": "small",
+              "label": "small"
+            },
+            {
+              "value": "medium",
+              "label": "medium"
+            },
+            {
+              "value": "large",
+              "label": "large"
+            },
+            {
+              "value": "vertical",
+              "label": "vertical"
+            },
+            {
+              "value": "horizontal",
+              "label": "horizontal"
+            },
+            {
+              "value": "square",
+              "label": "square"
+            },
+            {
+              "value": "glowing",
+              "label": "glowing"
+            },
+            {
+              "value": "fullBlack",
+              "label": "fullBlack"
+            }
+          ]
+        },
+        {
+          "id": "eyes.pupilSize",
+          "label": "Rozmiar źrenicy",
+          "type": "range",
+          "min": 1,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            2
+          ]
+        },
+        {
+          "id": "eyes.scleraVisibility",
+          "label": "Widoczność twardówki",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "eyes.lashes",
+          "label": "Rzęsy",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "single",
+              "label": "single"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "medium",
+              "label": "medium"
+            },
+            {
+              "value": "long",
+              "label": "long"
+            },
+            {
+              "value": "outerShort",
+              "label": "outerShort"
+            },
+            {
+              "value": "outerLong",
+              "label": "outerLong"
+            },
+            {
+              "value": "upper",
+              "label": "upper"
+            },
+            {
+              "value": "lower",
+              "label": "lower"
+            },
+            {
+              "value": "stylized",
+              "label": "stylized"
+            }
+          ]
+        },
+        {
+          "id": "eyes.lashLength",
+          "label": "Długość rzęs",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "eyes.asymmetry",
+          "label": "Asymetria",
+          "type": "range",
+          "min": -1,
+          "max": 1,
+          "step": 1,
+          "auto": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "brows",
+      "label": "Brwi",
+      "group": "anatomy",
+      "presets": {
+        "thin": {
+          "brows.shape": "thin",
+          "brows.thickness": 1,
+          "brows.width": 5
+        },
+        "bold": {
+          "brows.shape": "bushy",
+          "brows.thickness": 3,
+          "brows.width": 7
+        },
+        "arched": {
+          "brows.shape": "highArch",
+          "brows.arch": 3,
+          "brows.height": 2
+        },
+        "angular": {
+          "brows.shape": "angular",
+          "brows.thickness": 2,
+          "brows.arch": 1
+        }
+      },
+      "fields": [
+        {
+          "id": "brows.shape",
+          "label": "Kształt brwi",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "veryThin",
+              "label": "veryThin"
+            },
+            {
+              "value": "thin",
+              "label": "thin"
+            },
+            {
+              "value": "medium",
+              "label": "medium"
+            },
+            {
+              "value": "thick",
+              "label": "thick"
+            },
+            {
+              "value": "veryThick",
+              "label": "veryThick"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            },
+            {
+              "value": "highArch",
+              "label": "highArch"
+            },
+            {
+              "value": "lowArch",
+              "label": "lowArch"
+            },
+            {
+              "value": "angular",
+              "label": "angular"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "long",
+              "label": "long"
+            },
+            {
+              "value": "gap",
+              "label": "gap"
+            },
+            {
+              "value": "solid",
+              "label": "solid"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            },
+            {
+              "value": "bushy",
+              "label": "bushy"
+            }
+          ]
+        },
+        {
+          "id": "brows.width",
+          "label": "Szerokość",
+          "type": "range",
+          "min": 2,
+          "max": 9,
+          "step": 1,
+          "auto": [
+            4,
+            8
+          ]
+        },
+        {
+          "id": "brows.thickness",
+          "label": "Grubość",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "brows.height",
+          "label": "Pozycja nad oczami",
+          "type": "range",
+          "min": -1,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "brows.spacing",
+          "label": "Rozstaw",
+          "type": "range",
+          "min": 1,
+          "max": 8,
+          "step": 1,
+          "auto": [
+            2,
+            6
+          ]
+        },
+        {
+          "id": "brows.arch",
+          "label": "Łuk",
+          "type": "range",
+          "min": -2,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -1,
+            2
+          ]
+        },
+        {
+          "id": "brows.colorMode",
+          "label": "Kolor",
+          "type": "select",
+          "options": [
+            {
+              "value": "linkedHair",
+              "label": "linkedHair"
+            },
+            {
+              "value": "darkerHair",
+              "label": "darkerHair"
+            },
+            {
+              "value": "lighterHair",
+              "label": "lighterHair"
+            },
+            {
+              "value": "independent",
+              "label": "independent"
+            }
+          ]
+        },
+        {
+          "id": "brows.asymmetry",
+          "label": "Asymetria",
+          "type": "range",
+          "min": -1,
+          "max": 1,
+          "step": 1,
+          "auto": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nose",
+      "label": "Nos",
+      "group": "anatomy",
+      "presets": {
+        "small": {
+          "nose.shape": "button",
+          "nose.length": 2,
+          "nose.width": 2,
+          "nose.tipWidth": 2
+        },
+        "straight": {
+          "nose.shape": "straight",
+          "nose.length": 5,
+          "nose.width": 2,
+          "nose.bridgeWidth": 1
+        },
+        "wide": {
+          "nose.shape": "wide",
+          "nose.length": 4,
+          "nose.width": 6,
+          "nose.tipWidth": 5
+        },
+        "hooked": {
+          "nose.shape": "hooked",
+          "nose.length": 7,
+          "nose.width": 3,
+          "nose.tipWidth": 4
+        }
+      },
+      "fields": [
+        {
+          "id": "nose.shape",
+          "label": "Rodzaj nosa",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "pixel",
+              "label": "pixel"
+            },
+            {
+              "value": "dot",
+              "label": "dot"
+            },
+            {
+              "value": "button",
+              "label": "button"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "medium",
+              "label": "medium"
+            },
+            {
+              "value": "long",
+              "label": "long"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "wide",
+              "label": "wide"
+            },
+            {
+              "value": "narrow",
+              "label": "narrow"
+            },
+            {
+              "value": "flat",
+              "label": "flat"
+            },
+            {
+              "value": "upturned",
+              "label": "upturned"
+            },
+            {
+              "value": "hooked",
+              "label": "hooked"
+            },
+            {
+              "value": "triangular",
+              "label": "triangular"
+            },
+            {
+              "value": "square",
+              "label": "square"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            },
+            {
+              "value": "largeTip",
+              "label": "largeTip"
+            },
+            {
+              "value": "smallTip",
+              "label": "smallTip"
+            },
+            {
+              "value": "shadowOnly",
+              "label": "shadowOnly"
+            },
+            {
+              "value": "nostrilsOnly",
+              "label": "nostrilsOnly"
+            },
+            {
+              "value": "mechanical",
+              "label": "mechanical"
+            },
+            {
+              "value": "animal",
+              "label": "animal"
+            }
+          ]
+        },
+        {
+          "id": "nose.length",
+          "label": "Długość",
+          "type": "range",
+          "min": 0,
+          "max": 8,
+          "step": 1,
+          "auto": [
+            2,
+            7
+          ]
+        },
+        {
+          "id": "nose.width",
+          "label": "Szerokość",
+          "type": "range",
+          "min": 1,
+          "max": 7,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "nose.bridgeWidth",
+          "label": "Szerokość grzbietu",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "nose.tipWidth",
+          "label": "Szerokość czubka",
+          "type": "range",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "nose.positionY",
+          "label": "Pozycja pionowa",
+          "type": "range",
+          "min": -2,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -1,
+            2
+          ]
+        },
+        {
+          "id": "nose.nostrilSpacing",
+          "label": "Rozstaw nozdrzy",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "nose.shadowStrength",
+          "label": "Siła cienia",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "nose.asymmetry",
+          "label": "Asymetria",
+          "type": "range",
+          "min": -1,
+          "max": 1,
+          "step": 1,
+          "auto": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mouth",
+      "label": "Usta",
+      "group": "anatomy",
+      "presets": {
+        "line": {
+          "mouth.shape": "line",
+          "mouth.width": 7,
+          "mouth.height": 1
+        },
+        "soft": {
+          "mouth.shape": "soft",
+          "mouth.width": 7,
+          "mouth.upperLipThickness": 1,
+          "mouth.lowerLipThickness": 1
+        },
+        "full": {
+          "mouth.shape": "full",
+          "mouth.width": 8,
+          "mouth.upperLipThickness": 2,
+          "mouth.lowerLipThickness": 2
+        },
+        "angular": {
+          "mouth.shape": "angular",
+          "mouth.width": 8,
+          "mouth.centerDip": 1
+        }
+      },
+      "fields": [
+        {
+          "id": "mouth.shape",
+          "label": "Rodzaj ust",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "pixel",
+              "label": "pixel"
+            },
+            {
+              "value": "shortLine",
+              "label": "shortLine"
+            },
+            {
+              "value": "line",
+              "label": "line"
+            },
+            {
+              "value": "wideLine",
+              "label": "wideLine"
+            },
+            {
+              "value": "thin",
+              "label": "thin"
+            },
+            {
+              "value": "full",
+              "label": "full"
+            },
+            {
+              "value": "lowerFull",
+              "label": "lowerFull"
+            },
+            {
+              "value": "upperFull",
+              "label": "upperFull"
+            },
+            {
+              "value": "smallRound",
+              "label": "smallRound"
+            },
+            {
+              "value": "cupid",
+              "label": "cupid"
+            },
+            {
+              "value": "angular",
+              "label": "angular"
+            },
+            {
+              "value": "twoTone",
+              "label": "twoTone"
+            },
+            {
+              "value": "shadowed",
+              "label": "shadowed"
+            },
+            {
+              "value": "openGap",
+              "label": "openGap"
+            }
+          ]
+        },
+        {
+          "id": "mouth.width",
+          "label": "Szerokość",
+          "type": "range",
+          "min": 2,
+          "max": 12,
+          "step": 1,
+          "auto": [
+            4,
+            10
+          ]
+        },
+        {
+          "id": "mouth.height",
+          "label": "Wysokość",
+          "type": "range",
+          "min": 1,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            2
+          ]
+        },
+        {
+          "id": "mouth.positionY",
+          "label": "Pozycja pionowa",
+          "type": "range",
+          "min": -2,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -1,
+            2
+          ]
+        },
+        {
+          "id": "mouth.upperLipThickness",
+          "label": "Górna warga",
+          "type": "range",
+          "min": 0,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "mouth.lowerLipThickness",
+          "label": "Dolna warga",
+          "type": "range",
+          "min": 0,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "mouth.centerDip",
+          "label": "Wcięcie środka",
+          "type": "range",
+          "min": 0,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "mouth.colorMode",
+          "label": "Kolor ust",
+          "type": "select",
+          "options": [
+            {
+              "value": "skinShadow",
+              "label": "skinShadow"
+            },
+            {
+              "value": "softPink",
+              "label": "softPink"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "purple",
+              "label": "purple"
+            },
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "cosmetic",
+              "label": "cosmetic"
+            }
+          ]
+        },
+        {
+          "id": "mouth.asymmetry",
+          "label": "Asymetria",
+          "type": "range",
+          "min": -1,
+          "max": 1,
+          "step": 1,
+          "auto": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cheeks",
+      "label": "Policzki i detale twarzy",
+      "group": "details",
+      "presets": {
+        "none": {
+          "cheeks.shape": "none",
+          "cheeks.blush": 0
+        },
+        "soft": {
+          "cheeks.shape": "round",
+          "cheeks.width": 5,
+          "cheeks.blush": 1
+        },
+        "sharp": {
+          "cheeks.shape": "sharp",
+          "cheeks.shadowStrength": 3
+        },
+        "full": {
+          "cheeks.shape": "full",
+          "cheeks.width": 7,
+          "cheeks.roundness": 4
+        }
+      },
+      "fields": [
+        {
+          "id": "cheeks.shape",
+          "label": "Rodzaj policzków",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "wide",
+              "label": "wide"
+            },
+            {
+              "value": "narrow",
+              "label": "narrow"
+            },
+            {
+              "value": "high",
+              "label": "high"
+            },
+            {
+              "value": "low",
+              "label": "low"
+            },
+            {
+              "value": "sharp",
+              "label": "sharp"
+            },
+            {
+              "value": "round",
+              "label": "round"
+            },
+            {
+              "value": "hollow",
+              "label": "hollow"
+            },
+            {
+              "value": "full",
+              "label": "full"
+            }
+          ]
+        },
+        {
+          "id": "cheeks.width",
+          "label": "Szerokość",
+          "type": "range",
+          "min": 0,
+          "max": 8,
+          "step": 1,
+          "auto": [
+            2,
+            7
+          ]
+        },
+        {
+          "id": "cheeks.height",
+          "label": "Wysokość zaznaczenia",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "cheeks.positionY",
+          "label": "Pozycja",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "cheeks.roundness",
+          "label": "Zaokrąglenie",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "cheeks.shadowStrength",
+          "label": "Cień",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "cheeks.blush",
+          "label": "Rumieniec",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hair",
+      "label": "Włosy, fryzura i łysienie",
+      "group": "details",
+      "presets": {
+        "buzz": {
+          "hair.lengthStyle": "shaved",
+          "hair.length": 0,
+          "hair.topMass": "flat",
+          "hair.volumeTop": 1,
+          "hair.volumeSides": 1,
+          "hair.texture": "smooth",
+          "hair.fringe": "none",
+          "hair.balding": "none"
+        },
+        "crew": {
+          "hair.lengthStyle": "veryShort",
+          "hair.length": 1,
+          "hair.topMass": "angular",
+          "hair.volumeTop": 2,
+          "hair.volumeSides": 1,
+          "hair.fringe": "shortStraight"
+        },
+        "undercut": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "high",
+          "hair.volumeTop": 5,
+          "hair.volumeSides": 0,
+          "hair.sides": "shaved",
+          "hair.fringe": "sideLeft"
+        },
+        "sidePart": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "rounded",
+          "hair.volumeTop": 4,
+          "hair.parting": "left",
+          "hair.fringe": "sideRight"
+        },
+        "slicked": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "high",
+          "hair.texture": "smooth",
+          "hair.fringe": "none",
+          "hair.parting": "deepLeft"
+        },
+        "bob": {
+          "hair.lengthStyle": "jaw",
+          "hair.length": 7,
+          "hair.topMass": "rounded",
+          "hair.volumeSides": 4,
+          "hair.sides": "coverEars",
+          "hair.back": "jaw",
+          "hair.fringe": "straight"
+        },
+        "longBob": {
+          "hair.lengthStyle": "neck",
+          "hair.length": 10,
+          "hair.topMass": "rounded",
+          "hair.volumeSides": 4,
+          "hair.back": "neck",
+          "hair.fringe": "split"
+        },
+        "pixie": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "irregular",
+          "hair.volumeTop": 4,
+          "hair.texture": "spiky",
+          "hair.fringe": "choppy"
+        },
+        "bowl": {
+          "hair.lengthStyle": "ear",
+          "hair.length": 4,
+          "hair.topMass": "flat",
+          "hair.sides": "coverEars",
+          "hair.fringe": "straightLong"
+        },
+        "afro": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "afro",
+          "hair.volumeTop": 8,
+          "hair.volumeSides": 6,
+          "hair.texture": "afro",
+          "hair.fringe": "none"
+        },
+        "mohawk": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "mohawk",
+          "hair.volumeTop": 8,
+          "hair.volumeSides": 0,
+          "hair.sides": "shaved",
+          "hair.texture": "spiky"
+        },
+        "curtain": {
+          "hair.lengthStyle": "jaw",
+          "hair.length": 6,
+          "hair.topMass": "rounded",
+          "hair.parting": "center",
+          "hair.fringe": "curtain",
+          "hair.sides": "longStrands"
+        },
+        "longStraight": {
+          "hair.lengthStyle": "belowShoulder",
+          "hair.length": 14,
+          "hair.topMass": "rounded",
+          "hair.texture": "straight",
+          "hair.back": "belowShoulder",
+          "hair.sides": "longStrands"
+        },
+        "longWavy": {
+          "hair.lengthStyle": "belowShoulder",
+          "hair.length": 14,
+          "hair.topMass": "rounded",
+          "hair.texture": "wavy",
+          "hair.back": "belowShoulder",
+          "hair.sides": "longStrands"
+        },
+        "shortCurls": {
+          "hair.lengthStyle": "ear",
+          "hair.length": 5,
+          "hair.topMass": "curly",
+          "hair.volumeTop": 5,
+          "hair.volumeSides": 4,
+          "hair.texture": "curly"
+        },
+        "messy": {
+          "hair.lengthStyle": "short",
+          "hair.topMass": "irregular",
+          "hair.volumeTop": 5,
+          "hair.texture": "messy",
+          "hair.fringe": "choppy"
+        },
+        "mullet": {
+          "hair.lengthStyle": "neck",
+          "hair.length": 11,
+          "hair.topMass": "angular",
+          "hair.volumeSides": 2,
+          "hair.back": "neckLong",
+          "hair.fringe": "shortStraight"
+        },
+        "monk": {
+          "hair.lengthStyle": "short",
+          "hair.balding": "tonsure",
+          "hair.crownRadius": 4,
+          "hair.sides": "short",
+          "hair.fringe": "none"
+        },
+        "sideHair": {
+          "hair.lengthStyle": "short",
+          "hair.balding": "sidesOnly",
+          "hair.sides": "short",
+          "hair.fringe": "none"
+        },
+        "singleTuft": {
+          "hair.lengthStyle": "veryShort",
+          "hair.balding": "tuft",
+          "hair.topMass": "tuft",
+          "hair.volumeTop": 4,
+          "hair.fringe": "singleTuft"
+        }
+      },
+      "fields": [
+        {
+          "id": "hair.lengthStyle",
+          "label": "Długość bazowa",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "shaved",
+              "label": "shaved"
+            },
+            {
+              "value": "veryShort",
+              "label": "veryShort"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "ear",
+              "label": "ear"
+            },
+            {
+              "value": "jaw",
+              "label": "jaw"
+            },
+            {
+              "value": "neck",
+              "label": "neck"
+            },
+            {
+              "value": "shoulder",
+              "label": "shoulder"
+            },
+            {
+              "value": "belowShoulder",
+              "label": "belowShoulder"
+            }
+          ]
+        },
+        {
+          "id": "hair.length",
+          "label": "Długość tylna",
+          "type": "range",
+          "min": 0,
+          "max": 15,
+          "step": 1,
+          "auto": [
+            0,
+            13
+          ]
+        },
+        {
+          "id": "hair.topMass",
+          "label": "Masa górna",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "flat",
+              "label": "flat"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            },
+            {
+              "value": "high",
+              "label": "high"
+            },
+            {
+              "value": "angular",
+              "label": "angular"
+            },
+            {
+              "value": "spiky",
+              "label": "spiky"
+            },
+            {
+              "value": "curly",
+              "label": "curly"
+            },
+            {
+              "value": "afro",
+              "label": "afro"
+            },
+            {
+              "value": "mohawk",
+              "label": "mohawk"
+            },
+            {
+              "value": "irregular",
+              "label": "irregular"
+            },
+            {
+              "value": "tuft",
+              "label": "tuft"
+            }
+          ]
+        },
+        {
+          "id": "hair.volumeTop",
+          "label": "Objętość góry",
+          "type": "range",
+          "min": 0,
+          "max": 8,
+          "step": 1,
+          "auto": [
+            1,
+            7
+          ]
+        },
+        {
+          "id": "hair.volumeSides",
+          "label": "Objętość boków",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            0,
+            5
+          ]
+        },
+        {
+          "id": "hair.volumeBack",
+          "label": "Objętość tyłu",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "hair.texture",
+          "label": "Tekstura",
+          "type": "select",
+          "options": [
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "slightlyWavy",
+              "label": "slightlyWavy"
+            },
+            {
+              "value": "wavy",
+              "label": "wavy"
+            },
+            {
+              "value": "veryWavy",
+              "label": "veryWavy"
+            },
+            {
+              "value": "curly",
+              "label": "curly"
+            },
+            {
+              "value": "tightCurls",
+              "label": "tightCurls"
+            },
+            {
+              "value": "afro",
+              "label": "afro"
+            },
+            {
+              "value": "spiky",
+              "label": "spiky"
+            },
+            {
+              "value": "fluffy",
+              "label": "fluffy"
+            },
+            {
+              "value": "smooth",
+              "label": "smooth"
+            },
+            {
+              "value": "heavy",
+              "label": "heavy"
+            },
+            {
+              "value": "messy",
+              "label": "messy"
+            }
+          ]
+        },
+        {
+          "id": "hair.hairline",
+          "label": "Linia włosów",
+          "type": "select",
+          "options": [
+            {
+              "value": "veryLow",
+              "label": "veryLow"
+            },
+            {
+              "value": "low",
+              "label": "low"
+            },
+            {
+              "value": "standard",
+              "label": "standard"
+            },
+            {
+              "value": "high",
+              "label": "high"
+            },
+            {
+              "value": "veryHigh",
+              "label": "veryHigh"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            },
+            {
+              "value": "softM",
+              "label": "softM"
+            },
+            {
+              "value": "widowsPeak",
+              "label": "widowsPeak"
+            },
+            {
+              "value": "receded",
+              "label": "receded"
+            },
+            {
+              "value": "uneven",
+              "label": "uneven"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            },
+            {
+              "value": "deepTemples",
+              "label": "deepTemples"
+            },
+            {
+              "value": "hidden",
+              "label": "hidden"
+            }
+          ]
+        },
+        {
+          "id": "hair.hairlineHeight",
+          "label": "Wysokość linii",
+          "type": "range",
+          "min": 0,
+          "max": 7,
+          "step": 1,
+          "auto": [
+            1,
+            6
+          ]
+        },
+        {
+          "id": "hair.templeDepth",
+          "label": "Głębokość zakoli",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            0,
+            5
+          ]
+        },
+        {
+          "id": "hair.balding",
+          "label": "Łysienie",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "slightRecession",
+              "label": "slightRecession"
+            },
+            {
+              "value": "temples",
+              "label": "temples"
+            },
+            {
+              "value": "deepTemples",
+              "label": "deepTemples"
+            },
+            {
+              "value": "crownThin",
+              "label": "crownThin"
+            },
+            {
+              "value": "tonsure",
+              "label": "tonsure"
+            },
+            {
+              "value": "frontal",
+              "label": "frontal"
+            },
+            {
+              "value": "frontCrown",
+              "label": "frontCrown"
+            },
+            {
+              "value": "sidesOnly",
+              "label": "sidesOnly"
+            },
+            {
+              "value": "tuft",
+              "label": "tuft"
+            },
+            {
+              "value": "fullBald",
+              "label": "fullBald"
+            },
+            {
+              "value": "shaved",
+              "label": "shaved"
+            }
+          ]
+        },
+        {
+          "id": "hair.recession",
+          "label": "Stopień cofnięcia",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            0,
+            5
+          ]
+        },
+        {
+          "id": "hair.crownRadius",
+          "label": "Promień przerzedzenia",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        },
+        {
+          "id": "hair.topDensity",
+          "label": "Gęstość góry",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            2,
+            5
+          ]
+        },
+        {
+          "id": "hair.parting",
+          "label": "Przedziałek",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "center",
+              "label": "center"
+            },
+            {
+              "value": "left",
+              "label": "left"
+            },
+            {
+              "value": "right",
+              "label": "right"
+            },
+            {
+              "value": "deepLeft",
+              "label": "deepLeft"
+            },
+            {
+              "value": "deepRight",
+              "label": "deepRight"
+            },
+            {
+              "value": "irregular",
+              "label": "irregular"
+            },
+            {
+              "value": "zigzag",
+              "label": "zigzag"
+            }
+          ]
+        },
+        {
+          "id": "hair.partPosition",
+          "label": "Pozycja przedziałka",
+          "type": "range",
+          "min": -4,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            -3,
+            3
+          ]
+        },
+        {
+          "id": "hair.fringe",
+          "label": "Grzywka",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "shortStraight",
+              "label": "shortStraight"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "straightLong",
+              "label": "straightLong"
+            },
+            {
+              "value": "sideLeft",
+              "label": "sideLeft"
+            },
+            {
+              "value": "sideRight",
+              "label": "sideRight"
+            },
+            {
+              "value": "split",
+              "label": "split"
+            },
+            {
+              "value": "curtain",
+              "label": "curtain"
+            },
+            {
+              "value": "uneven",
+              "label": "uneven"
+            },
+            {
+              "value": "choppy",
+              "label": "choppy"
+            },
+            {
+              "value": "singleTuft",
+              "label": "singleTuft"
+            },
+            {
+              "value": "oneEye",
+              "label": "oneEye"
+            },
+            {
+              "value": "bothEyes",
+              "label": "bothEyes"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            }
+          ]
+        },
+        {
+          "id": "hair.fringeLength",
+          "label": "Długość grzywki",
+          "type": "range",
+          "min": 0,
+          "max": 9,
+          "step": 1,
+          "auto": [
+            1,
+            8
+          ]
+        },
+        {
+          "id": "hair.fringeDensity",
+          "label": "Gęstość grzywki",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "hair.sides",
+          "label": "Boki włosów",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "shaved",
+              "label": "shaved"
+            },
+            {
+              "value": "veryShort",
+              "label": "veryShort"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "close",
+              "label": "close"
+            },
+            {
+              "value": "outward",
+              "label": "outward"
+            },
+            {
+              "value": "partialEars",
+              "label": "partialEars"
+            },
+            {
+              "value": "coverEars",
+              "label": "coverEars"
+            },
+            {
+              "value": "longStrands",
+              "label": "longStrands"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            }
+          ]
+        },
+        {
+          "id": "hair.earCoverage",
+          "label": "Zakrycie uszu",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        },
+        {
+          "id": "hair.back",
+          "label": "Tył włosów",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "ear",
+              "label": "ear"
+            },
+            {
+              "value": "jaw",
+              "label": "jaw"
+            },
+            {
+              "value": "neck",
+              "label": "neck"
+            },
+            {
+              "value": "shoulder",
+              "label": "shoulder"
+            },
+            {
+              "value": "belowShoulder",
+              "label": "belowShoulder"
+            },
+            {
+              "value": "wide",
+              "label": "wide"
+            },
+            {
+              "value": "narrow",
+              "label": "narrow"
+            },
+            {
+              "value": "rounded",
+              "label": "rounded"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "choppy",
+              "label": "choppy"
+            },
+            {
+              "value": "neckLong",
+              "label": "neckLong"
+            }
+          ]
+        },
+        {
+          "id": "hair.grayingPattern",
+          "label": "Wzór siwienia",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "strands",
+              "label": "strands"
+            },
+            {
+              "value": "temples",
+              "label": "temples"
+            },
+            {
+              "value": "front",
+              "label": "front"
+            },
+            {
+              "value": "even",
+              "label": "even"
+            },
+            {
+              "value": "full",
+              "label": "full"
+            }
+          ]
+        },
+        {
+          "id": "hair.grayingAmount",
+          "label": "Ilość siwizny",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "id": "facialHair",
+      "label": "Zarost",
+      "group": "details",
+      "presets": {
+        "none": {
+          "facialHair.style": "none",
+          "facialHair.density": 0
+        },
+        "stubble": {
+          "facialHair.style": "stubble",
+          "facialHair.density": 2,
+          "facialHair.length": 1
+        },
+        "full": {
+          "facialHair.style": "fullBeard",
+          "facialHair.density": 4,
+          "facialHair.length": 5,
+          "facialHair.cheekCoverage": 3
+        },
+        "goatee": {
+          "facialHair.style": "goatee",
+          "facialHair.length": 4,
+          "facialHair.chinCoverage": 4
+        },
+        "mustache": {
+          "facialHair.style": "thickMustache",
+          "facialHair.mustacheThickness": 3
+        }
+      },
+      "fields": [
+        {
+          "id": "facialHair.style",
+          "label": "Rodzaj zarostu",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "shadow",
+              "label": "shadow"
+            },
+            {
+              "value": "stubble",
+              "label": "stubble"
+            },
+            {
+              "value": "fullStubble",
+              "label": "fullStubble"
+            },
+            {
+              "value": "shortBeard",
+              "label": "shortBeard"
+            },
+            {
+              "value": "longBeard",
+              "label": "longBeard"
+            },
+            {
+              "value": "pointedBeard",
+              "label": "pointedBeard"
+            },
+            {
+              "value": "squareBeard",
+              "label": "squareBeard"
+            },
+            {
+              "value": "goatee",
+              "label": "goatee"
+            },
+            {
+              "value": "chinOnly",
+              "label": "chinOnly"
+            },
+            {
+              "value": "sideburns",
+              "label": "sideburns"
+            },
+            {
+              "value": "thinMustache",
+              "label": "thinMustache"
+            },
+            {
+              "value": "thickMustache",
+              "label": "thickMustache"
+            },
+            {
+              "value": "curledMustache",
+              "label": "curledMustache"
+            },
+            {
+              "value": "mustacheBeard",
+              "label": "mustacheBeard"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            }
+          ]
+        },
+        {
+          "id": "facialHair.density",
+          "label": "Gęstość",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        },
+        {
+          "id": "facialHair.length",
+          "label": "Długość",
+          "type": "range",
+          "min": 0,
+          "max": 8,
+          "step": 1,
+          "auto": [
+            1,
+            6
+          ]
+        },
+        {
+          "id": "facialHair.mustacheThickness",
+          "label": "Grubość wąsów",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "facialHair.chinCoverage",
+          "label": "Pokrycie podbródka",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "facialHair.cheekCoverage",
+          "label": "Pokrycie policzków",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        },
+        {
+          "id": "facialHair.sideburnLength",
+          "label": "Długość bokobrodów",
+          "type": "range",
+          "min": 0,
+          "max": 7,
+          "step": 1,
+          "auto": [
+            1,
+            6
+          ]
+        },
+        {
+          "id": "facialHair.colorMode",
+          "label": "Kolor",
+          "type": "select",
+          "options": [
+            {
+              "value": "linkedHair",
+              "label": "linkedHair"
+            },
+            {
+              "value": "darkerHair",
+              "label": "darkerHair"
+            },
+            {
+              "value": "lighterHair",
+              "label": "lighterHair"
+            },
+            {
+              "value": "independent",
+              "label": "independent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "skin",
+      "label": "Skóra, cieniowanie i szczegóły",
+      "group": "colors",
+      "presets": {
+        "clean": {
+          "skin.detail": "none",
+          "skin.detailDensity": 0,
+          "skin.shadowDepth": 2
+        },
+        "freckled": {
+          "skin.detail": "freckles",
+          "skin.detailDensity": 3
+        },
+        "mature": {
+          "skin.detail": "wrinkles",
+          "skin.detailDensity": 3,
+          "skin.shadowDepth": 3
+        },
+        "fantasy": {
+          "skin.tone": "fantasyBlue",
+          "skin.detail": "scales",
+          "skin.detailDensity": 2
+        }
+      },
+      "fields": [
+        {
+          "id": "skin.tone",
+          "label": "Rampa skóry",
+          "type": "select",
+          "options": [
+            {
+              "value": "veryFair",
+              "label": "veryFair"
+            },
+            {
+              "value": "fair",
+              "label": "fair"
+            },
+            {
+              "value": "fairWarm",
+              "label": "fairWarm"
+            },
+            {
+              "value": "fairCool",
+              "label": "fairCool"
+            },
+            {
+              "value": "medium",
+              "label": "medium"
+            },
+            {
+              "value": "olive",
+              "label": "olive"
+            },
+            {
+              "value": "golden",
+              "label": "golden"
+            },
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "darkBrown",
+              "label": "darkBrown"
+            },
+            {
+              "value": "veryDark",
+              "label": "veryDark"
+            },
+            {
+              "value": "fantasyBlue",
+              "label": "fantasyBlue"
+            },
+            {
+              "value": "fantasyGreen",
+              "label": "fantasyGreen"
+            },
+            {
+              "value": "fantasyRed",
+              "label": "fantasyRed"
+            },
+            {
+              "value": "fantasyPurple",
+              "label": "fantasyPurple"
+            },
+            {
+              "value": "fantasyGray",
+              "label": "fantasyGray"
+            }
+          ]
+        },
+        {
+          "id": "skin.detail",
+          "label": "Detal skóry",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "freckles",
+              "label": "freckles"
+            },
+            {
+              "value": "manyFreckles",
+              "label": "manyFreckles"
+            },
+            {
+              "value": "moles",
+              "label": "moles"
+            },
+            {
+              "value": "scar",
+              "label": "scar"
+            },
+            {
+              "value": "foreheadWrinkles",
+              "label": "foreheadWrinkles"
+            },
+            {
+              "value": "underEyeWrinkles",
+              "label": "underEyeWrinkles"
+            },
+            {
+              "value": "cheekLines",
+              "label": "cheekLines"
+            },
+            {
+              "value": "blush",
+              "label": "blush"
+            },
+            {
+              "value": "underEyeShadow",
+              "label": "underEyeShadow"
+            },
+            {
+              "value": "mechanicalJoints",
+              "label": "mechanicalJoints"
+            },
+            {
+              "value": "scales",
+              "label": "scales"
+            },
+            {
+              "value": "spots",
+              "label": "spots"
+            }
+          ]
+        },
+        {
+          "id": "skin.detailDensity",
+          "label": "Gęstość detali",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        },
+        {
+          "id": "skin.warmth",
+          "label": "Ciepło odcienia",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "skin.brightness",
+          "label": "Jasność",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "skin.shadowDepth",
+          "label": "Głębokość cienia",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "skin.highlightStrength",
+          "label": "Siła światła",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fantasy",
+      "label": "Rogi, anteny i oznaczenia fantasy",
+      "group": "details",
+      "presets": {
+        "none": {
+          "fantasy.hornStyle": "none",
+          "fantasy.antennaStyle": "none",
+          "fantasy.marking": "none"
+        },
+        "demon": {
+          "fantasy.hornStyle": "demon",
+          "fantasy.hornLength": 7,
+          "fantasy.hornCurvature": 3,
+          "fantasy.marking": "foreheadRune"
+        },
+        "fae": {
+          "fantasy.antennaStyle": "fairy",
+          "fantasy.antennaLength": 7,
+          "fantasy.marking": "templeDots"
+        },
+        "cyber": {
+          "fantasy.hornStyle": "mechanical",
+          "fantasy.hornLength": 4,
+          "fantasy.antennaStyle": "mechanical",
+          "fantasy.marking": "circuit"
+        }
+      },
+      "fields": [
+        {
+          "id": "fantasy.hornStyle",
+          "label": "Rogi",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "tiny",
+              "label": "tiny"
+            },
+            {
+              "value": "straight",
+              "label": "straight"
+            },
+            {
+              "value": "curved",
+              "label": "curved"
+            },
+            {
+              "value": "upward",
+              "label": "upward"
+            },
+            {
+              "value": "sideways",
+              "label": "sideways"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            },
+            {
+              "value": "single",
+              "label": "single"
+            },
+            {
+              "value": "ram",
+              "label": "ram"
+            },
+            {
+              "value": "antler",
+              "label": "antler"
+            },
+            {
+              "value": "demon",
+              "label": "demon"
+            },
+            {
+              "value": "mechanical",
+              "label": "mechanical"
+            }
+          ]
+        },
+        {
+          "id": "fantasy.hornLength",
+          "label": "Długość rogów",
+          "type": "range",
+          "min": 0,
+          "max": 10,
+          "step": 1,
+          "auto": [
+            2,
+            8
+          ]
+        },
+        {
+          "id": "fantasy.hornWidth",
+          "label": "Szerokość rogów",
+          "type": "range",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "fantasy.hornAngle",
+          "label": "Kąt rogów",
+          "type": "range",
+          "min": -4,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            -3,
+            3
+          ]
+        },
+        {
+          "id": "fantasy.hornCurvature",
+          "label": "Krzywizna",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "fantasy.hornAsymmetry",
+          "label": "Asymetria rogów",
+          "type": "range",
+          "min": -2,
+          "max": 2,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "fantasy.antennaStyle",
+          "label": "Anteny",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "single",
+              "label": "single"
+            },
+            {
+              "value": "double",
+              "label": "double"
+            },
+            {
+              "value": "short",
+              "label": "short"
+            },
+            {
+              "value": "long",
+              "label": "long"
+            },
+            {
+              "value": "ballTip",
+              "label": "ballTip"
+            },
+            {
+              "value": "mechanical",
+              "label": "mechanical"
+            },
+            {
+              "value": "insect",
+              "label": "insect"
+            },
+            {
+              "value": "fairy",
+              "label": "fairy"
+            }
+          ]
+        },
+        {
+          "id": "fantasy.antennaLength",
+          "label": "Długość anten",
+          "type": "range",
+          "min": 0,
+          "max": 10,
+          "step": 1,
+          "auto": [
+            2,
+            8
+          ]
+        },
+        {
+          "id": "fantasy.marking",
+          "label": "Oznaczenie",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "foreheadRune",
+              "label": "foreheadRune"
+            },
+            {
+              "value": "templeDots",
+              "label": "templeDots"
+            },
+            {
+              "value": "cheekStripes",
+              "label": "cheekStripes"
+            },
+            {
+              "value": "circuit",
+              "label": "circuit"
+            },
+            {
+              "value": "scales",
+              "label": "scales"
+            },
+            {
+              "value": "star",
+              "label": "star"
+            },
+            {
+              "value": "thirdEye",
+              "label": "thirdEye"
+            }
+          ]
+        },
+        {
+          "id": "fantasy.markingIntensity",
+          "label": "Intensywność",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clothing",
+      "label": "Odzież bazowa",
+      "group": "details",
+      "presets": {
+        "tee": {
+          "clothing.garment": "tShirt",
+          "clothing.neckline": "round",
+          "clothing.pattern": "none"
+        },
+        "shirt": {
+          "clothing.garment": "shirt",
+          "clothing.neckline": "open",
+          "clothing.collarWidth": 3
+        },
+        "armor": {
+          "clothing.garment": "armor",
+          "clothing.neckline": "high",
+          "clothing.pattern": "plates",
+          "clothing.shoulderCoverage": 5
+        },
+        "robe": {
+          "clothing.garment": "robe",
+          "clothing.neckline": "v",
+          "clothing.pattern": "trim"
+        }
+      },
+      "fields": [
+        {
+          "id": "clothing.garment",
+          "label": "Rodzaj ubrania",
+          "type": "select",
+          "options": [
+            {
+              "value": "plain",
+              "label": "plain"
+            },
+            {
+              "value": "tShirt",
+              "label": "tShirt"
+            },
+            {
+              "value": "shirt",
+              "label": "shirt"
+            },
+            {
+              "value": "hoodie",
+              "label": "hoodie"
+            },
+            {
+              "value": "sweater",
+              "label": "sweater"
+            },
+            {
+              "value": "tunic",
+              "label": "tunic"
+            },
+            {
+              "value": "armor",
+              "label": "armor"
+            },
+            {
+              "value": "jumpsuit",
+              "label": "jumpsuit"
+            },
+            {
+              "value": "coat",
+              "label": "coat"
+            },
+            {
+              "value": "robe",
+              "label": "robe"
+            },
+            {
+              "value": "top",
+              "label": "top"
+            }
+          ]
+        },
+        {
+          "id": "clothing.neckline",
+          "label": "Dekolt",
+          "type": "select",
+          "options": [
+            {
+              "value": "round",
+              "label": "round"
+            },
+            {
+              "value": "v",
+              "label": "v"
+            },
+            {
+              "value": "high",
+              "label": "high"
+            },
+            {
+              "value": "turtleneck",
+              "label": "turtleneck"
+            },
+            {
+              "value": "square",
+              "label": "square"
+            },
+            {
+              "value": "open",
+              "label": "open"
+            },
+            {
+              "value": "asymmetric",
+              "label": "asymmetric"
+            }
+          ]
+        },
+        {
+          "id": "clothing.necklineDepth",
+          "label": "Głębokość dekoltu",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "clothing.collarWidth",
+          "label": "Szerokość kołnierza",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            4
+          ]
+        },
+        {
+          "id": "clothing.shoulderCoverage",
+          "label": "Pokrycie ramion",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            2,
+            5
+          ]
+        },
+        {
+          "id": "clothing.pattern",
+          "label": "Wzór",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "stripe",
+              "label": "stripe"
+            },
+            {
+              "value": "doubleStripe",
+              "label": "doubleStripe"
+            },
+            {
+              "value": "checker",
+              "label": "checker"
+            },
+            {
+              "value": "dots",
+              "label": "dots"
+            },
+            {
+              "value": "diagonal",
+              "label": "diagonal"
+            },
+            {
+              "value": "sash",
+              "label": "sash"
+            },
+            {
+              "value": "trim",
+              "label": "trim"
+            },
+            {
+              "value": "runes",
+              "label": "runes"
+            },
+            {
+              "value": "plates",
+              "label": "plates"
+            }
+          ]
+        },
+        {
+          "id": "clothing.patternDensity",
+          "label": "Gęstość wzoru",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "clothing.shadowStrength",
+          "label": "Cień ubrania",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "colors",
+      "label": "Kolory i paleta 32-kolorowa",
+      "group": "colors",
+      "presets": {
+        "natural": {
+          "colors.paletteStyle": "balanced",
+          "colors.hairColor": "brown",
+          "colors.irisColor": "brown",
+          "colors.mouthColor": "softPink",
+          "colors.clothColor": "blue",
+          "colors.backgroundColor": "navy"
+        },
+        "warm": {
+          "colors.paletteStyle": "warm",
+          "colors.hairColor": "auburn",
+          "colors.irisColor": "hazel",
+          "colors.clothColor": "rust",
+          "colors.backgroundColor": "cream"
+        },
+        "cool": {
+          "colors.paletteStyle": "cool",
+          "colors.hairColor": "black",
+          "colors.irisColor": "blue",
+          "colors.clothColor": "teal",
+          "colors.backgroundColor": "slate"
+        },
+        "fantasy": {
+          "colors.paletteStyle": "vivid",
+          "colors.hairColor": "purple",
+          "colors.irisColor": "glowCyan",
+          "colors.mouthColor": "purple",
+          "colors.clothColor": "magenta",
+          "colors.backgroundColor": "deepPurple"
+        }
+      },
+      "fields": [
+        {
+          "id": "colors.paletteStyle",
+          "label": "Styl palety",
+          "type": "select",
+          "options": [
+            {
+              "value": "balanced",
+              "label": "balanced"
+            },
+            {
+              "value": "soft",
+              "label": "soft"
+            },
+            {
+              "value": "highContrast",
+              "label": "highContrast"
+            },
+            {
+              "value": "warm",
+              "label": "warm"
+            },
+            {
+              "value": "cool",
+              "label": "cool"
+            },
+            {
+              "value": "vivid",
+              "label": "vivid"
+            }
+          ]
+        },
+        {
+          "id": "colors.hairColor",
+          "label": "Kolor włosów",
+          "type": "select",
+          "options": [
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "darkBrown",
+              "label": "darkBrown"
+            },
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "lightBrown",
+              "label": "lightBrown"
+            },
+            {
+              "value": "blond",
+              "label": "blond"
+            },
+            {
+              "value": "platinum",
+              "label": "platinum"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "auburn",
+              "label": "auburn"
+            },
+            {
+              "value": "gray",
+              "label": "gray"
+            },
+            {
+              "value": "white",
+              "label": "white"
+            },
+            {
+              "value": "blue",
+              "label": "blue"
+            },
+            {
+              "value": "green",
+              "label": "green"
+            },
+            {
+              "value": "pink",
+              "label": "pink"
+            },
+            {
+              "value": "purple",
+              "label": "purple"
+            },
+            {
+              "value": "multicolor",
+              "label": "multicolor"
+            }
+          ]
+        },
+        {
+          "id": "colors.irisColor",
+          "label": "Kolor tęczówki",
+          "type": "select",
+          "options": [
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "darkBrown",
+              "label": "darkBrown"
+            },
+            {
+              "value": "hazel",
+              "label": "hazel"
+            },
+            {
+              "value": "green",
+              "label": "green"
+            },
+            {
+              "value": "blue",
+              "label": "blue"
+            },
+            {
+              "value": "gray",
+              "label": "gray"
+            },
+            {
+              "value": "amber",
+              "label": "amber"
+            },
+            {
+              "value": "violet",
+              "label": "violet"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "glowCyan",
+              "label": "glowCyan"
+            },
+            {
+              "value": "glowGold",
+              "label": "glowGold"
+            }
+          ]
+        },
+        {
+          "id": "colors.mouthColor",
+          "label": "Kolor ust",
+          "type": "select",
+          "options": [
+            {
+              "value": "skin",
+              "label": "skin"
+            },
+            {
+              "value": "softPink",
+              "label": "softPink"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "purple",
+              "label": "purple"
+            },
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "coral",
+              "label": "coral"
+            }
+          ]
+        },
+        {
+          "id": "colors.clothColor",
+          "label": "Kolor ubrania",
+          "type": "select",
+          "options": [
+            {
+              "value": "blue",
+              "label": "blue"
+            },
+            {
+              "value": "navy",
+              "label": "navy"
+            },
+            {
+              "value": "teal",
+              "label": "teal"
+            },
+            {
+              "value": "green",
+              "label": "green"
+            },
+            {
+              "value": "olive",
+              "label": "olive"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "rust",
+              "label": "rust"
+            },
+            {
+              "value": "orange",
+              "label": "orange"
+            },
+            {
+              "value": "yellow",
+              "label": "yellow"
+            },
+            {
+              "value": "purple",
+              "label": "purple"
+            },
+            {
+              "value": "magenta",
+              "label": "magenta"
+            },
+            {
+              "value": "gray",
+              "label": "gray"
+            },
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "white",
+              "label": "white"
+            }
+          ]
+        },
+        {
+          "id": "colors.backgroundColor",
+          "label": "Kolor tła",
+          "type": "select",
+          "options": [
+            {
+              "value": "navy",
+              "label": "navy"
+            },
+            {
+              "value": "slate",
+              "label": "slate"
+            },
+            {
+              "value": "charcoal",
+              "label": "charcoal"
+            },
+            {
+              "value": "cream",
+              "label": "cream"
+            },
+            {
+              "value": "sand",
+              "label": "sand"
+            },
+            {
+              "value": "forest",
+              "label": "forest"
+            },
+            {
+              "value": "teal",
+              "label": "teal"
+            },
+            {
+              "value": "rust",
+              "label": "rust"
+            },
+            {
+              "value": "deepPurple",
+              "label": "deepPurple"
+            },
+            {
+              "value": "black",
+              "label": "black"
+            }
+          ]
+        },
+        {
+          "id": "colors.outlineMode",
+          "label": "Obrys",
+          "type": "select",
+          "options": [
+            {
+              "value": "nearBlack",
+              "label": "nearBlack"
+            },
+            {
+              "value": "softDark",
+              "label": "softDark"
+            },
+            {
+              "value": "colored",
+              "label": "colored"
+            },
+            {
+              "value": "highContrast",
+              "label": "highContrast"
+            }
+          ]
+        },
+        {
+          "id": "colors.browIndependent",
+          "label": "Niezależny kolor brwi",
+          "type": "select",
+          "options": [
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "blond",
+              "label": "blond"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "gray",
+              "label": "gray"
+            },
+            {
+              "value": "white",
+              "label": "white"
+            },
+            {
+              "value": "blue",
+              "label": "blue"
+            },
+            {
+              "value": "purple",
+              "label": "purple"
+            }
+          ]
+        },
+        {
+          "id": "colors.facialHairIndependent",
+          "label": "Niezależny kolor zarostu",
+          "type": "select",
+          "options": [
+            {
+              "value": "black",
+              "label": "black"
+            },
+            {
+              "value": "brown",
+              "label": "brown"
+            },
+            {
+              "value": "blond",
+              "label": "blond"
+            },
+            {
+              "value": "red",
+              "label": "red"
+            },
+            {
+              "value": "gray",
+              "label": "gray"
+            },
+            {
+              "value": "white",
+              "label": "white"
+            },
+            {
+              "value": "blue",
+              "label": "blue"
+            },
+            {
+              "value": "purple",
+              "label": "purple"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "identityV4",
+      "label": "V4 · Świat, archetyp i randomizacja",
+      "group": "details",
+      "presets": {
+        "fantasy": {
+          "v4.worldStyle": "fantasy",
+          "v4.archetype": "wanderingMage",
+          "v4.randomMode": "fantasy",
+          "v4.complexity": 72
+        },
+        "scifi": {
+          "v4.worldStyle": "scienceFiction",
+          "v4.archetype": "spacePilot",
+          "v4.randomMode": "scifi",
+          "v4.complexity": 78
+        },
+        "chaos": {
+          "v4.worldStyle": "mixed",
+          "v4.archetype": "auto",
+          "v4.randomMode": "chaotic",
+          "v4.complexity": 95
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.worldStyle",
+          "label": "Styl świata",
+          "type": "select",
+          "options": [
+            {
+              "value": "modern",
+              "label": "modern"
+            },
+            {
+              "value": "fantasy",
+              "label": "fantasy"
+            },
+            {
+              "value": "scienceFiction",
+              "label": "scienceFiction"
+            },
+            {
+              "value": "cyberpunk",
+              "label": "cyberpunk"
+            },
+            {
+              "value": "steampunk",
+              "label": "steampunk"
+            },
+            {
+              "value": "postApocalyptic",
+              "label": "postApocalyptic"
+            },
+            {
+              "value": "historical",
+              "label": "historical"
+            },
+            {
+              "value": "military",
+              "label": "military"
+            },
+            {
+              "value": "magical",
+              "label": "magical"
+            },
+            {
+              "value": "horror",
+              "label": "horror"
+            },
+            {
+              "value": "royal",
+              "label": "royal"
+            },
+            {
+              "value": "mixed",
+              "label": "mixed"
+            }
+          ]
+        },
+        {
+          "id": "v4.archetype",
+          "label": "Archetyp",
+          "type": "select",
+          "options": [
+            {
+              "value": "auto",
+              "label": "auto"
+            },
+            {
+              "value": "knight",
+              "label": "knight"
+            },
+            {
+              "value": "wanderingMage",
+              "label": "wanderingMage"
+            },
+            {
+              "value": "rogue",
+              "label": "rogue"
+            },
+            {
+              "value": "pirateCaptain",
+              "label": "pirateCaptain"
+            },
+            {
+              "value": "cowboy",
+              "label": "cowboy"
+            },
+            {
+              "value": "soldier",
+              "label": "soldier"
+            },
+            {
+              "value": "streetHacker",
+              "label": "streetHacker"
+            },
+            {
+              "value": "scientist",
+              "label": "scientist"
+            },
+            {
+              "value": "mechanic",
+              "label": "mechanic"
+            },
+            {
+              "value": "spacePilot",
+              "label": "spacePilot"
+            },
+            {
+              "value": "monarch",
+              "label": "monarch"
+            },
+            {
+              "value": "priest",
+              "label": "priest"
+            },
+            {
+              "value": "barbarian",
+              "label": "barbarian"
+            },
+            {
+              "value": "forestElf",
+              "label": "forestElf"
+            },
+            {
+              "value": "goblinMechanic",
+              "label": "goblinMechanic"
+            },
+            {
+              "value": "robot",
+              "label": "robot"
+            },
+            {
+              "value": "mutant",
+              "label": "mutant"
+            },
+            {
+              "value": "vampire",
+              "label": "vampire"
+            },
+            {
+              "value": "zombie",
+              "label": "zombie"
+            },
+            {
+              "value": "detective",
+              "label": "detective"
+            },
+            {
+              "value": "musician",
+              "label": "musician"
+            },
+            {
+              "value": "doctor",
+              "label": "doctor"
+            },
+            {
+              "value": "chef",
+              "label": "chef"
+            },
+            {
+              "value": "miner",
+              "label": "miner"
+            },
+            {
+              "value": "diver",
+              "label": "diver"
+            }
+          ]
+        },
+        {
+          "id": "v4.randomMode",
+          "label": "Tryb losowania",
+          "type": "select",
+          "options": [
+            {
+              "value": "natural",
+              "label": "natural"
+            },
+            {
+              "value": "diverse",
+              "label": "diverse"
+            },
+            {
+              "value": "stylized",
+              "label": "stylized"
+            },
+            {
+              "value": "fantasy",
+              "label": "fantasy"
+            },
+            {
+              "value": "scifi",
+              "label": "scifi"
+            },
+            {
+              "value": "chaotic",
+              "label": "chaotic"
+            },
+            {
+              "value": "rareHeavy",
+              "label": "rareHeavy"
+            },
+            {
+              "value": "minimal",
+              "label": "minimal"
+            }
+          ]
+        },
+        {
+          "id": "v4.complexity",
+          "label": "Budżet złożoności",
+          "type": "range",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "auto": [
+            25,
+            82
+          ]
+        },
+        {
+          "id": "v4.rarityBias",
+          "label": "Bias rzadkości",
+          "type": "range",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "auto": [
+            5,
+            65
+          ]
+        },
+        {
+          "id": "v4.accessoryAsymmetry",
+          "label": "Asymetria dodatków",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "headwearV4",
+      "label": "V4 · Nakrycia głowy i hełmy",
+      "group": "wearables",
+      "presets": {
+        "knight": {
+          "v4.headwear": "helmetKnightOpen",
+          "v4.headwearCoverage": 4,
+          "v4.hairCompression": 5
+        },
+        "wizard": {
+          "v4.headwear": "wizardHat",
+          "v4.headwearHeight": 10
+        },
+        "pirate": {
+          "v4.headwear": "pirateHat",
+          "v4.headwearTilt": 1
+        },
+        "space": {
+          "v4.headwear": "spaceHelmet",
+          "v4.headwearCoverage": 5
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.headwear",
+          "label": "Nakrycie głowy",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "baseballCap",
+              "label": "baseballCap"
+            },
+            {
+              "value": "beanie",
+              "label": "beanie"
+            },
+            {
+              "value": "beret",
+              "label": "beret"
+            },
+            {
+              "value": "fedora",
+              "label": "fedora"
+            },
+            {
+              "value": "cowboyHat",
+              "label": "cowboyHat"
+            },
+            {
+              "value": "topHat",
+              "label": "topHat"
+            },
+            {
+              "value": "wizardHat",
+              "label": "wizardHat"
+            },
+            {
+              "value": "strawHat",
+              "label": "strawHat"
+            },
+            {
+              "value": "hood",
+              "label": "hood"
+            },
+            {
+              "value": "bandana",
+              "label": "bandana"
+            },
+            {
+              "value": "headband",
+              "label": "headband"
+            },
+            {
+              "value": "turban",
+              "label": "turban"
+            },
+            {
+              "value": "crown",
+              "label": "crown"
+            },
+            {
+              "value": "tiara",
+              "label": "tiara"
+            },
+            {
+              "value": "wreath",
+              "label": "wreath"
+            },
+            {
+              "value": "winterHat",
+              "label": "winterHat"
+            },
+            {
+              "value": "sailorCap",
+              "label": "sailorCap"
+            },
+            {
+              "value": "militaryCap",
+              "label": "militaryCap"
+            },
+            {
+              "value": "chefHat",
+              "label": "chefHat"
+            },
+            {
+              "value": "pirateHat",
+              "label": "pirateHat"
+            },
+            {
+              "value": "helmetKnightOpen",
+              "label": "helmetKnightOpen"
+            },
+            {
+              "value": "helmetKnightClosed",
+              "label": "helmetKnightClosed"
+            },
+            {
+              "value": "helmetNorse",
+              "label": "helmetNorse"
+            },
+            {
+              "value": "helmetGladiator",
+              "label": "helmetGladiator"
+            },
+            {
+              "value": "helmetSamurai",
+              "label": "helmetSamurai"
+            },
+            {
+              "value": "helmetFuturistic",
+              "label": "helmetFuturistic"
+            },
+            {
+              "value": "spaceHelmet",
+              "label": "spaceHelmet"
+            },
+            {
+              "value": "motorcycleHelmet",
+              "label": "motorcycleHelmet"
+            },
+            {
+              "value": "tacticalHelmet",
+              "label": "tacticalHelmet"
+            },
+            {
+              "value": "minerHelmet",
+              "label": "minerHelmet"
+            },
+            {
+              "value": "diverHelmet",
+              "label": "diverHelmet"
+            },
+            {
+              "value": "hornedHelmet",
+              "label": "hornedHelmet"
+            },
+            {
+              "value": "demonHelmet",
+              "label": "demonHelmet"
+            },
+            {
+              "value": "ceremonialHelmet",
+              "label": "ceremonialHelmet"
+            },
+            {
+              "value": "robotHelmet",
+              "label": "robotHelmet"
+            }
+          ]
+        },
+        {
+          "id": "v4.headwearWidth",
+          "label": "Szerokość",
+          "type": "range",
+          "min": 8,
+          "max": 40,
+          "step": 1,
+          "auto": [
+            16,
+            32
+          ]
+        },
+        {
+          "id": "v4.headwearHeight",
+          "label": "Wysokość",
+          "type": "range",
+          "min": 2,
+          "max": 15,
+          "step": 1,
+          "auto": [
+            4,
+            10
+          ]
+        },
+        {
+          "id": "v4.headwearTilt",
+          "label": "Nachylenie",
+          "type": "range",
+          "min": -3,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "v4.headwearOffsetX",
+          "label": "Przesunięcie X",
+          "type": "range",
+          "min": -4,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "v4.headwearCoverage",
+          "label": "Pokrycie głowy",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "v4.hairCompression",
+          "label": "Kompresja włosów",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "v4.headwearDamage",
+          "label": "Uszkodzenia",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eyewearV4",
+      "label": "V4 · Okulary, wizjery i opaski",
+      "group": "wearables",
+      "presets": {
+        "scholar": {
+          "v4.eyewear": "roundGlasses",
+          "v4.frameThickness": 1
+        },
+        "pirate": {
+          "v4.eyewear": "eyePatchLeft"
+        },
+        "cyber": {
+          "v4.eyewear": "cyberVisor",
+          "v4.lensTint": 4
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.eyewear",
+          "label": "Akcesorium oczu",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "roundGlasses",
+              "label": "roundGlasses"
+            },
+            {
+              "value": "ovalGlasses",
+              "label": "ovalGlasses"
+            },
+            {
+              "value": "squareGlasses",
+              "label": "squareGlasses"
+            },
+            {
+              "value": "rectGlasses",
+              "label": "rectGlasses"
+            },
+            {
+              "value": "tinyGlasses",
+              "label": "tinyGlasses"
+            },
+            {
+              "value": "oversizeGlasses",
+              "label": "oversizeGlasses"
+            },
+            {
+              "value": "thinFrames",
+              "label": "thinFrames"
+            },
+            {
+              "value": "thickFrames",
+              "label": "thickFrames"
+            },
+            {
+              "value": "rimless",
+              "label": "rimless"
+            },
+            {
+              "value": "halfFrames",
+              "label": "halfFrames"
+            },
+            {
+              "value": "catEye",
+              "label": "catEye"
+            },
+            {
+              "value": "retro",
+              "label": "retro"
+            },
+            {
+              "value": "aviator",
+              "label": "aviator"
+            },
+            {
+              "value": "wayfarer",
+              "label": "wayfarer"
+            },
+            {
+              "value": "narrowShades",
+              "label": "narrowShades"
+            },
+            {
+              "value": "mirrorShades",
+              "label": "mirrorShades"
+            },
+            {
+              "value": "cyberVisor",
+              "label": "cyberVisor"
+            },
+            {
+              "value": "monoVisor",
+              "label": "monoVisor"
+            },
+            {
+              "value": "monocleLeft",
+              "label": "monocleLeft"
+            },
+            {
+              "value": "monocleRight",
+              "label": "monocleRight"
+            },
+            {
+              "value": "eyePatchLeft",
+              "label": "eyePatchLeft"
+            },
+            {
+              "value": "eyePatchRight",
+              "label": "eyePatchRight"
+            },
+            {
+              "value": "targetingLens",
+              "label": "targetingLens"
+            },
+            {
+              "value": "weldingGoggles",
+              "label": "weldingGoggles"
+            }
+          ]
+        },
+        {
+          "id": "v4.frameThickness",
+          "label": "Grubość oprawki",
+          "type": "range",
+          "min": 1,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            1,
+            2
+          ]
+        },
+        {
+          "id": "v4.lensHeight",
+          "label": "Wysokość soczewki",
+          "type": "range",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            2,
+            4
+          ]
+        },
+        {
+          "id": "v4.bridgeWidth",
+          "label": "Szerokość mostka",
+          "type": "range",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "v4.lensTint",
+          "label": "Przyciemnienie",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        },
+        {
+          "id": "v4.reflection",
+          "label": "Refleks",
+          "type": "range",
+          "min": 0,
+          "max": 3,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faceMaskV4",
+      "label": "V4 · Maski twarzy",
+      "group": "wearables",
+      "presets": {
+        "ninja": {
+          "v4.faceMask": "ninjaMask"
+        },
+        "gas": {
+          "v4.faceMask": "gasMask"
+        },
+        "venetian": {
+          "v4.faceMask": "venetianMask"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.faceMask",
+          "label": "Maska",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "surgicalMask",
+              "label": "surgicalMask"
+            },
+            {
+              "value": "respirator",
+              "label": "respirator"
+            },
+            {
+              "value": "faceBandana",
+              "label": "faceBandana"
+            },
+            {
+              "value": "ninjaMask",
+              "label": "ninjaMask"
+            },
+            {
+              "value": "gasMask",
+              "label": "gasMask"
+            },
+            {
+              "value": "theaterMask",
+              "label": "theaterMask"
+            },
+            {
+              "value": "venetianMask",
+              "label": "venetianMask"
+            },
+            {
+              "value": "demonMask",
+              "label": "demonMask"
+            },
+            {
+              "value": "robotMask",
+              "label": "robotMask"
+            },
+            {
+              "value": "halfMask",
+              "label": "halfMask"
+            },
+            {
+              "value": "hockeyMask",
+              "label": "hockeyMask"
+            },
+            {
+              "value": "ceremonialMask",
+              "label": "ceremonialMask"
+            },
+            {
+              "value": "balaclava",
+              "label": "balaclava"
+            },
+            {
+              "value": "scarfMask",
+              "label": "scarfMask"
+            }
+          ]
+        },
+        {
+          "id": "v4.maskCoverage",
+          "label": "Pokrycie",
+          "type": "range",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            2,
+            5
+          ]
+        },
+        {
+          "id": "v4.maskFilterSize",
+          "label": "Rozmiar filtra",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "v4.maskDamage",
+          "label": "Uszkodzenia",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jewelryV4",
+      "label": "V4 · Biżuteria i dodatki szyi",
+      "group": "wearables",
+      "presets": {
+        "royal": {
+          "v4.earJewelry": "pearl",
+          "v4.neckJewelry": "royalMedallion"
+        },
+        "punk": {
+          "v4.earJewelry": "multiPiercing",
+          "v4.facePiercing": "septum",
+          "v4.neckJewelry": "choker"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.earJewelry",
+          "label": "Kolczyki",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "stud",
+              "label": "stud"
+            },
+            {
+              "value": "smallHoop",
+              "label": "smallHoop"
+            },
+            {
+              "value": "largeHoop",
+              "label": "largeHoop"
+            },
+            {
+              "value": "multiPiercing",
+              "label": "multiPiercing"
+            },
+            {
+              "value": "industrial",
+              "label": "industrial"
+            },
+            {
+              "value": "tunnel",
+              "label": "tunnel"
+            },
+            {
+              "value": "dangling",
+              "label": "dangling"
+            },
+            {
+              "value": "pearl",
+              "label": "pearl"
+            },
+            {
+              "value": "chainEarring",
+              "label": "chainEarring"
+            },
+            {
+              "value": "fantasyEarring",
+              "label": "fantasyEarring"
+            }
+          ]
+        },
+        {
+          "id": "v4.facePiercing",
+          "label": "Piercing twarzy",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "noseStud",
+              "label": "noseStud"
+            },
+            {
+              "value": "septum",
+              "label": "septum"
+            },
+            {
+              "value": "browPiercing",
+              "label": "browPiercing"
+            },
+            {
+              "value": "lipRing",
+              "label": "lipRing"
+            },
+            {
+              "value": "labret",
+              "label": "labret"
+            },
+            {
+              "value": "foreheadGem",
+              "label": "foreheadGem"
+            }
+          ]
+        },
+        {
+          "id": "v4.neckJewelry",
+          "label": "Dodatek szyi",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "thinChain",
+              "label": "thinChain"
+            },
+            {
+              "value": "thickChain",
+              "label": "thickChain"
+            },
+            {
+              "value": "choker",
+              "label": "choker"
+            },
+            {
+              "value": "medallion",
+              "label": "medallion"
+            },
+            {
+              "value": "amulet",
+              "label": "amulet"
+            },
+            {
+              "value": "dogTags",
+              "label": "dogTags"
+            },
+            {
+              "value": "beads",
+              "label": "beads"
+            },
+            {
+              "value": "scarf",
+              "label": "scarf"
+            },
+            {
+              "value": "cravat",
+              "label": "cravat"
+            },
+            {
+              "value": "bowTie",
+              "label": "bowTie"
+            },
+            {
+              "value": "tie",
+              "label": "tie"
+            },
+            {
+              "value": "royalMedallion",
+              "label": "royalMedallion"
+            }
+          ]
+        },
+        {
+          "id": "v4.jewelrySize",
+          "label": "Rozmiar",
+          "type": "range",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "v4.jewelryCount",
+          "label": "Liczba detali",
+          "type": "range",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "armorV4",
+      "label": "V4 · Odzież zaawansowana i zbroje",
+      "group": "wearables",
+      "presets": {
+        "plate": {
+          "v4.armor": "plateArmor",
+          "v4.armorBulk": 5,
+          "v4.pauldronSize": 4
+        },
+        "cyber": {
+          "v4.armor": "cyberArmor",
+          "v4.armorGlow": 3
+        },
+        "wanderer": {
+          "v4.armor": "travelerCoat",
+          "v4.cape": "shortCape"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.armor",
+          "label": "Warstwa stroju",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "leatherArmor",
+              "label": "leatherArmor"
+            },
+            {
+              "value": "chainmail",
+              "label": "chainmail"
+            },
+            {
+              "value": "plateArmor",
+              "label": "plateArmor"
+            },
+            {
+              "value": "samuraiArmor",
+              "label": "samuraiArmor"
+            },
+            {
+              "value": "gladiatorArmor",
+              "label": "gladiatorArmor"
+            },
+            {
+              "value": "ceremonialArmor",
+              "label": "ceremonialArmor"
+            },
+            {
+              "value": "magicArmor",
+              "label": "magicArmor"
+            },
+            {
+              "value": "iceArmor",
+              "label": "iceArmor"
+            },
+            {
+              "value": "demonArmor",
+              "label": "demonArmor"
+            },
+            {
+              "value": "mechanicalArmor",
+              "label": "mechanicalArmor"
+            },
+            {
+              "value": "spaceArmor",
+              "label": "spaceArmor"
+            },
+            {
+              "value": "scrapArmor",
+              "label": "scrapArmor"
+            },
+            {
+              "value": "tshirt",
+              "label": "tshirt"
+            },
+            {
+              "value": "shirt",
+              "label": "shirt"
+            },
+            {
+              "value": "hoodie",
+              "label": "hoodie"
+            },
+            {
+              "value": "jacket",
+              "label": "jacket"
+            },
+            {
+              "value": "vest",
+              "label": "vest"
+            },
+            {
+              "value": "coat",
+              "label": "coat"
+            },
+            {
+              "value": "sweater",
+              "label": "sweater"
+            },
+            {
+              "value": "turtleneck",
+              "label": "turtleneck"
+            },
+            {
+              "value": "blazer",
+              "label": "blazer"
+            },
+            {
+              "value": "uniform",
+              "label": "uniform"
+            },
+            {
+              "value": "apron",
+              "label": "apron"
+            },
+            {
+              "value": "jumpsuit",
+              "label": "jumpsuit"
+            },
+            {
+              "value": "wizardRobe",
+              "label": "wizardRobe"
+            },
+            {
+              "value": "priestRobe",
+              "label": "priestRobe"
+            },
+            {
+              "value": "pirateCoat",
+              "label": "pirateCoat"
+            },
+            {
+              "value": "cowboyVest",
+              "label": "cowboyVest"
+            },
+            {
+              "value": "labCoat",
+              "label": "labCoat"
+            },
+            {
+              "value": "travelerCoat",
+              "label": "travelerCoat"
+            }
+          ]
+        },
+        {
+          "id": "v4.cape",
+          "label": "Peleryna / tył",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "shortCape",
+              "label": "shortCape"
+            },
+            {
+              "value": "longCape",
+              "label": "longCape"
+            },
+            {
+              "value": "loweredHood",
+              "label": "loweredHood"
+            },
+            {
+              "value": "scarfBack",
+              "label": "scarfBack"
+            },
+            {
+              "value": "furCollar",
+              "label": "furCollar"
+            },
+            {
+              "value": "angelWings",
+              "label": "angelWings"
+            },
+            {
+              "value": "demonWings",
+              "label": "demonWings"
+            },
+            {
+              "value": "dragonWings",
+              "label": "dragonWings"
+            },
+            {
+              "value": "mechanicalWings",
+              "label": "mechanicalWings"
+            },
+            {
+              "value": "backpack",
+              "label": "backpack"
+            },
+            {
+              "value": "quiver",
+              "label": "quiver"
+            },
+            {
+              "value": "swordBack",
+              "label": "swordBack"
+            },
+            {
+              "value": "energyRifleBack",
+              "label": "energyRifleBack"
+            },
+            {
+              "value": "mechanicalTubes",
+              "label": "mechanicalTubes"
+            }
+          ]
+        },
+        {
+          "id": "v4.armorBulk",
+          "label": "Masywność",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "v4.pauldronSize",
+          "label": "Naramienniki",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "v4.armorDamage",
+          "label": "Uszkodzenia",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        },
+        {
+          "id": "v4.armorGlow",
+          "label": "Poświata",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "v4.emblemSize",
+          "label": "Emblemat",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "propsV4",
+      "label": "V4 · Rekwizyty ust i ramion",
+      "group": "wearables",
+      "presets": {
+        "smoker": {
+          "v4.mouthProp": "cigarette",
+          "v4.smokeAmount": 4
+        },
+        "pirate": {
+          "v4.mouthProp": "pipe",
+          "v4.shoulderProp": "parrot"
+        },
+        "cyber": {
+          "v4.mouthProp": "cyberCable",
+          "v4.shoulderProp": "shoulderRobot"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.mouthProp",
+          "label": "Rekwizyt ust",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "cigarette",
+              "label": "cigarette"
+            },
+            {
+              "value": "cigar",
+              "label": "cigar"
+            },
+            {
+              "value": "pipe",
+              "label": "pipe"
+            },
+            {
+              "value": "grassBlade",
+              "label": "grassBlade"
+            },
+            {
+              "value": "matchstick",
+              "label": "matchstick"
+            },
+            {
+              "value": "toothpick",
+              "label": "toothpick"
+            },
+            {
+              "value": "lollipop",
+              "label": "lollipop"
+            },
+            {
+              "value": "straw",
+              "label": "straw"
+            },
+            {
+              "value": "flower",
+              "label": "flower"
+            },
+            {
+              "value": "rose",
+              "label": "rose"
+            },
+            {
+              "value": "thermometer",
+              "label": "thermometer"
+            },
+            {
+              "value": "whistle",
+              "label": "whistle"
+            },
+            {
+              "value": "instrumentMouthpiece",
+              "label": "instrumentMouthpiece"
+            },
+            {
+              "value": "cyberCable",
+              "label": "cyberCable"
+            }
+          ]
+        },
+        {
+          "id": "v4.shoulderProp",
+          "label": "Rekwizyt ramienia",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "parrot",
+              "label": "parrot"
+            },
+            {
+              "value": "cat",
+              "label": "cat"
+            },
+            {
+              "value": "smallDragon",
+              "label": "smallDragon"
+            },
+            {
+              "value": "shoulderRobot",
+              "label": "shoulderRobot"
+            },
+            {
+              "value": "ghost",
+              "label": "ghost"
+            },
+            {
+              "value": "insect",
+              "label": "insect"
+            },
+            {
+              "value": "flowerBundle",
+              "label": "flowerBundle"
+            },
+            {
+              "value": "skull",
+              "label": "skull"
+            },
+            {
+              "value": "radio",
+              "label": "radio"
+            },
+            {
+              "value": "flashlight",
+              "label": "flashlight"
+            },
+            {
+              "value": "energyOrb",
+              "label": "energyOrb"
+            }
+          ]
+        },
+        {
+          "id": "v4.propSide",
+          "label": "Strona",
+          "type": "range",
+          "min": -1,
+          "max": 1,
+          "step": 1,
+          "auto": [
+            -1,
+            1
+          ]
+        },
+        {
+          "id": "v4.propAngle",
+          "label": "Kąt",
+          "type": "range",
+          "min": -4,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            -2,
+            2
+          ]
+        },
+        {
+          "id": "v4.propLength",
+          "label": "Długość",
+          "type": "range",
+          "min": 2,
+          "max": 10,
+          "step": 1,
+          "auto": [
+            3,
+            8
+          ]
+        },
+        {
+          "id": "v4.smokeAmount",
+          "label": "Ilość dymu",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cyberV4",
+      "label": "V4 · Cybernetyka, blizny i oznaczenia",
+      "group": "details",
+      "presets": {
+        "cyborg": {
+          "v4.cybernetics": "halfFace",
+          "v4.cyberCoverage": 5,
+          "v4.cyberGlow": 3
+        },
+        "veteran": {
+          "v4.scar": "eyeSlash",
+          "v4.marking": "warPaint"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.cybernetics",
+          "label": "Cybernetyka",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "cyberEyeLeft",
+              "label": "cyberEyeLeft"
+            },
+            {
+              "value": "cyberEyeRight",
+              "label": "cyberEyeRight"
+            },
+            {
+              "value": "metalJaw",
+              "label": "metalJaw"
+            },
+            {
+              "value": "templeImplant",
+              "label": "templeImplant"
+            },
+            {
+              "value": "faceWires",
+              "label": "faceWires"
+            },
+            {
+              "value": "cheekPlate",
+              "label": "cheekPlate"
+            },
+            {
+              "value": "artificialEar",
+              "label": "artificialEar"
+            },
+            {
+              "value": "scanner",
+              "label": "scanner"
+            },
+            {
+              "value": "halfFace",
+              "label": "halfFace"
+            },
+            {
+              "value": "neckPorts",
+              "label": "neckPorts"
+            },
+            {
+              "value": "chestReactor",
+              "label": "chestReactor"
+            }
+          ]
+        },
+        {
+          "id": "v4.scar",
+          "label": "Blizna",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "eyeVertical",
+              "label": "eyeVertical"
+            },
+            {
+              "value": "eyeSlash",
+              "label": "eyeSlash"
+            },
+            {
+              "value": "browScar",
+              "label": "browScar"
+            },
+            {
+              "value": "lipScar",
+              "label": "lipScar"
+            },
+            {
+              "value": "chinScar",
+              "label": "chinScar"
+            },
+            {
+              "value": "smallScars",
+              "label": "smallScars"
+            },
+            {
+              "value": "stitches",
+              "label": "stitches"
+            },
+            {
+              "value": "burn",
+              "label": "burn"
+            },
+            {
+              "value": "mechanicalCrack",
+              "label": "mechanicalCrack"
+            }
+          ]
+        },
+        {
+          "id": "v4.marking",
+          "label": "Tatuaż / malowanie",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "tribal",
+              "label": "tribal"
+            },
+            {
+              "value": "runes",
+              "label": "runes"
+            },
+            {
+              "value": "geometric",
+              "label": "geometric"
+            },
+            {
+              "value": "warPaint",
+              "label": "warPaint"
+            },
+            {
+              "value": "clown",
+              "label": "clown"
+            },
+            {
+              "value": "skullPaint",
+              "label": "skullPaint"
+            },
+            {
+              "value": "camouflage",
+              "label": "camouflage"
+            },
+            {
+              "value": "cyberLines",
+              "label": "cyberLines"
+            },
+            {
+              "value": "magicGlyphs",
+              "label": "magicGlyphs"
+            }
+          ]
+        },
+        {
+          "id": "v4.cyberCoverage",
+          "label": "Pokrycie cybernetyką",
+          "type": "range",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            2,
+            5
+          ]
+        },
+        {
+          "id": "v4.cyberGlow",
+          "label": "Poświata cybernetyczna",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        },
+        {
+          "id": "v4.markingCoverage",
+          "label": "Pokrycie oznaczeniem",
+          "type": "range",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "effectsV4",
+      "label": "V4 · Efekty, aura i tło",
+      "group": "effects",
+      "presets": {
+        "neon": {
+          "v4.background": "neonCity",
+          "v4.effect": "glitch",
+          "v4.aura": "holographic"
+        },
+        "winter": {
+          "v4.background": "snowField",
+          "v4.effect": "snow"
+        },
+        "infernal": {
+          "v4.background": "flames",
+          "v4.effect": "embers",
+          "v4.aura": "fire"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.background",
+          "label": "Tło",
+          "type": "select",
+          "options": [
+            {
+              "value": "solid",
+              "label": "solid"
+            },
+            {
+              "value": "blockGradient",
+              "label": "blockGradient"
+            },
+            {
+              "value": "verticalSplit",
+              "label": "verticalSplit"
+            },
+            {
+              "value": "horizontalSplit",
+              "label": "horizontalSplit"
+            },
+            {
+              "value": "diagonalStripes",
+              "label": "diagonalStripes"
+            },
+            {
+              "value": "checker",
+              "label": "checker"
+            },
+            {
+              "value": "dots",
+              "label": "dots"
+            },
+            {
+              "value": "pixelNoise",
+              "label": "pixelNoise"
+            },
+            {
+              "value": "sunset",
+              "label": "sunset"
+            },
+            {
+              "value": "night",
+              "label": "night"
+            },
+            {
+              "value": "neonCity",
+              "label": "neonCity"
+            },
+            {
+              "value": "forest",
+              "label": "forest"
+            },
+            {
+              "value": "space",
+              "label": "space"
+            },
+            {
+              "value": "dungeon",
+              "label": "dungeon"
+            },
+            {
+              "value": "laboratory",
+              "label": "laboratory"
+            },
+            {
+              "value": "spaceship",
+              "label": "spaceship"
+            },
+            {
+              "value": "flames",
+              "label": "flames"
+            },
+            {
+              "value": "snowField",
+              "label": "snowField"
+            },
+            {
+              "value": "rainCity",
+              "label": "rainCity"
+            },
+            {
+              "value": "magicAura",
+              "label": "magicAura"
+            },
+            {
+              "value": "terminal",
+              "label": "terminal"
+            },
+            {
+              "value": "factionSymbol",
+              "label": "factionSymbol"
+            }
+          ]
+        },
+        {
+          "id": "v4.effect",
+          "label": "Efekt atmosferyczny",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "smoke",
+              "label": "smoke"
+            },
+            {
+              "value": "steam",
+              "label": "steam"
+            },
+            {
+              "value": "sparks",
+              "label": "sparks"
+            },
+            {
+              "value": "snow",
+              "label": "snow"
+            },
+            {
+              "value": "rain",
+              "label": "rain"
+            },
+            {
+              "value": "dust",
+              "label": "dust"
+            },
+            {
+              "value": "leaves",
+              "label": "leaves"
+            },
+            {
+              "value": "ash",
+              "label": "ash"
+            },
+            {
+              "value": "bubbles",
+              "label": "bubbles"
+            },
+            {
+              "value": "fire",
+              "label": "fire"
+            },
+            {
+              "value": "electricity",
+              "label": "electricity"
+            },
+            {
+              "value": "magicParticles",
+              "label": "magicParticles"
+            },
+            {
+              "value": "glitch",
+              "label": "glitch"
+            },
+            {
+              "value": "hologram",
+              "label": "hologram"
+            },
+            {
+              "value": "embers",
+              "label": "embers"
+            }
+          ]
+        },
+        {
+          "id": "v4.aura",
+          "label": "Aura",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "soft",
+              "label": "soft"
+            },
+            {
+              "value": "dark",
+              "label": "dark"
+            },
+            {
+              "value": "holy",
+              "label": "holy"
+            },
+            {
+              "value": "fire",
+              "label": "fire"
+            },
+            {
+              "value": "ice",
+              "label": "ice"
+            },
+            {
+              "value": "electric",
+              "label": "electric"
+            },
+            {
+              "value": "magic",
+              "label": "magic"
+            },
+            {
+              "value": "holographic",
+              "label": "holographic"
+            },
+            {
+              "value": "runic",
+              "label": "runic"
+            }
+          ]
+        },
+        {
+          "id": "v4.particleDensity",
+          "label": "Gęstość cząstek",
+          "type": "range",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "v4.backgroundContrast",
+          "label": "Kontrast tła",
+          "type": "range",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "auto": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": "v4.vignette",
+          "label": "Winieta",
+          "type": "range",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            0,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "animationV4",
+      "label": "V4 · Animacja deterministyczna",
+      "group": "effects",
+      "presets": {
+        "idle": {
+          "v4.animation": "idle"
+        },
+        "smoke": {
+          "v4.animation": "smoke"
+        },
+        "magic": {
+          "v4.animation": "auraPulse"
+        }
+      },
+      "fields": [
+        {
+          "id": "v4.animation",
+          "label": "Animacja",
+          "type": "select",
+          "options": [
+            {
+              "value": "none",
+              "label": "none"
+            },
+            {
+              "value": "blink",
+              "label": "blink"
+            },
+            {
+              "value": "lookAround",
+              "label": "lookAround"
+            },
+            {
+              "value": "idle",
+              "label": "idle"
+            },
+            {
+              "value": "smoke",
+              "label": "smoke"
+            },
+            {
+              "value": "hairWind",
+              "label": "hairWind"
+            },
+            {
+              "value": "jewelrySwing",
+              "label": "jewelrySwing"
+            },
+            {
+              "value": "glowPulse",
+              "label": "glowPulse"
+            },
+            {
+              "value": "auraPulse",
+              "label": "auraPulse"
+            },
+            {
+              "value": "particles",
+              "label": "particles"
+            }
+          ]
+        },
+        {
+          "id": "v4.animationSpeed",
+          "label": "Szybkość",
+          "type": "range",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "auto": [
+            2,
+            4
+          ]
+        },
+        {
+          "id": "v4.animationAmplitude",
+          "label": "Amplituda",
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "auto": [
+            1,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": {
+    "auto": {
+      "label": "Automatyczny",
+      "global": {},
+      "values": {}
+    },
+    "neutralPortrait": {
+      "label": "Neutralny portret",
+      "global": {
+        "presentation": "neutral",
+        "bias": 0,
+        "age": 35,
+        "fantasy": "none"
+      },
+      "values": {
+        "body.type": "standard",
+        "head.shape": "oval",
+        "eyes.shape": "almond",
+        "hair.topMass": "rounded",
+        "clothing.garment": "plain"
+      }
+    },
+    "heroic": {
+      "label": "Heroiczny",
+      "global": {
+        "presentation": "masculine",
+        "bias": -55,
+        "age": 38,
+        "fantasy": "subtle"
+      },
+      "values": {
+        "body.type": "muscular",
+        "shoulders.shape": "broad",
+        "head.shape": "angular",
+        "brows.shape": "thick",
+        "nose.shape": "straight",
+        "hair.topMass": "high",
+        "clothing.garment": "armor"
+      }
+    },
+    "soft": {
+      "label": "Miękki",
+      "global": {
+        "presentation": "feminine",
+        "bias": 55,
+        "age": 28,
+        "fantasy": "none"
+      },
+      "values": {
+        "head.shape": "softOval",
+        "eyes.shape": "almond",
+        "eyes.lashes": "outerLong",
+        "brows.shape": "rounded",
+        "nose.shape": "button",
+        "mouth.shape": "full",
+        "cheeks.shape": "round",
+        "hair.texture": "wavy"
+      }
+    },
+    "rugged": {
+      "label": "Surowy",
+      "global": {
+        "presentation": "masculine",
+        "bias": -70,
+        "age": 48,
+        "fantasy": "none"
+      },
+      "values": {
+        "head.shape": "wideJaw",
+        "brows.shape": "bushy",
+        "nose.shape": "hooked",
+        "facialHair.style": "shortBeard",
+        "skin.detail": "scar",
+        "hair.balding": "temples"
+      }
+    },
+    "elegant": {
+      "label": "Elegancki",
+      "global": {
+        "presentation": "feminine",
+        "bias": 65,
+        "age": 34,
+        "fantasy": "none"
+      },
+      "values": {
+        "head.shape": "heart",
+        "eyes.shape": "upturned",
+        "eyes.lashes": "long",
+        "brows.shape": "highArch",
+        "mouth.shape": "cupid",
+        "hair.parting": "left",
+        "clothing.garment": "coat"
+      }
+    },
+    "elf": {
+      "label": "Elf fantasy",
+      "global": {
+        "presentation": "neutral",
+        "bias": 10,
+        "age": 80,
+        "fantasy": "strong"
+      },
+      "values": {
+        "ears.shape": "elfLong",
+        "eyes.shape": "almond",
+        "eyes.pupilStyle": "vertical",
+        "head.shape": "elongated",
+        "hair.lengthStyle": "belowShoulder",
+        "hair.texture": "straight",
+        "fantasy.marking": "templeDots",
+        "clothing.garment": "robe"
+      }
+    },
+    "goblin": {
+      "label": "Goblin fantasy",
+      "global": {
+        "presentation": "neutral",
+        "bias": -20,
+        "age": 55,
+        "fantasy": "strong"
+      },
+      "values": {
+        "ears.shape": "goblin",
+        "head.shape": "pear",
+        "nose.shape": "wide",
+        "eyes.shape": "deepSet",
+        "skin.tone": "fantasyGreen",
+        "hair.balding": "sidesOnly",
+        "fantasy.marking": "cheekStripes"
+      }
+    },
+    "cyberpunk": {
+      "label": "Cyberpunk",
+      "global": {
+        "presentation": "neutral",
+        "bias": 0,
+        "age": 32,
+        "fantasy": "moderate"
+      },
+      "values": {
+        "eyes.shape": "robotic",
+        "eyes.irisStyle": "glow",
+        "nose.shape": "mechanical",
+        "skin.detail": "mechanicalJoints",
+        "fantasy.antennaStyle": "mechanical",
+        "fantasy.marking": "circuit",
+        "clothing.garment": "jumpsuit",
+        "colors.paletteStyle": "vivid"
+      }
+    },
+    "youthful": {
+      "label": "Młodzieńczy",
+      "global": {
+        "presentation": "neutral",
+        "bias": 10,
+        "age": 12,
+        "fantasy": "none"
+      },
+      "values": {
+        "head.shape": "round",
+        "eyes.shape": "cartoon",
+        "nose.shape": "button",
+        "mouth.shape": "smallRound",
+        "cheeks.shape": "full",
+        "facialHair.style": "none"
+      }
+    },
+    "mature": {
+      "label": "Dojrzały",
+      "global": {
+        "presentation": "neutral",
+        "bias": -10,
+        "age": 76,
+        "fantasy": "none"
+      },
+      "values": {
+        "head.shape": "elongated",
+        "eyes.shape": "realistic",
+        "skin.detail": "underEyeWrinkles",
+        "hair.grayingPattern": "even",
+        "hair.grayingAmount": 4,
+        "hair.balding": "slightRecession"
+      }
+    },
+    "baldWarrior": {
+      "label": "Łysy wojownik",
+      "global": {
+        "presentation": "masculine",
+        "bias": -80,
+        "age": 44,
+        "fantasy": "subtle"
+      },
+      "values": {
+        "body.type": "muscular",
+        "head.shape": "angular",
+        "hair.balding": "fullBald",
+        "hair.lengthStyle": "none",
+        "facialHair.style": "fullBeard",
+        "skin.detail": "scar",
+        "clothing.garment": "armor"
+      }
+    },
+    "mystic": {
+      "label": "Długowłosy mistyk",
+      "global": {
+        "presentation": "neutral",
+        "bias": 5,
+        "age": 58,
+        "fantasy": "moderate"
+      },
+      "values": {
+        "head.shape": "elongated",
+        "hair.lengthStyle": "belowShoulder",
+        "hair.length": 15,
+        "hair.texture": "wavy",
+        "hair.parting": "center",
+        "facialHair.style": "longBeard",
+        "fantasy.marking": "foreheadRune",
+        "clothing.garment": "robe"
+      }
+    }
+  }
+}
+''';

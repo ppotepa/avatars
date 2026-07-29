@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Avatar Genome Editor</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">avatar_genome</p>
+      <h1>Edytor genomu awatara</h1>
+    </div>
+    <div id="connection-status" class="connection-status" aria-live="polite">Łączenie…</div>
+  </header>
+
+  <main class="workspace">
+    <aside class="preview-panel panel">
+      <section class="preview-card">
+        <div id="avatar-preview" class="avatar-preview" aria-label="Podgląd awatara"></div>
+        <div id="avatar-status" class="avatar-status"></div>
+      </section>
+
+      <section class="toolbar" aria-label="Akcje awatara">
+        <button id="generate-button" type="button" class="primary">Generuj</button>
+        <button id="new-seed-button" type="button">Nowy seed</button>
+        <button id="reset-overrides-button" type="button">Reset nadpisań</button>
+        <button id="reset-locks-button" type="button">Reset blokad</button>
+      </section>
+
+      <section class="export-grid" aria-label="Eksport">
+        <button id="export-request-button" type="button">Request JSON</button>
+        <button id="export-result-button" type="button">Result JSON</button>
+        <button id="download-svg-button" type="button">Pobierz SVG</button>
+        <button id="download-png-button" type="button">Pobierz PNG</button>
+        <button id="save-server-button" type="button">Zapisz na serwerze</button>
+        <button id="import-request-button" type="button">Importuj request</button>
+        <input id="import-request-file" type="file" accept="application/json,.json" hidden>
+      </section>
+
+      <section class="preset-card">
+        <label for="whole-preset">Preset całej postaci</label>
+        <div class="inline-action">
+          <select id="whole-preset"></select>
+          <button id="apply-whole-preset-button" type="button">Zastosuj</button>
+        </div>
+      </section>
+
+      <details class="json-inspector">
+        <summary>Aktualny AvatarRequest</summary>
+        <pre id="request-json"></pre>
+      </details>
+    </aside>
+
+    <section class="editor-panel panel">
+      <section class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Binding requestu</p>
+            <h2>Ustawienia globalne</h2>
+          </div>
+        </div>
+        <div id="global-fields" class="field-grid"></div>
+      </section>
+
+      <section class="section-block parameter-section">
+        <div class="section-heading sticky-heading">
+          <div>
+            <p class="eyebrow">ParameterCatalog</p>
+            <h2>Właściwości awatara</h2>
+          </div>
+          <div class="filters">
+            <label class="search-field">
+              <span>Szukaj</span>
+              <input id="property-search" type="search" placeholder="np. hair, oczy, armor">
+            </label>
+            <label class="check-field">
+              <input id="changed-only" type="checkbox">
+              <span>Tylko zmienione</span>
+            </label>
+          </div>
+        </div>
+        <nav id="group-tabs" class="group-tabs" aria-label="Grupy parametrów"></nav>
+        <div id="parameter-categories" class="categories"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
