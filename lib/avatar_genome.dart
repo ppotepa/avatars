@@ -10,6 +10,7 @@ export 'src/catalog/parameter_catalog.dart';
 export 'src/constraints/avatar_validator.dart';
 export 'src/constraints/validation.dart';
 export 'src/genome/avatar_genome_model.dart';
+export 'src/genome/diversity_genome_generator.dart';
 export 'src/genome/genome_generator.dart';
 export 'src/geometry/avatar_layout.dart';
 export 'src/geometry/pixel_rect.dart';
