@@ -56,6 +56,7 @@ final class ValidationReport {
       };
 }
 
+/// Applies geometry normalization independently from diagnostic collection.
 final class ConstraintEngine {
   ConstraintEngine({this.enabled = true});
 
@@ -95,8 +96,7 @@ final class ConstraintEngine {
     String reason, {
     ValidationSeverity severity = ValidationSeverity.soft,
   }) {
-    if (!enabled) return before;
-    if (before != after) {
+    if (enabled && before != after) {
       _entries.add(ValidationEntry(
         id: id,
         status: ValidationStatus.corrected,
