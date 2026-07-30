@@ -139,12 +139,22 @@ final class AvatarGenerator {
     for (final component in occupied.connectedComponents()) {
       if (component.length == 1) isolated++;
     }
+    final visibility = analyzeRenderVisibility(state.layers);
+    final eyeRatio = visibility.visibleRatio('eyes');
+    final mouthRatio = visibility.visibleRatio('mouth');
+    final faceReadability = clampInt(
+      ((eyeRatio * .7 + mouthRatio * .3) * 100).round(),
+      0,
+      100,
+    );
     return AvatarMetrics(
       usedColorCount: image.usedColorCount,
       occupiedPixelCount: occupied.count,
       isolatedPixelCount: isolated,
       connectedComponentCount: occupied.connectedComponents().length,
       layerCount: state.layers.length,
+      visibility: visibility,
+      faceReadabilityScore: faceReadability,
     );
   }
 }
