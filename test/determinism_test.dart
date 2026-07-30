@@ -37,6 +37,20 @@ void main() {
     );
   });
 
+  test('result reports final semantic visibility', () {
+    final result = generator.generate(const AvatarRequest(
+      seed: 'visibility-contract',
+      overrides: <String, Object>{
+        'eyes.shape': 'round',
+        'eyes.width': 5,
+        'eyes.height': 3,
+      },
+    ));
+    expect(result.metrics.visibility.sourcePixels['eyes'], greaterThan(0));
+    expect(result.metrics.visibility.visiblePixels['eyes'], greaterThan(0));
+    expect(result.metrics.faceReadabilityScore, inInclusiveRange(0, 100));
+  });
+
   test('category nonce rerolls only the requested category at genome level', () {
     const request = AvatarRequest(seed: 'category-reroll');
     final base = generator.generate(request);
