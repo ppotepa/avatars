@@ -15,6 +15,26 @@ void main() {
     expect(response.request.overrides['eyes.shape'], 'almond');
     expect(response.svg, contains('<svg'));
     expect(response.propertyState['eyes.shape'], isNotNull);
+    expect(response.result.metrics.faceReadabilityScore, inInclusiveRange(0, 100));
+    expect(
+      response.result.metrics.visibility.sourcePixels['eyes'],
+      greaterThan(0),
+    );
+  });
+
+  test('phase binding exposes animation frames to the web editor', () {
+    final service = AvatarEditorService();
+    final response = service.generate(
+      const AvatarRequest(
+        seed: 'editor-animation',
+        overrides: <String, Object>{'v4.animation': 'idle'},
+      ),
+      actions: const <AvatarEditorAction>[
+        AvatarEditorAction(operation: 'set', id: 'request.phase', value: 5),
+      ],
+    );
+    expect(response.request.phase, 5);
+    expect(response.toJson()['result'], isNotNull);
   });
 
   test('unknown override is rejected', () {
