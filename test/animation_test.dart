@@ -1,7 +1,40 @@
 import 'package:avatar_genome/avatar_genome.dart';
+import 'package:avatar_genome/src/rendering/render_helpers.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('animation speed shortens the shared motion period', () {
+    expect(animationPeriod(1, slow: 20, fast: 10), 20);
+    expect(animationPeriod(6, slow: 20, fast: 10), 10);
+    expect(
+      List<int>.generate(
+        6,
+        (index) => animationPeriod(index + 1, slow: 20, fast: 10),
+      ),
+      orderedEquals(<int>[20, 18, 16, 14, 12, 10]),
+    );
+  });
+
+  test('idle composes contextual motion without changing the catalog API', () {
+    for (final channel in <String>[
+      'blink',
+      'hairWind',
+      'jewelrySwing',
+      'smoke',
+      'auraPulse',
+      'particles',
+    ]) {
+      expect(
+        animationChannelEnabled('idle', channel),
+        isTrue,
+        reason: 'idle should include $channel',
+      );
+    }
+    expect(animationChannelEnabled('lookAround', 'blink'), isTrue);
+    expect(animationChannelEnabled('none', 'blink'), isFalse);
+    expect(animationChannelEnabled('particles', 'hairWind'), isFalse);
+  });
+
   final cases = <String, Map<String, Object>>{
     'blink': <String, Object>{
       'v4.animation': 'blink',
