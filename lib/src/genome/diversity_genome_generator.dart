@@ -7,13 +7,123 @@ import '../util/math_utils.dart';
 import 'avatar_genome_model.dart';
 import 'genome_generator.dart';
 
+/// Defines a complete, world-aware probability distribution for backgrounds.
+///
+/// Every catalog option always receives a positive base weight. World themes
+/// only increase preferred options; they never make another option unreachable.
+final class BackgroundDiversityPolicy {
+  const BackgroundDiversityPolicy();
+
+  static const Map<String, Set<String>> preferredByWorld =
+      <String, Set<String>>{
+    'modern': <String>{
+      'solid',
+      'blockGradient',
+      'verticalSplit',
+      'horizontalSplit',
+      'checker',
+      'dots',
+      'sunset',
+      'night',
+      'rainCity',
+    },
+    'fantasy': <String>{
+      'forest',
+      'dungeon',
+      'magicAura',
+      'flames',
+      'night',
+      'factionSymbol',
+    },
+    'magical': <String>{
+      'magicAura',
+      'forest',
+      'space',
+      'night',
+      'factionSymbol',
+    },
+    'scienceFiction': <String>{
+      'spaceship',
+      'space',
+      'terminal',
+      'laboratory',
+      'pixelNoise',
+    },
+    'cyberpunk': <String>{
+      'neonCity',
+      'terminal',
+      'rainCity',
+      'laboratory',
+      'pixelNoise',
+    },
+    'postApocalyptic': <String>{
+      'flames',
+      'solid',
+      'pixelNoise',
+      'sunset',
+      'factionSymbol',
+    },
+    'historical': <String>{
+      'solid',
+      'sunset',
+      'forest',
+      'factionSymbol',
+    },
+    'military': <String>{
+      'solid',
+      'checker',
+      'rainCity',
+      'factionSymbol',
+    },
+    'horror': <String>{
+      'night',
+      'dungeon',
+      'forest',
+      'pixelNoise',
+    },
+    'royal': <String>{
+      'solid',
+      'factionSymbol',
+      'sunset',
+    },
+  };
+
+  Map<String, double> weights(
+    ParameterDefinition field,
+    String world,
+  ) {
+    final preferred = preferredByWorld[world] ?? const <String>{};
+    return <String, double>{
+      for (final option in field.options)
+        option.value: preferred.contains(option.value) ? 6 : 1,
+    };
+  }
+
+  String choose(
+    ParameterDefinition field,
+    String world,
+    RandomStream random,
+  ) {
+    final distribution = weights(field, world);
+    return random.weightedPick(<WeightedValue<String>>[
+      for (final option in field.options)
+        WeightedValue<String>(option.value, distribution[option.value]!),
+    ]);
+  }
+}
+
 /// Post-processes the stable V4.1 planner to expand reachable combinations.
 final class DiversityGenomeGenerator implements GenomeGenerator {
-  DiversityGenomeGenerator({ParameterCatalog? catalog})
-      : catalog = catalog ?? ParameterCatalog.v41,
+  DiversityGenomeGenerator({
+    ParameterCatalog? catalog,
+    BackgroundDiversityPolicy? backgroundPolicy,
+  })  : catalog = catalog ?? ParameterCatalog.v41,
+        backgroundPolicy =
+            backgroundPolicy ?? const BackgroundDiversityPolicy(),
         _base = V41GenomeGenerator(catalog: catalog ?? ParameterCatalog.v41);
 
   final ParameterCatalog catalog;
+  final BackgroundDiversityPolicy backgroundPolicy;
   final V41GenomeGenerator _base;
 
   static const Set<String> _optional = <String>{
@@ -90,25 +200,13 @@ final class DiversityGenomeGenerator implements GenomeGenerator {
     if (!automatic('v4.background')) return;
     final field = catalog.fieldById['v4.background']!;
     final world = values['v4.worldStyle']! as String;
-    final preferred = <String, Set<String>>{
-      'modern': {'solid', 'blockGradient', 'verticalSplit', 'horizontalSplit', 'checker', 'dots', 'sunset', 'night', 'rainCity'},
-      'fantasy': {'forest', 'dungeon', 'magicAura', 'flames', 'night', 'factionSymbol'},
-      'magical': {'magicAura', 'forest', 'space', 'night', 'factionSymbol'},
-      'scienceFiction': {'spaceship', 'space', 'terminal', 'laboratory', 'pixelNoise'},
-      'cyberpunk': {'neonCity', 'terminal', 'rainCity', 'laboratory', 'pixelNoise'},
-      'postApocalyptic': {'flames', 'solid', 'pixelNoise', 'sunset', 'factionSymbol'},
-      'historical': {'solid', 'sunset', 'forest', 'factionSymbol'},
-      'military': {'solid', 'checker', 'rainCity', 'factionSymbol'},
-      'horror': {'night', 'dungeon', 'forest', 'pixelNoise'},
-      'royal': {'solid', 'factionSymbol', 'sunset'},
-    }[world] ?? const <String>{};
-    final choices = <WeightedValue<String>>[
-      for (final option in field.options)
-        WeightedValue<String>(option.value, preferred.contains(option.value) ? 6 : 1),
-    ];
     setAuto(
       'v4.background',
-      root.fork('complete-background').weightedPick(choices),
+      backgroundPolicy.choose(
+        field,
+        world,
+        root.fork('complete-background'),
+      ),
       'completeBackgroundPool',
     );
   }
