@@ -25,6 +25,7 @@
 
       <section class="toolbar" aria-label="Akcje awatara">
         <button id="generate-button" type="button" class="primary">Generuj</button>
+        <button id="animate-button" type="button">Odtwórz animację</button>
         <button id="new-seed-button" type="button">Nowy seed</button>
         <button id="reset-overrides-button" type="button">Reset nadpisań</button>
         <button id="reset-locks-button" type="button">Reset blokad</button>
@@ -38,6 +39,15 @@
         <button id="save-server-button" type="button">Zapisz na serwerze</button>
         <button id="import-request-button" type="button">Importuj request</button>
         <input id="import-request-file" type="file" accept="application/json,.json" hidden>
+      </section>
+
+      <section class="readability-card" aria-labelledby="readability-title">
+        <div class="readability-heading">
+          <span id="readability-title">Czytelność renderu</span>
+          <strong id="readability-score">—</strong>
+        </div>
+        <div id="readability-metrics" class="readability-metrics"></div>
+        <div id="readability-warnings" class="readability-warnings"></div>
       </section>
 
       <section class="preset-card">
