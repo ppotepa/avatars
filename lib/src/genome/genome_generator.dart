@@ -416,10 +416,33 @@ final class V41GenomeGenerator implements GenomeGenerator {
       selected.add(available.removeAt(index));
     }
     for (final entry in groups.entries) {
-      for (final id in entry.value) {
-        if (!canAuto(id)) continue;
-        if (!selected.contains(entry.key)) {
+      final automatic = entry.value.where(canAuto).toList(growable: false);
+      if (!selected.contains(entry.key)) {
+        for (final id in automatic) {
           setAuto(id, 'none', 'compositionBudget', 1);
+        }
+        continue;
+      }
+      final fixedActive = entry.value.where((id) =>
+          !canAuto(id) && values[id] != 'none').length;
+      final maximumActive = switch (entry.key) {
+        'jewelry' => complexity >= 70 ? 2 : 1,
+        'armor' || 'effects' => complexity >= 85 ? 2 : 1,
+        _ => 1,
+      };
+      final remainingSlots =
+          clampInt(maximumActive - fixedActive, 0, automatic.length);
+      final candidates = automatic.toList();
+      final active = <String>{};
+      final memberRng = root.fork('v41.group.${entry.key}');
+      while (candidates.isNotEmpty && active.length < remainingSlots) {
+        active.add(candidates.removeAt(
+          memberRng.nextInt(0, candidates.length - 1),
+        ));
+      }
+      for (final id in automatic) {
+        if (!active.contains(id)) {
+          setAuto(id, 'none', 'saliencyBudget', 1);
           continue;
         }
         final field = catalog.fieldById[id]!;
