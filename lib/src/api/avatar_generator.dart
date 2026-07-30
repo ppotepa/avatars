@@ -1,6 +1,7 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
 import '../constraints/validation.dart';
+import '../genome/diversity_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
@@ -64,7 +65,7 @@ final class AvatarGenerator {
     AvatarValidator? validator,
   })  : catalog = catalog ?? ParameterCatalog.v41,
         genomeService = genomeService ??
-            V41GenomeGenerator(catalog: catalog ?? ParameterCatalog.v41),
+            DiversityGenomeGenerator(catalog: catalog ?? ParameterCatalog.v41),
         layoutResolver = layoutResolver ?? const V41LayoutResolver(),
         paletteFactory = paletteFactory ?? const V41PaletteFactory(),
         renderer = renderer ?? CompositeAvatarRenderer(),
