@@ -169,11 +169,16 @@ final class BackgroundRenderer implements AvatarPartRenderer {
   _Aura _aura(AvatarRenderContext c) {
     final style = c.string('v4.aura');
     if (style == 'none') return _Aura(PixelMask(), PixelMask());
-    final pulse = c.string('v4.animation') == 'auraPulse' ||
-            c.string('v4.animation') == 'glowPulse'
+    final animation = c.string('v4.animation');
+    final pulse = animationChannelEnabled(animation, 'auraPulse') ||
+            animationChannelEnabled(animation, 'glowPulse')
         ? cyclicOffset(
             c.phase,
-            (6 + c.integer('v4.animationSpeed')) * 4,
+            animationPeriod(
+              c.integer('v4.animationSpeed'),
+              slow: 36,
+              fast: 18,
+            ),
             c.integer('v4.animationAmplitude'),
           ).abs()
         : 0;
@@ -214,7 +219,10 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     for (var i = 0; i < count; i++) {
       var x = rng.nextInt(1, 46);
       var y = rng.nextInt(1, 46);
-      if (c.string('v4.animation') == 'particles') {
+      if (animationChannelEnabled(
+        c.string('v4.animation'),
+        'particles',
+      )) {
         y = positiveMod(y + phase * (1 + i % 2), 48);
       }
       if (style == 'rain') {
