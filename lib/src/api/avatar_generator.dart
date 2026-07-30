@@ -15,6 +15,7 @@ import '../rendering/parts/background_renderer.dart';
 import '../rendering/parts/face_renderer.dart';
 import '../rendering/parts/hair_renderer.dart';
 import '../rendering/parts/props_renderer.dart';
+import '../rendering/parts/v42_detail_renderer.dart';
 import '../rendering/parts/v42_features_renderer.dart';
 import '../rendering/parts/v42_motion_renderer.dart';
 import '../rendering/parts/v42_scenic_light_renderer.dart';
@@ -43,6 +44,7 @@ final class CompositeAvatarRenderer implements AvatarRenderer {
         ExpressiveMotionOverlayRenderer(),
         HairRenderer(),
         ExtendedAdornmentRenderer(),
+        ExtendedDetailRenderer(),
         AccessoriesRenderer(),
         PropsRenderer(),
         AvatarMotionRenderer(),
