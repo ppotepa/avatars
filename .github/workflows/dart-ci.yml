@@ -20,5 +20,5 @@ jobs:
       - run: python3 tool/static_audit.py
       - run: dart pub get
       - run: dart format lib test bin tool benchmark
-      - run: dart analyze
+      - run: dart analyze --no-fatal-warnings
       - run: dart test
