@@ -1,5 +1,14 @@
 ## Unreleased
 
+- Added final-composition visibility metrics for semantic render parts.
+- Added eye and mouth readability validation after all occluding layers.
+- Added visible eye outlines and dithered eyewear lenses so clear glasses no
+  longer erase facial features.
+- Reworked the composition budget to select a limited number of salient
+  accessories inside each group instead of enabling every member.
+- Added contact shadows below front hair and more distinct, body-anchored
+  necklace, amulet, dog-tag and royal-medallion geometry.
+- Added web-editor animation playback and a live readability diagnostics panel.
 - Improved the base renderer without introducing a parallel V2 mode.
 - Composed subtle blink, hair, jewelry, smoke, aura and particle channels into
   the existing idle animation.
