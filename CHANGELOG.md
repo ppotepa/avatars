@@ -1,5 +1,29 @@
 ## Unreleased
 
+- Added the additive V4.2 catalog extension with four metadata-driven categories
+  and 51 fields, bringing the server-visible catalog to 30 categories and 274
+  fields without a handwritten frontend control list.
+- Added coordinated facial expressions with independent eye, eyebrow and mouth
+  states, emotion marks, cheek lift, tears, talking mouth cycles, laughter,
+  smirking, anger, sleep, surprise and configurable blink behavior.
+- Added safe expressive gaze, eyebrow, breathing and pose overlays that preserve
+  stable 48×48 sprite framing and never translate the complete avatar canvas.
+- Added twenty halo styles with glow, tilt, breakage and orbit controls, plus
+  symbolic overlays, forehead adornments, side-head features, creature traits,
+  relics, familiars, wings, packs, banners and back-mounted structures.
+- Expanded horn and antler geometry with ram, bull, antelope, deer, moose, demon,
+  dragon, broken, unicorn, crystal, mechanical, neon, coral and ice variants.
+- Added natural, urban, fantasy, science-fiction and horror backgrounds including
+  moonlit forests, oceans, volcanic skies, castles, portals, floating islands,
+  crystal caves, space stations, alien planets, graveyards and blood moons.
+- Added layered weather, ambient haze, cosmic skies, rear flames and deterministic
+  cinematic events such as lightning, fire bursts, portal pulses, neon flicker,
+  comets, star bursts, eclipses, ghost passes and shadow sweeps.
+- Added world-aware V4.2 composition weights so the expanded features remain
+  coherent and do not all appear simultaneously.
+- Added V4.2 catalog, server binding, rendering, determinism, animation and stable
+  framing tests, plus GitHub Actions for structural audit, formatting, analysis
+  and tests on every push to `main`.
 - Kept idle animation inside stable sprite bounds by removing whole-avatar canvas
   translation; local blink, hair, jewelry, smoke, aura and particle motion remains.
 - Added a regression test that verifies anatomical layers stay pixel-aligned across
