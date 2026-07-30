@@ -13,6 +13,8 @@ final class AvatarMetrics {
     required this.isolatedPixelCount,
     required this.connectedComponentCount,
     required this.layerCount,
+    required this.visibility,
+    required this.faceReadabilityScore,
   });
 
   final int usedColorCount;
@@ -20,6 +22,8 @@ final class AvatarMetrics {
   final int isolatedPixelCount;
   final int connectedComponentCount;
   final int layerCount;
+  final RenderVisibility visibility;
+  final int faceReadabilityScore;
 
   Map<String, Object> toJson() => <String, Object>{
         'usedColorCount': usedColorCount,
@@ -27,6 +31,8 @@ final class AvatarMetrics {
         'isolatedPixelCount': isolatedPixelCount,
         'connectedComponentCount': connectedComponentCount,
         'layerCount': layerCount,
+        'visibility': visibility.toJson(),
+        'faceReadabilityScore': faceReadabilityScore,
       };
 }
 
