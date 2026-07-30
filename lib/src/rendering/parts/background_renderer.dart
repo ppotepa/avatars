@@ -44,7 +44,9 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     final accent = PixelMask();
     final style = c.string('v4.background');
     final contrast = c.integer('v4.backgroundContrast');
-    final phase = c.phase;
+    final phase = c.rendering.animateBackground
+        ? (c.rendering.reducedMotion ? c.phase ~/ 2 : c.phase)
+        : 0;
 
     if (style == 'blockGradient') {
       dark.fillRect(0, 31, 48, 17);
@@ -87,6 +89,11 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       final rng = c.random('background.stars');
       for (var i = 0; i < 18; i++) light.set(rng.nextInt(1, 46), rng.nextInt(1, 26));
       accent.fillEllipse(37, 8, 4, 4).subtract(PixelMask()..fillEllipse(39, 7, 4, 4));
+      if (c.rendering.animateBackground) {
+        final twinkleX = 3 + positiveMod(phase * 11, 40);
+        final twinkleY = 3 + positiveMod(phase * 7, 20);
+        accent.set(twinkleX, twinkleY);
+      }
     } else if (style == 'neonCity' || style == 'rainCity') {
       dark.fillRect(0, 0, 48, 48);
       for (var x = 0; x < 48; x += 7) {
@@ -97,6 +104,9 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       if (style == 'rainCity') {
         final offset = positiveMod(phase, 4);
         for (var x = offset; x < 48; x += 7) light.line(x, 2, x - 2, 8);
+      } else if (c.rendering.animateBackground) {
+        final signX = 4 + positiveMod(phase ~/ 3, 33);
+        accent.fillRect(signX, 16, 4, 2);
       }
     } else if (style == 'forest') {
       light.fillRect(0, 0, 48, 22);
@@ -105,12 +115,24 @@ final class BackgroundRenderer implements AvatarPartRenderer {
         dark.fillTriangle((x: x, y: 31), (x: x + 8, y: 31), (x: x + 4, y: 12));
         dark.fillRect(x + 3, 29, 2, 19);
       }
+      if (c.rendering.animateBackground) {
+        for (var i = 0; i < 4; i++) {
+          final x = positiveMod(i * 13 + phase ~/ 2, 48);
+          final y = 7 + positiveMod(i * 9 + phase ~/ 4, 22);
+          accent.set(x, y).set(x + 1, y + 1);
+        }
+      }
     } else if (style == 'space') {
       dark.fillRect(0, 0, 48, 48);
       final rng = c.random('background.space');
       for (var i = 0; i < 26; i++) (i % 5 == 0 ? accent : light)
           .set(rng.nextInt(0, 47), rng.nextInt(0, 47));
       accent.fillEllipse(8, 38, 8, 3);
+      if (c.rendering.animateBackground && positiveMod(phase, 32) < 8) {
+        final cometX = 46 - positiveMod(phase, 32) * 5;
+        light.line(cometX, 5, cometX - 6, 9);
+        accent.set(cometX, 5);
+      }
     } else if (style == 'dungeon') {
       dark.fillRect(0, 0, 48, 48);
       for (var y = 0; y < 48; y += 6) {
@@ -119,12 +141,21 @@ final class BackgroundRenderer implements AvatarPartRenderer {
           light.vLine(x, y, y + 5);
         }
       }
+      if (c.rendering.animateBackground) {
+        final glow = 2 + positiveMod(phase ~/ 3, 2);
+        accent.fillEllipse(5, 27, glow, glow + 2);
+        accent.fillEllipse(42, 27, glow, glow + 2);
+      }
     } else if (style == 'laboratory' || style == 'spaceship') {
       dark.fillRect(0, 0, 48, 48);
       light.fillRect(3, 4, 42, 35);
       dark.fillRect(5, 6, 38, 31);
       for (var x = 8; x < 43; x += 8) accent.set(x, 9).set(x, 34);
       if (style == 'laboratory') accent.line(8, 30, 15, 20).line(15, 20, 22, 30);
+      if (c.rendering.animateBackground) {
+        final scanY = 8 + positiveMod(phase ~/ 2, 24);
+        accent.hLine(7, 40, scanY);
+      }
     } else if (style == 'flames') {
       dark.fillRect(0, 0, 48, 48);
       for (var x = 0; x < 48; x += 5) {
@@ -210,7 +241,9 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     final style = c.string('v4.effect');
     if (style == 'none') return _Effect(PixelMask(), PixelMask(), PixelMask());
     final density = c.integer('v4.particleDensity');
-    final phase = c.phase;
+    final phase = c.rendering.animateBackground
+        ? (c.rendering.reducedMotion ? c.phase ~/ 2 : c.phase)
+        : 0;
     final rng = c.random('effect.$style.${back ? 'back' : 'front'}');
     final dark = PixelMask();
     final base = PixelMask();
@@ -219,10 +252,8 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     for (var i = 0; i < count; i++) {
       var x = rng.nextInt(1, 46);
       var y = rng.nextInt(1, 46);
-      if (animationChannelEnabled(
-        c.string('v4.animation'),
-        'particles',
-      )) {
+      if (c.rendering.animateBackground ||
+          animationChannelEnabled(c.string('v4.animation'), 'particles')) {
         y = positiveMod(y + phase * (1 + i % 2), 48);
       }
       if (style == 'rain') {

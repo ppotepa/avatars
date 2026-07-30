@@ -20,6 +20,7 @@ export 'src/pixels/indexed_image.dart';
 export 'src/pixels/pixel_mask.dart';
 export 'src/random/random_stream.dart';
 export 'src/rendering/render_model.dart';
+export 'src/rendering/resolution_renderer.dart';
 export 'src/serialization/avatar_codec.dart';
 export 'src/editor/avatar_editor_service.dart';
 export 'src/editor/avatar_property_binding.dart';

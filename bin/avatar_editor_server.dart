@@ -143,6 +143,38 @@ final class AvatarEditorHttpApplication {
         );
         return;
       }
+      if (request.method == 'POST' && path == '/api/export/spritesheet') {
+        final payload = await _readJson(request);
+        final editorResponse = _generateFromPayload(payload);
+        final frameCount =
+            _integerOption(payload, 'frameCount', fallback: 16, min: 1, max: 64);
+        final frameDurationMs = _integerOption(
+          payload,
+          'frameDurationMs',
+          fallback: 140,
+          min: 16,
+          max: 2000,
+        );
+        final columns =
+            _integerOption(payload, 'columns', fallback: 4, min: 1, max: 16);
+        final scale =
+            _integerOption(payload, 'scale', fallback: 1, min: 1, max: 16);
+        final animation = service.generator.generateAnimation(
+          editorResponse.request,
+          frameCount: frameCount,
+          frameDuration: Duration(milliseconds: frameDurationMs),
+        );
+        final bytes =
+            AvatarSpriteSheetCodec(columns: columns, scale: scale).encode(animation);
+        await _binary(
+          request,
+          bytes,
+          contentType: ContentType('image', 'png'),
+          fileName:
+              'avatar-${editorResponse.result.imageHash}-${frameCount}f.png',
+        );
+        return;
+      }
       if (request.method == 'POST' && path == '/api/save') {
         final payload = await _readJson(request);
         final response = _generateFromPayload(payload);

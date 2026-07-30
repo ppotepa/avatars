@@ -26,7 +26,7 @@ The assembled project was loaded in headless Chromium against an intercepted
 mock of the documented API contract. The test verified:
 
 - 223 dynamically generated catalog controls;
-- eight request/settings controls;
+- fourteen request/settings/rendering controls;
 - grouped category tabs;
 - a rendered SVG preview;
 - no JavaScript page errors;

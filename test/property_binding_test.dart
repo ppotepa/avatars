@@ -4,11 +4,12 @@ import 'package:test/test.dart';
 void main() {
   test('registry exposes request and all catalog fields', () {
     final registry = AvatarPropertyRegistry();
-    expect(registry.requestBindings, hasLength(8));
+    expect(registry.requestBindings, hasLength(14));
     expect(registry.catalogBindings, hasLength(ParameterCatalog.v41.fieldCount));
-    expect(registry.bindings, hasLength(ParameterCatalog.v41.fieldCount + 8));
+    expect(registry.bindings, hasLength(ParameterCatalog.v41.fieldCount + 14));
     expect(registry.bindingById['hair.length'], isNotNull);
     expect(registry.bindingById['settings.age'], isNotNull);
+    expect(registry.bindingById['rendering.size'], isNotNull);
   });
 
   test('binder writes request properties and override values', () {
@@ -16,8 +17,12 @@ void main() {
     var request = const AvatarRequest(seed: 'binding-test');
     request = binder.setValue(request, 'settings.age', 64);
     request = binder.setValue(request, 'hair.length', 7);
+    request = binder.setValue(request, 'rendering.size', 96);
+    request = binder.setValue(request, 'rendering.detailLevel', 'rich');
     expect(request.settings.age, 64);
     expect(request.overrides['hair.length'], 7);
+    expect(request.rendering.size, 96);
+    expect(request.rendering.detailLevel, AvatarDetailLevel.rich);
 
     request = binder.resetValue(request, 'hair.length');
     expect(request.overrides.containsKey('hair.length'), isFalse);

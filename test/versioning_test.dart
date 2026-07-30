@@ -21,4 +21,27 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('render settings round-trip without changing the request schema', () {
+    const request = AvatarRequest(
+      seed: 'render-settings',
+      rendering: AvatarRenderSettings(
+        size: 80,
+        detailLevel: AvatarDetailLevel.rich,
+        lightingDirection: AvatarLightingDirection.upperRight,
+        shadingStrength: 3,
+        animateBackground: false,
+        reducedMotion: true,
+      ),
+    );
+    final decoded = AvatarRequest.fromJson(request.toJson());
+    expect(decoded.rendering.size, 80);
+    expect(decoded.rendering.detailLevel, AvatarDetailLevel.rich);
+    expect(
+      decoded.rendering.lightingDirection,
+      AvatarLightingDirection.upperRight,
+    );
+    expect(decoded.rendering.animateBackground, isFalse);
+    expect(decoded.rendering.reducedMotion, isTrue);
+  });
 }

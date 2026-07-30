@@ -71,7 +71,12 @@ The default `CompositeAvatarRenderer` can be replaced or extended by dependency 
 
 ### Composition
 
-`IndexedAvatarCompositor` sorts layers stably by `z` and identifier, then writes palette indices to a 48×48 `IndexedImage`. It does not use a platform drawing API or antialiasing.
+`IndexedAvatarCompositor` sorts layers stably by `z` and identifier, then writes
+palette indices to the canonical 48×48 composition. `ResolutionAwareRenderer`
+keeps that image unchanged for compatibility or expands it to a native 64×64,
+80×80 or 96×96 indexed image with deterministic sub-pixel edge lighting,
+material highlights and dithering. It does not use a platform drawing API or
+antialiasing.
 
 ### Animation channels
 

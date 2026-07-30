@@ -31,7 +31,8 @@ Open `http://127.0.0.1:8080`.
 `dart:mirrors` is not available in Flutter AOT builds. The editor therefore uses
 `AvatarPropertyRegistry`, a metadata-driven binding registry:
 
-- eight bindings expose `AvatarRequest` and `GenomeSettings` properties;
+- fourteen bindings expose `AvatarRequest`, `GenomeSettings` and
+  `AvatarRenderSettings` properties;
 - every field in `ParameterCatalog.v41` automatically becomes a generic
   `CatalogPropertyBinding`;
 - the frontend receives the schema from `GET /api/catalog` and never contains a
@@ -90,6 +91,11 @@ The browser editor displays these ratios, face readability and visibility
 warnings, and can advance `request.phase` continuously to preview the selected
 animation without a separate animation API.
 
+The preview exposes native 48, 64, 80 and 96 pixel canvases, basic/enhanced/rich
+detail, directional lighting, shading strength, animated backgrounds and
+reduced motion. These presentation settings live under `request.rendering` and
+do not change the generated genome.
+
 ### `POST /api/export/png`
 
 Returns `image/png`. The body accepts `request` and optional `scale`.
@@ -97,6 +103,11 @@ Returns `image/png`. The body accepts `request` and optional `scale`.
 ### `POST /api/export/svg`
 
 Returns `image/svg+xml`.
+
+### `POST /api/export/spritesheet`
+
+Returns an animated PNG sprite sheet. The body accepts `request`,
+`frameCount` (1–64), `frameDurationMs`, `columns` and `scale`.
 
 ### `POST /api/save`
 

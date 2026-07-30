@@ -81,6 +81,12 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
         'request.seed' => 'seed',
         'request.phase' => 'phase',
         'request.guardEnabled' => 'guardEnabled',
+        'rendering.size' => 'rendering.size',
+        'rendering.detailLevel' => 'rendering.detailLevel',
+        'rendering.lightingDirection' => 'rendering.lightingDirection',
+        'rendering.shadingStrength' => 'rendering.shadingStrength',
+        'rendering.animateBackground' => 'rendering.animateBackground',
+        'rendering.reducedMotion' => 'rendering.reducedMotion',
         _ => id,
       };
   @override
@@ -106,6 +112,12 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
         'settings.symmetry' => request.settings.symmetry,
         'request.phase' => request.phase,
         'request.guardEnabled' => request.guardEnabled,
+        'rendering.size' => request.rendering.size,
+        'rendering.detailLevel' => request.rendering.detailLevel.name,
+        'rendering.lightingDirection' => request.rendering.lightingDirection.name,
+        'rendering.shadingStrength' => request.rendering.shadingStrength,
+        'rendering.animateBackground' => request.rendering.animateBackground,
+        'rendering.reducedMotion' => request.rendering.reducedMotion,
         _ => throw StateError('Unknown request binding: $id'),
       };
 
@@ -148,6 +160,31 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
         ),
       'request.phase' => request.copyWith(phase: value! as int),
       'request.guardEnabled' => request.copyWith(guardEnabled: value! as bool),
+      'rendering.size' => request.copyWith(
+          rendering: request.rendering.copyWith(size: value! as int),
+        ),
+      'rendering.detailLevel' => request.copyWith(
+          rendering: request.rendering.copyWith(
+            detailLevel: AvatarDetailLevel.values.byName(value! as String),
+          ),
+        ),
+      'rendering.lightingDirection' => request.copyWith(
+          rendering: request.rendering.copyWith(
+            lightingDirection:
+                AvatarLightingDirection.values.byName(value! as String),
+          ),
+        ),
+      'rendering.shadingStrength' => request.copyWith(
+          rendering:
+              request.rendering.copyWith(shadingStrength: value! as int),
+        ),
+      'rendering.animateBackground' => request.copyWith(
+          rendering:
+              request.rendering.copyWith(animateBackground: value! as bool),
+        ),
+      'rendering.reducedMotion' => request.copyWith(
+          rendering: request.rendering.copyWith(reducedMotion: value! as bool),
+        ),
       _ => throw StateError('Unknown request binding: $id'),
     };
   }
@@ -174,6 +211,28 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
         ),
       'request.phase' => request.copyWith(phase: 0),
       'request.guardEnabled' => request.copyWith(guardEnabled: true),
+      'rendering.size' => request.copyWith(
+          rendering: request.rendering.copyWith(size: 48),
+        ),
+      'rendering.detailLevel' => request.copyWith(
+          rendering: request.rendering.copyWith(
+            detailLevel: AvatarDetailLevel.enhanced,
+          ),
+        ),
+      'rendering.lightingDirection' => request.copyWith(
+          rendering: request.rendering.copyWith(
+            lightingDirection: AvatarLightingDirection.upperLeft,
+          ),
+        ),
+      'rendering.shadingStrength' => request.copyWith(
+          rendering: request.rendering.copyWith(shadingStrength: 2),
+        ),
+      'rendering.animateBackground' => request.copyWith(
+          rendering: request.rendering.copyWith(animateBackground: true),
+        ),
+      'rendering.reducedMotion' => request.copyWith(
+          rendering: request.rendering.copyWith(reducedMotion: false),
+        ),
       _ => throw StateError('Unknown request binding: $id'),
     };
   }
@@ -345,6 +404,72 @@ final class AvatarPropertyRegistry {
           label: 'Guard / walidacja',
           group: 'global',
           category: 'runtime',
+          kind: EditorFieldKind.boolean,
+          target: EditorBindingTarget.request,
+        ),
+        RequestPropertyBinding(
+          id: 'rendering.size',
+          label: 'Rozdzielczość renderu',
+          group: 'global',
+          category: 'rendering',
+          kind: EditorFieldKind.select,
+          target: EditorBindingTarget.request,
+          options: <EditorFieldOption>[
+            EditorFieldOption(value: 48, label: '48 × 48 · klasyczna'),
+            EditorFieldOption(value: 64, label: '64 × 64 · czytelna'),
+            EditorFieldOption(value: 80, label: '80 × 80 · szczegółowa'),
+            EditorFieldOption(value: 96, label: '96 × 96 · maksymalna'),
+          ],
+        ),
+        RequestPropertyBinding(
+          id: 'rendering.detailLevel',
+          label: 'Poziom detalu',
+          group: 'global',
+          category: 'rendering',
+          kind: EditorFieldKind.select,
+          target: EditorBindingTarget.request,
+          options: <EditorFieldOption>[
+            EditorFieldOption(value: 'basic', label: 'Podstawowy'),
+            EditorFieldOption(value: 'enhanced', label: 'Rozszerzony'),
+            EditorFieldOption(value: 'rich', label: 'Bogaty'),
+          ],
+        ),
+        RequestPropertyBinding(
+          id: 'rendering.lightingDirection',
+          label: 'Kierunek światła',
+          group: 'global',
+          category: 'rendering',
+          kind: EditorFieldKind.select,
+          target: EditorBindingTarget.request,
+          options: <EditorFieldOption>[
+            EditorFieldOption(value: 'upperLeft', label: 'Góra-lewo'),
+            EditorFieldOption(value: 'frontal', label: 'Frontalne'),
+            EditorFieldOption(value: 'upperRight', label: 'Góra-prawo'),
+          ],
+        ),
+        RequestPropertyBinding(
+          id: 'rendering.shadingStrength',
+          label: 'Siła cieniowania',
+          group: 'global',
+          category: 'rendering',
+          kind: EditorFieldKind.range,
+          target: EditorBindingTarget.request,
+          min: 0,
+          max: 3,
+        ),
+        RequestPropertyBinding(
+          id: 'rendering.animateBackground',
+          label: 'Animowane tło',
+          group: 'global',
+          category: 'rendering',
+          kind: EditorFieldKind.boolean,
+          target: EditorBindingTarget.request,
+        ),
+        RequestPropertyBinding(
+          id: 'rendering.reducedMotion',
+          label: 'Ogranicz ruch',
+          group: 'global',
+          category: 'rendering',
           kind: EditorFieldKind.boolean,
           target: EditorBindingTarget.request,
         ),

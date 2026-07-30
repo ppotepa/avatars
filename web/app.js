@@ -53,6 +53,8 @@ function bindElements() {
     'apply-whole-preset-button', 'global-fields', 'property-search',
     'changed-only', 'group-tabs', 'parameter-categories', 'toast',
     'readability-score', 'readability-metrics', 'readability-warnings',
+    'quick-resolution', 'quick-detail', 'animation-frames', 'playback-speed',
+    'download-sheet-button',
   ];
   for (const id of ids) elements[id] = document.getElementById(id);
 }
@@ -92,9 +94,23 @@ function bindStaticActions() {
   });
   elements['download-svg-button'].addEventListener('click', () => downloadExport('/api/export/svg', 'svg'));
   elements['download-png-button'].addEventListener('click', () => downloadExport('/api/export/png', 'png'));
+  elements['download-sheet-button'].addEventListener('click', downloadSpriteSheet);
   elements['save-server-button'].addEventListener('click', saveOnServer);
   elements['import-request-button'].addEventListener('click', () => elements['import-request-file'].click());
   elements['import-request-file'].addEventListener('change', importRequest);
+  elements['quick-resolution'].addEventListener('change', event => {
+    queueRender([{ op: 'set', id: 'rendering.size', value: Number(event.target.value) }], true);
+  });
+  elements['quick-detail'].addEventListener('change', event => {
+    queueRender([{ op: 'set', id: 'rendering.detailLevel', value: event.target.value }], true);
+  });
+  elements['playback-speed'].addEventListener('change', () => {
+    if (state.animationTimer) {
+      clearInterval(state.animationTimer);
+      state.animationTimer = null;
+      startAnimation();
+    }
+  });
 }
 
 function renderWholePresets() {
@@ -254,7 +270,15 @@ function createControl(binding, onAction) {
     for (const option of binding.options || []) {
       primary.add(new Option(option.label, String(option.value)));
     }
-    primary.addEventListener('change', () => onAction({ op: 'set', id: binding.id, value: primary.value }));
+    primary.addEventListener('change', () => {
+      const option = (binding.options || [])
+        .find(candidate => String(candidate.value) === primary.value);
+      onAction({
+        op: 'set',
+        id: binding.id,
+        value: option ? option.value : primary.value,
+      });
+    });
     root.append(primary);
   } else if (binding.kind === 'boolean') {
     primary = document.createElement('input');
@@ -311,7 +335,10 @@ function syncUi() {
   elements['avatar-status'].innerHTML = `
     <strong>${escapeHtml(state.response.imageHash)}</strong><br>
     ${validation.isValid ? 'Guard: OK' : `Guard: ${validation.hardViolationCount} błędów`} ·
+    ${metrics.canvasWidth}×${metrics.canvasHeight} · ${metrics.detailLevel} ·
     ${metrics.usedColorCount} kolorów · ${metrics.layerCount} warstw`;
+  elements['quick-resolution'].value = String(state.request.rendering?.size || 48);
+  elements['quick-detail'].value = state.request.rendering?.detailLevel || 'enhanced';
   elements['request-json'].textContent = JSON.stringify(state.request, null, 2);
   renderReadability(metrics, validation);
 
@@ -370,6 +397,22 @@ function renderReadability(metrics, validation) {
       <span>${value}%</span>`;
     elements['readability-metrics'].append(row);
   }
+  const qualityScores = {
+    'Kontrast oczu': metrics.eyeContrastScore,
+    'Sylwetka / tło': metrics.silhouetteContrastScore,
+    'Spójność detalu': metrics.visualDensityScore,
+  };
+  for (const [label, rawValue] of Object.entries(qualityScores)) {
+    const value = Math.max(0, Math.min(100, Math.round(Number(rawValue ?? 0))));
+    const row = document.createElement('div');
+    row.className = 'readability-row';
+    const fillClass = value < 35 ? 'low' : value < 65 ? 'medium' : '';
+    row.innerHTML = `
+      <span>${escapeHtml(label)}</span>
+      <span class="readability-track"><span class="readability-fill ${fillClass}" style="width:${value}%"></span></span>
+      <span>${value}%</span>`;
+    elements['readability-metrics'].append(row);
+  }
   const warnings = (validation.entries || [])
     .filter(entry => entry.id?.startsWith('visibility.') && entry.status === 'violation')
     .map(entry => entry.reason);
@@ -385,12 +428,18 @@ function toggleAnimation() {
     elements['animate-button'].textContent = 'Odtwórz animację';
     return;
   }
+  startAnimation();
+}
+
+function startAnimation() {
   elements['animate-button'].textContent = 'Zatrzymaj animację';
+  const interval = Number(elements['playback-speed'].value || 140);
   state.animationTimer = setInterval(() => {
     if (!state.request || state.rendering || state.pendingActions.length) return;
-    const phase = (Number(state.request.phase || 0) + 1) % 64;
+    const frameCount = Number(elements['animation-frames'].value || 16);
+    const phase = (Number(state.request.phase || 0) + 1) % frameCount;
     queueRender([{ op: 'set', id: 'request.phase', value: phase }], true);
-  }, 140);
+  }, interval);
 }
 
 function syncControl(view, value) {
@@ -462,7 +511,7 @@ async function flushRender() {
         request: state.request,
         actions,
         includePixels: false,
-        svgScale: 8,
+        svgScale: 1,
       }),
     });
     state.request = response.request;
@@ -496,11 +545,37 @@ async function downloadExport(path, extension) {
     const response = await fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request: state.request, scale: 8 }),
+      body: JSON.stringify({ request: state.request, scale: 1 }),
     });
     if (!response.ok) throw new Error(await responseError(response));
     const blob = await response.blob();
     downloadBlob(`avatar-${state.response?.imageHash || 'genome'}.${extension}`, blob);
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+async function downloadSpriteSheet() {
+  if (!state.request) return;
+  try {
+    await ensureIdle();
+    const frameCount = Number(elements['animation-frames'].value || 16);
+    const response = await fetch('/api/export/spritesheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        request: state.request,
+        frameCount,
+        frameDurationMs: Number(elements['playback-speed'].value || 140),
+        columns: 4,
+        scale: 1,
+      }),
+    });
+    if (!response.ok) throw new Error(await responseError(response));
+    downloadBlob(
+      `avatar-${state.response?.imageHash || 'genome'}-${frameCount}f.png`,
+      await response.blob(),
+    );
   } catch (error) {
     showToast(error.message, true);
   }
@@ -512,7 +587,7 @@ async function saveOnServer() {
     await ensureIdle();
     const result = await apiJson('/api/save', {
       method: 'POST',
-      body: JSON.stringify({ request: state.request, scale: 8 }),
+      body: JSON.stringify({ request: state.request, scale: 1 }),
     });
     showToast(`Zapisano: ${result.directory}`);
   } catch (error) {

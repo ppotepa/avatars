@@ -51,6 +51,79 @@ void main() {
     expect(result.metrics.faceReadabilityScore, inInclusiveRange(0, 100));
   });
 
+  test('all four render sizes preserve the genome and render natively', () {
+    const sizes = AvatarRenderSettings.supportedSizes;
+    final results = <AvatarResult>[
+      for (final size in sizes)
+        generator.generate(AvatarRequest(
+          seed: 'multi-resolution',
+          rendering: AvatarRenderSettings(
+            size: size,
+            detailLevel: AvatarDetailLevel.rich,
+          ),
+        )),
+    ];
+    for (var index = 0; index < sizes.length; index++) {
+      expect(results[index].image.width, sizes[index]);
+      expect(results[index].image.height, sizes[index]);
+      expect(results[index].metrics.canvasWidth, sizes[index]);
+      expect(results[index].image.indices.length, sizes[index] * sizes[index]);
+      expect(results[index].genome.values, results.first.genome.values);
+    }
+    expect(results.map((result) => result.imageHash).toSet(), hasLength(4));
+  });
+
+  test('enhanced 96x96 render adds deterministic detail over basic scaling', () {
+    const basic = AvatarRequest(
+      seed: 'detail-profile',
+      rendering: AvatarRenderSettings(
+        size: 96,
+        detailLevel: AvatarDetailLevel.basic,
+      ),
+    );
+    const rich = AvatarRequest(
+      seed: 'detail-profile',
+      rendering: AvatarRenderSettings(
+        size: 96,
+        detailLevel: AvatarDetailLevel.rich,
+        shadingStrength: 3,
+      ),
+    );
+    final basicResult = generator.generate(basic);
+    final richResult = generator.generate(rich);
+    expect(richResult.genome.values, basicResult.genome.values);
+    expect(richResult.imageHash, isNot(basicResult.imageHash));
+    expect(generator.generate(rich).imageHash, richResult.imageHash);
+  });
+
+  test('48x48 compatibility render ignores presentation-only detail controls', () {
+    const base = AvatarRequest(seed: 'legacy-48');
+    const rich = AvatarRequest(
+      seed: 'legacy-48',
+      rendering: AvatarRenderSettings(
+        detailLevel: AvatarDetailLevel.rich,
+        lightingDirection: AvatarLightingDirection.upperRight,
+        shadingStrength: 3,
+      ),
+    );
+    expect(
+      generator.generate(rich).image.indices,
+      generator.generate(base).image.indices,
+    );
+  });
+
+  test('unsupported render sizes fail explicitly', () {
+    expect(
+      () => generator.generate(
+        const AvatarRequest(
+          seed: 'invalid-size',
+          rendering: AvatarRenderSettings(size: 72),
+        ),
+      ),
+      throwsArgumentError,
+    );
+  });
+
   test('category nonce rerolls only the requested category at genome level', () {
     const request = AvatarRequest(seed: 'category-reroll');
     final base = generator.generate(request);

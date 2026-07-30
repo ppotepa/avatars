@@ -31,11 +31,49 @@
         <button id="reset-locks-button" type="button">Reset blokad</button>
       </section>
 
+      <section class="render-controls" aria-label="Jakość renderowania">
+        <label>
+          <span>Rozdzielczość</span>
+          <select id="quick-resolution">
+            <option value="48">48 × 48</option>
+            <option value="64">64 × 64</option>
+            <option value="80">80 × 80</option>
+            <option value="96">96 × 96</option>
+          </select>
+        </label>
+        <label>
+          <span>Detal</span>
+          <select id="quick-detail">
+            <option value="basic">Podstawowy</option>
+            <option value="enhanced">Rozszerzony</option>
+            <option value="rich">Bogaty</option>
+          </select>
+        </label>
+        <label>
+          <span>Klatki</span>
+          <select id="animation-frames">
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="24">24</option>
+            <option value="32">32</option>
+          </select>
+        </label>
+        <label>
+          <span>Podgląd</span>
+          <select id="playback-speed">
+            <option value="200">Spokojny</option>
+            <option value="140" selected>Normalny</option>
+            <option value="90">Szybki</option>
+          </select>
+        </label>
+      </section>
+
       <section class="export-grid" aria-label="Eksport">
         <button id="export-request-button" type="button">Request JSON</button>
         <button id="export-result-button" type="button">Result JSON</button>
         <button id="download-svg-button" type="button">Pobierz SVG</button>
         <button id="download-png-button" type="button">Pobierz PNG</button>
+        <button id="download-sheet-button" type="button">Pobierz sprite sheet</button>
         <button id="save-server-button" type="button">Zapisz na serwerze</button>
         <button id="import-request-button" type="button">Importuj request</button>
         <input id="import-request-file" type="file" accept="application/json,.json" hidden>

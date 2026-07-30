@@ -1,6 +1,7 @@
 # Avatar Genome
 
-A deterministic, reusable Dart library for generating layered 48×48 pixel-art avatars from a textual **genome seed**.
+A deterministic, reusable Dart library for generating layered pixel-art avatars
+at native 48×48, 64×64, 80×80 or 96×96 resolution from a textual **genome seed**.
 
 The package is a domain-oriented port of the Avatar Graph V4.1 HTML prototype. It retains the complete V4.1 parameter catalog: **26 categories, 223 fields, category presets, whole-avatar presets, anatomy, hair, facial hair, clothing, armor, headwear, eyewear, face masks, jewelry, props, cybernetics, backgrounds, effects and deterministic animation phases**.
 
@@ -19,7 +20,7 @@ Then open `http://127.0.0.1:8080`. Linux/macOS users can run
 `./scripts/run_server.sh`.
 
 The frontend does not contain a handwritten list of avatar properties.
-`AvatarPropertyRegistry` exposes eight request/settings bindings and creates a
+`AvatarPropertyRegistry` exposes fourteen request/settings/rendering bindings and creates a
 generic binding for every one of the 223 fields in `ParameterCatalog.v41`. The
 server publishes the resulting grouped schema through `GET /api/catalog`, and
 the UI creates controls, presets, locks, automatic values and source labels from
@@ -31,7 +32,8 @@ while remaining compatible with Android, iOS and desktop builds.
 
 The editor persists `AvatarRequest`, not only the resolved genome. It supports
 live SVG preview, request/result JSON, PNG/SVG downloads, category rerolls,
-parameter/category locks, whole/category presets and optional server-side save
+parameter/category locks, whole/category presets, resolution-aware rendering,
+animation sprite-sheet export and optional server-side save
 packages under `output/avatars`. See
 [docs/EDITOR_SERVER.md](docs/EDITOR_SERVER.md) and
 [docs/BINDING_ARCHITECTURE.md](docs/BINDING_ARCHITECTURE.md).
@@ -62,6 +64,12 @@ final result = generator.generate(
       presentation: AvatarPresentation.neutral,
       fantasy: FantasyLevel.moderate,
     ),
+    rendering: AvatarRenderSettings(
+      size: 96,
+      detailLevel: AvatarDetailLevel.rich,
+      lightingDirection: AvatarLightingDirection.upperLeft,
+      shadingStrength: 3,
+    ),
   ),
 );
 
@@ -79,13 +87,15 @@ The same request produces the same genome and indexed pixel buffer on every supp
 - `AvatarGenome` — all resolved parameter values and their sources;
 - `AvatarLayout` — derived landmarks, attachment slots and graph snapshot;
 - `AvatarPalette` — a semantic 32-color palette;
-- `IndexedImage` — a compact 48×48 buffer of palette indices;
+- `IndexedImage` — a compact 48×48, 64×64, 80×80 or 96×96 buffer of palette indices;
 - render layers and masks metadata;
 - guard corrections and violations;
 - quality metrics;
 - a deterministic image hash.
 
-The indexed image stores 2304 bytes plus the palette. PNG is an export format, not the generator's internal representation.
+The classic indexed image stores 2304 bytes plus the palette. Larger render
+profiles retain the same genome and 32-color semantic palette while adding
+resolution-aware edge lighting, material highlights and ordered dithering.
 
 ## Manual parameters
 
@@ -209,7 +219,7 @@ await File('avatar.json').writeAsString(
 Run the included command-line tool:
 
 ```bash
-dart run tool/generate.dart --seed player-42 --scale 8 --frames 8
+dart run tool/generate.dart --seed player-42 --render-size 96 --detail rich --scale 1 --frames 16
 ```
 
 ## Architecture
@@ -228,6 +238,8 @@ LayoutResolver / dependency graph
 AvatarPartRenderer implementations
     ↓
 AvatarCompositor
+    ↓
+ResolutionAwareRenderer
     ↓
 IndexedImage
     ↓

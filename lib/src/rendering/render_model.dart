@@ -1,3 +1,4 @@
+import '../api/avatar_request.dart';
 import '../constraints/validation.dart';
 import '../genome/avatar_genome_model.dart';
 import '../geometry/avatar_layout.dart';
@@ -39,6 +40,7 @@ final class AvatarRenderContext {
     required this.palette,
     required this.guard,
     required this.phase,
+    this.rendering = const AvatarRenderSettings(),
   });
 
   final AvatarGenome genome;
@@ -46,6 +48,7 @@ final class AvatarRenderContext {
   final AvatarPalette palette;
   final ConstraintEngine guard;
   final int phase;
+  final AvatarRenderSettings rendering;
 
   int integer(String id, [int fallback = 0]) => layout.integer(id, fallback);
   String string(String id, [String fallback = 'none']) =>

@@ -1,5 +1,15 @@
 ## Unreleased
 
+- Added native 48×48, 64×64, 80×80 and 96×96 rendering profiles without
+  changing seed/genome identity.
+- Added basic, enhanced and rich detail profiles with directional edge light,
+  material highlights, shadow ramps and deterministic dithering.
+- Added independently animated neon, rain, forest, space, dungeon, laboratory,
+  flame and atmospheric background details plus a reduced-motion setting.
+- Added browser controls for resolution, detail, animation length and playback
+  speed, and exposed all rendering controls through the generic property UI.
+- Added native-size PNG/SVG export and configurable animation sprite-sheet
+  export through the local server.
 - Added final-composition visibility metrics for semantic render parts.
 - Added eye and mouth readability validation after all occluding layers.
 - Added visible eye outlines and dithered eyewear lenses so clear glasses no

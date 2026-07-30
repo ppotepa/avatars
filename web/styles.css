@@ -101,6 +101,18 @@ h2 { margin-bottom: 0; font-size: 1.1rem; }
 .avatar-status { color: var(--muted); font-size: 0.8rem; line-height: 1.5; min-height: 2.4rem; }
 .avatar-status strong { color: var(--text); }
 .toolbar, .export-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
+.render-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.render-controls label { display: grid; gap: 0.3rem; color: var(--muted); font-size: 0.72rem; }
+.render-controls select { width: 100%; }
 .readability-card {
   margin-top: 1rem;
   padding: 0.8rem;

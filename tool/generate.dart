@@ -15,8 +15,30 @@ Future<void> main(List<String> arguments) async {
   final scale = int.tryParse(_value(arguments, '--scale') ?? '') ?? 8;
   final preset = _value(arguments, '--preset');
   final frames = int.tryParse(_value(arguments, '--frames') ?? '') ?? 0;
+  final renderSize = int.tryParse(_value(arguments, '--render-size') ?? '') ?? 48;
+  final detailName = _value(arguments, '--detail') ?? 'enhanced';
+  final lightingName = _value(arguments, '--lighting') ?? 'upperLeft';
+  final shading =
+      int.tryParse(_value(arguments, '--shading') ?? '') ?? 2;
 
-  var request = AvatarRequest(seed: seed);
+  if (!AvatarRenderSettings.supportedSizes.contains(renderSize)) {
+    throw ArgumentError.value(
+      renderSize,
+      '--render-size',
+      'Supported values: 48, 64, 80, 96.',
+    );
+  }
+  var request = AvatarRequest(
+    seed: seed,
+    rendering: AvatarRenderSettings(
+      size: renderSize,
+      detailLevel: AvatarDetailLevel.values.byName(detailName),
+      lightingDirection: AvatarLightingDirection.values.byName(lightingName),
+      shadingStrength: shading,
+      animateBackground: !arguments.contains('--static-background'),
+      reducedMotion: arguments.contains('--reduced-motion'),
+    ),
+  );
   if (preset != null) {
     request = AvatarPresetService().applyWholePreset(request, preset);
   }
@@ -77,6 +99,12 @@ Options:
   --scale <integer>  PNG/SVG pixel scale. Default: 8
   --preset <id>      Whole-avatar preset from ParameterCatalog.v41.
   --frames <count>   Also export an animation sprite sheet.
+  --render-size <n>  Native canvas: 48, 64, 80 or 96. Default: 48
+  --detail <level>   basic, enhanced or rich. Default: enhanced
+  --lighting <side>  upperLeft, frontal or upperRight.
+  --shading <0-3>    Shading strength. Default: 2
+  --static-background  Disable background motion.
+  --reduced-motion     Reduce animation amplitude and speed.
   -h, --help         Show this help.
 ''');
 }

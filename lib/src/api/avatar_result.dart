@@ -15,6 +15,12 @@ final class AvatarMetrics {
     required this.layerCount,
     required this.visibility,
     required this.faceReadabilityScore,
+    this.canvasWidth = 48,
+    this.canvasHeight = 48,
+    this.detailLevel = 'enhanced',
+    this.eyeContrastScore = 0,
+    this.silhouetteContrastScore = 0,
+    this.visualDensityScore = 100,
   });
 
   final int usedColorCount;
@@ -24,6 +30,12 @@ final class AvatarMetrics {
   final int layerCount;
   final RenderVisibility visibility;
   final int faceReadabilityScore;
+  final int canvasWidth;
+  final int canvasHeight;
+  final String detailLevel;
+  final int eyeContrastScore;
+  final int silhouetteContrastScore;
+  final int visualDensityScore;
 
   Map<String, Object> toJson() => <String, Object>{
         'usedColorCount': usedColorCount,
@@ -33,6 +45,12 @@ final class AvatarMetrics {
         'layerCount': layerCount,
         'visibility': visibility.toJson(),
         'faceReadabilityScore': faceReadabilityScore,
+        'canvasWidth': canvasWidth,
+        'canvasHeight': canvasHeight,
+        'detailLevel': detailLevel,
+        'eyeContrastScore': eyeContrastScore,
+        'silhouetteContrastScore': silhouetteContrastScore,
+        'visualDensityScore': visualDensityScore,
       };
 }
 

@@ -15,6 +15,31 @@ void main() {
     );
   });
 
+  test('background motion can animate independently from the avatar channel', () {
+    final generator = AvatarGenerator();
+    const request = AvatarRequest(
+      seed: 'living-background',
+      overrides: <String, Object>{
+        'v4.background': 'neonCity',
+        'v4.animation': 'none',
+      },
+      rendering: AvatarRenderSettings(size: 64),
+    );
+    final first = generator.generate(request.copyWith(phase: 0));
+    final later = generator.generate(request.copyWith(phase: 12));
+    expect(later.imageHash, isNot(first.imageHash));
+
+    final staticFirst = generator.generate(request.copyWith(
+      phase: 0,
+      rendering: request.rendering.copyWith(animateBackground: false),
+    ));
+    final staticLater = generator.generate(request.copyWith(
+      phase: 12,
+      rendering: request.rendering.copyWith(animateBackground: false),
+    ));
+    expect(staticLater.imageHash, staticFirst.imageHash);
+  });
+
   test('idle composes contextual motion without changing the catalog API', () {
     for (final channel in <String>[
       'blink',

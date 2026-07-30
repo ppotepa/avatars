@@ -2,6 +2,74 @@ import 'avatar_version.dart';
 
 enum AvatarPresentation { neutral, masculine, feminine }
 enum FantasyLevel { none, subtle, moderate, strong }
+enum AvatarDetailLevel { basic, enhanced, rich }
+enum AvatarLightingDirection { upperLeft, frontal, upperRight }
+
+/// Presentation-only rendering controls.
+///
+/// These settings do not change the generated genome, so the same seed keeps
+/// the same identity at every supported canvas size.
+final class AvatarRenderSettings {
+  const AvatarRenderSettings({
+    this.size = 48,
+    this.detailLevel = AvatarDetailLevel.enhanced,
+    this.lightingDirection = AvatarLightingDirection.upperLeft,
+    this.shadingStrength = 2,
+    this.animateBackground = true,
+    this.reducedMotion = false,
+  });
+
+  factory AvatarRenderSettings.fromJson(Map<String, Object?> json) =>
+      AvatarRenderSettings(
+        size: (json['size'] as num?)?.toInt() ?? 48,
+        detailLevel: AvatarDetailLevel.values.firstWhere(
+          (value) => value.name == json['detailLevel'],
+          orElse: () => AvatarDetailLevel.enhanced,
+        ),
+        lightingDirection: AvatarLightingDirection.values.firstWhere(
+          (value) => value.name == json['lightingDirection'],
+          orElse: () => AvatarLightingDirection.upperLeft,
+        ),
+        shadingStrength: (json['shadingStrength'] as num?)?.toInt() ?? 2,
+        animateBackground: json['animateBackground'] as bool? ?? true,
+        reducedMotion: json['reducedMotion'] as bool? ?? false,
+      );
+
+  static const supportedSizes = <int>[48, 64, 80, 96];
+
+  final int size;
+  final AvatarDetailLevel detailLevel;
+  final AvatarLightingDirection lightingDirection;
+  final int shadingStrength;
+  final bool animateBackground;
+  final bool reducedMotion;
+
+  AvatarRenderSettings copyWith({
+    int? size,
+    AvatarDetailLevel? detailLevel,
+    AvatarLightingDirection? lightingDirection,
+    int? shadingStrength,
+    bool? animateBackground,
+    bool? reducedMotion,
+  }) =>
+      AvatarRenderSettings(
+        size: size ?? this.size,
+        detailLevel: detailLevel ?? this.detailLevel,
+        lightingDirection: lightingDirection ?? this.lightingDirection,
+        shadingStrength: shadingStrength ?? this.shadingStrength,
+        animateBackground: animateBackground ?? this.animateBackground,
+        reducedMotion: reducedMotion ?? this.reducedMotion,
+      );
+
+  Map<String, Object> toJson() => <String, Object>{
+        'size': size,
+        'detailLevel': detailLevel.name,
+        'lightingDirection': lightingDirection.name,
+        'shadingStrength': shadingStrength,
+        'animateBackground': animateBackground,
+        'reducedMotion': reducedMotion,
+      };
+}
 
 final class GenomeSettings {
   const GenomeSettings({
@@ -64,6 +132,7 @@ final class AvatarRequest {
   const AvatarRequest({
     required this.seed,
     this.settings = const GenomeSettings(),
+    this.rendering = const AvatarRenderSettings(),
     this.overrides = const <String, Object>{},
     this.lockedParameters = const <String, Object>{},
     this.lockedCategories = const <String, Map<String, Object>>{},
@@ -84,6 +153,11 @@ final class AvatarRequest {
             json['settings'] as Map? ?? const <String, Object?>{},
           ),
         ),
+        rendering: AvatarRenderSettings.fromJson(
+          Map<String, Object?>.from(
+            json['rendering'] as Map? ?? const <String, Object?>{},
+          ),
+        ),
         overrides: _objectMap(json['overrides']),
         lockedParameters: _objectMap(json['lockedParameters']),
         lockedCategories: _nestedObjectMap(json['lockedCategories']),
@@ -98,6 +172,7 @@ final class AvatarRequest {
 
   final String seed;
   final GenomeSettings settings;
+  final AvatarRenderSettings rendering;
 
   /// Manual or preset values. These win over automatic generation.
   final Map<String, Object> overrides;
@@ -118,6 +193,7 @@ final class AvatarRequest {
   AvatarRequest copyWith({
     String? seed,
     GenomeSettings? settings,
+    AvatarRenderSettings? rendering,
     Map<String, Object>? overrides,
     Map<String, Object>? lockedParameters,
     Map<String, Map<String, Object>>? lockedCategories,
@@ -128,6 +204,7 @@ final class AvatarRequest {
       AvatarRequest(
         seed: seed ?? this.seed,
         settings: settings ?? this.settings,
+        rendering: rendering ?? this.rendering,
         overrides: overrides ?? this.overrides,
         lockedParameters: lockedParameters ?? this.lockedParameters,
         lockedCategories: lockedCategories ?? this.lockedCategories,
@@ -140,6 +217,7 @@ final class AvatarRequest {
         'schemaVersion': AvatarGenomeVersion.requestSchema,
         'seed': seed,
         'settings': settings.toJson(),
+        'rendering': rendering.toJson(),
         'overrides': overrides,
         'lockedParameters': lockedParameters,
         'lockedCategories': lockedCategories,
