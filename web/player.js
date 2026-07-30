@@ -43,9 +43,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function updatePlayButton() {
     const playing = Boolean(state.animationTimer);
-    playButton.innerHTML = `<span aria-hidden="true">${playing ? 'Ⅱ' : '▶'}</span>`;
-    playButton.title = playing ? 'Wstrzymaj animację' : 'Odtwórz animację';
-    playButton.setAttribute('aria-label', playButton.title);
+    const icon = playing ? 'Ⅱ' : '▶';
+    const title = playing ? 'Wstrzymaj animację' : 'Odtwórz animację';
+    if (playButton.textContent.trim() !== icon) {
+      playButton.innerHTML = `<span aria-hidden="true">${icon}</span>`;
+    }
+    if (playButton.title !== title) playButton.title = title;
+    if (playButton.getAttribute('aria-label') !== title) {
+      playButton.setAttribute('aria-label', title);
+    }
     playButton.setAttribute('aria-pressed', String(playing));
   }
 
