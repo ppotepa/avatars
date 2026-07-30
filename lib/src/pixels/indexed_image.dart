@@ -32,7 +32,6 @@ final class IndexedImage {
         transparentIndex: transparentIndex,
       );
 
-
   int get(int x, int y) =>
       x >= 0 && x < width && y >= 0 && y < height
           ? indices[y * width + x]
@@ -60,14 +59,16 @@ final class IndexedImage {
     }
   }
 
-  String get hash {
-    var value = 0x811c9dc5;
-    for (final pixel in indices) {
-      value ^= pixel;
-      value = multiply32(value, 0x01000193);
-    }
-    return hex32(value);
-  }
+  String get hash => hash48(
+        indices,
+        prefix: <int>[
+          width & 0xff,
+          (width >> 8) & 0xff,
+          height & 0xff,
+          (height >> 8) & 0xff,
+          transparentIndex,
+        ],
+      );
 
   int get usedColorCount {
     final values = <int>{};
