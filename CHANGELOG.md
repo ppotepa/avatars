@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Made every catalogued background reachable through automatic generation while
+  preserving world-aware preferences and removing invalid post-apocalyptic
+  background candidates.
+- Added generator reachability tests that render every selectable option and
+  both numeric endpoints for every range field.
 - Expanded deterministic image identifiers from 32 to 48 bits. Result hashes now
   cover canvas dimensions, transparency, indexed pixels and the complete RGBA
   palette, so color-only variants receive different 12-character identifiers.
