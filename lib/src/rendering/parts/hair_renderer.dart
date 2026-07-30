@@ -44,6 +44,15 @@ final class HairRenderer implements AvatarPartRenderer {
           _facialHairColor(context), meta: const {'part': 'facialHair'})
       ..addLayer('facialHair.light', 129, facialHair.light,
           context.color('hairLight'), meta: const {'part': 'facialHair'})
+      ..addLayer(
+          'hair.contactShadow',
+          134,
+          hair.front
+              .translated(0, 1)
+              .subtract(hair.front)
+              .intersect(head),
+          context.color('skinShadow'),
+          meta: const {'part': 'hairShadow'})
       ..addLayer('hair.front.outline', 136,
           hair.front.outline(diagonal: true).subtract(hair.back),
           context.color('outline'), meta: const {'part': 'hair'})
