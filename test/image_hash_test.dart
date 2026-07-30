@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:avatar_genome/avatar_genome.dart';
 import 'package:test/test.dart';
 
@@ -26,5 +28,28 @@ void main() {
     };
 
     expect(hashes, hasLength(AvatarRenderSettings.supportedSizes.length));
+  });
+
+  test('palette colors participate in the complete image hash', () {
+    final image = IndexedImage.fromIndices(
+      width: 2,
+      height: 1,
+      indices: Uint8List.fromList(<int>[0, 1]),
+    );
+    final firstPalette = Uint32List.fromList(<int>[
+      0xff0000ff,
+      0x00ff00ff,
+    ]);
+    final secondPalette = Uint32List.fromList(<int>[
+      0x0000ffff,
+      0x00ff00ff,
+    ]);
+
+    final first = image.hashWithPalette(firstPalette);
+    final second = image.hashWithPalette(secondPalette);
+
+    expect(first, matches(RegExp(r'^[0-9a-f]{12}$')));
+    expect(second, matches(RegExp(r'^[0-9a-f]{12}$')));
+    expect(second, isNot(first));
   });
 }
