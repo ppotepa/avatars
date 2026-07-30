@@ -324,8 +324,24 @@ final class AccessoriesRenderer implements AvatarPartRenderer {
       }
     }
     final bounds = state.mask('head').dilated();
-    return _Eyewear(frame.intersect(bounds), lens.intersect(bounds),
-        reflection.intersect(lens), tint >= 2 || style.contains('Shades') || style.contains('Visor'));
+    final darkLens =
+        tint >= 2 || style.contains('Shades') || style.contains('Visor');
+    final clippedLens = lens.intersect(bounds);
+    final renderedLens = darkLens
+        ? orderedDither(
+            clippedLens,
+            clampInt(3 + tint, 3, 7),
+            phase: c.integer('v4.reflection'),
+          )
+        : tint == 0
+            ? PixelMask()
+            : orderedDither(clippedLens, clampInt(tint + 1, 1, 3));
+    return _Eyewear(
+      frame.intersect(bounds),
+      renderedLens,
+      reflection.intersect(clippedLens),
+      darkLens,
+    );
   }
 
   _FaceMask _faceMask(AvatarRenderContext c, AvatarRenderState state) {
@@ -442,14 +458,51 @@ final class AccessoriesRenderer implements AvatarPartRenderer {
     final neckStyle = c.string('v4.neckJewelry');
     if (neckStyle != 'none') {
       final y = c.integer('body.neckBaseY') + 1;
+      final chainHalfWidth = clampInt(
+        c.integer('neck.widthBottom') + 4,
+        7,
+        12,
+      );
+      final chainLeft = 24 - chainHalfWidth;
+      final chainRight = 24 + chainHalfWidth;
       if (<String>['thinChain', 'thickChain', 'choker', 'beads'].contains(neckStyle)) {
         final thickness = neckStyle == 'thickChain' || neckStyle == 'choker' ? 2 : 1;
-        base.line(17, y, 24, y + 3, thickness: thickness)
-            .line(24, y + 3, 31, y, thickness: thickness);
-        if (neckStyle == 'beads') for (var x = 18; x <= 30; x += 3) accent.set(x, y + positiveMod(x, 3));
+        base.line(chainLeft, y, 24, y + 3, thickness: thickness)
+            .line(24, y + 3, chainRight, y, thickness: thickness);
+        if (neckStyle == 'beads') {
+          for (var x = chainLeft + 1; x < chainRight; x += 3) {
+            accent.fillEllipse(x, y + positiveMod(x, 3), 1, 1);
+          }
+        }
       } else if (<String>['medallion', 'amulet', 'dogTags', 'royalMedallion'].contains(neckStyle)) {
-        base.line(18, y, 24, y + 8).line(30, y, 24, y + 8);
-        accent.fillEllipse(24, y + 8, size + 1, size + 1);
+        base.line(chainLeft, y, 24, y + 7)
+            .line(chainRight, y, 24, y + 7);
+        if (neckStyle == 'dogTags') {
+          base.fillRect(21, y + 7, 4, 6);
+          base.fillRect(24, y + 9, 4, 6);
+          accent.set(22, y + 8).set(25, y + 10);
+        } else if (neckStyle == 'amulet') {
+          base.fillTriangle(
+            (x: 24 - size - 1, y: y + 8),
+            (x: 24 + size + 1, y: y + 8),
+            (x: 24, y: y + 12 + size),
+          );
+          accent.fillEllipse(24, y + 10, clampInt(size - 1, 1, 4),
+              clampInt(size - 1, 1, 4));
+        } else if (neckStyle == 'royalMedallion') {
+          base.fillEllipse(24, y + 9, size + 3, size + 3);
+          for (var direction = -1; direction <= 1; direction += 2) {
+            base.line(24, y + 9, 24 + direction * (size + 4), y + 6);
+            base.line(24, y + 9, 24 + direction * (size + 4), y + 12);
+          }
+          accent.fillEllipse(24, y + 9, size + 1, size + 1);
+          light.set(23, y + 8);
+        } else {
+          base.fillEllipse(24, y + 9, size + 2, size + 2);
+          accent.fillEllipse(24, y + 9, clampInt(size, 1, 4),
+              clampInt(size, 1, 4));
+          light.set(23, y + 8);
+        }
       } else if (neckStyle == 'scarf' || neckStyle == 'cravat') {
         base.fillRect(17, y - 1, 14, 4);
         base.fillTriangle((x: 21, y: y + 2), (x: 27, y: y + 2), (x: 24, y: y + 10));
@@ -493,7 +546,11 @@ final class AccessoriesRenderer implements AvatarPartRenderer {
       }
     }
 
-    light.data.setAll(0, accent.intersect(maskFromPredicate((x, y) => positiveMod(x + y, 2) == 0)).data);
+    light.data.setAll(0, light.union(
+      accent.intersect(
+        maskFromPredicate((x, y) => positiveMod(x + y, 3) == 0),
+      ),
+    ).data);
     return _Jewelry(base, accent, light);
   }
 
