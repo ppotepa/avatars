@@ -138,7 +138,14 @@ final class FaceRenderer implements AvatarPartRenderer {
         (x: left + width - 1, y: top + height - 1 - angle * side),
         (x: centerX, y: top),
       );
-    } else if (shape == 'rectangular' || shape == 'robotic') {
+    } else if (shape == 'robotic') {
+      outline.fillRect(left, top, width, height);
+      outline
+        ..set(left, top, false)
+        ..set(left + width - 1, top, false)
+        ..set(left, top + height - 1, false)
+        ..set(left + width - 1, top + height - 1, false);
+    } else if (shape == 'rectangular') {
       outline.fillRect(left, top, width, height);
     } else if (shape == 'narrow' || shape == 'horizontal' || shape == 'deepSet') {
       outline.line(left, centerY, left + width - 1, centerY + angle * side.sign,
@@ -157,11 +164,16 @@ final class FaceRenderer implements AvatarPartRenderer {
       outline.line(left, centerY, centerX, top + height - 1, thickness: 1);
       outline.line(centerX, top + height - 1, left + width - 1,
           centerY + angle * side.sign, thickness: 1);
+      if (shape == 'realistic' && width >= 5 && height >= 3) {
+        outline.hLine(left + 1, left + width - 2, centerY);
+      }
     } else {
       final rx = (width - 1) / 2;
-      final ry = shape == 'cartoon' || shape == 'wide'
-          ? (height + 1) / 2
-          : (height - 1) / 2;
+      final ry = shape == 'round'
+          ? clampDouble(rx, .5, (height + 1) / 2)
+          : shape == 'cartoon' || shape == 'wide'
+              ? (height + 1) / 2
+              : (height - 1) / 2;
       outline.fillEllipse(centerX, centerY, rx, ry < .5 ? .5 : ry);
     }
 
@@ -247,10 +259,14 @@ final class FaceRenderer implements AvatarPartRenderer {
       }
     }
 
-    if (c.string('v4.animation') == 'lookAround') {
+    if (animationChannelEnabled(c.string('v4.animation'), 'lookAround')) {
       final speed = clampInt(c.integer('v4.animationSpeed'), 1, 6);
       final amplitude = clampInt(c.integer('v4.animationAmplitude'), 1, 2);
-      final lookX = cyclicOffset(c.phase, 10 + speed * 2, amplitude);
+      final lookX = cyclicOffset(
+        c.phase,
+        animationPeriod(speed, slow: 20, fast: 10),
+        amplitude,
+      );
       if (lookX != 0) {
         void shiftInsideEye(PixelMask target) {
           final shifted = target.translated(lookX, 0).intersect(outline);
@@ -308,27 +324,33 @@ final class FaceRenderer implements AvatarPartRenderer {
       }
     }
 
-    if (c.string('v4.animation') == 'blink') {
+    if (animationChannelEnabled(c.string('v4.animation'), 'blink')) {
       final speed = clampInt(c.integer('v4.animationSpeed'), 1, 6);
-      final cycleLength = 7 + speed;
-      final step = positiveMod(c.phase, cycleLength);
-      final closing = step == cycleLength - 2
+      final cycleLength = animationPeriod(speed, slow: 16, fast: 9);
+      final step = positiveMod(c.phase + 3, cycleLength);
+      final remaining = cycleLength - step;
+      final closing = remaining == 4 || remaining == 1
           ? 1
-          : step == cycleLength - 1
+          : remaining == 3 || remaining == 2
               ? 2
               : 0;
       if (closing > 0) {
+        final visibleBand = maskFromPredicate(
+          (x, y) => closing == 1
+              ? y >= centerY && y <= centerY + 1
+              : y == centerY,
+        );
         for (final mask in <PixelMask>[
           sclera,
           irisDark,
           iris,
           irisLight,
           pupil,
-          lids,
-          lashes,
         ]) {
-          mask.data.fillRange(0, mask.data.length, 0);
+          mask.data.setAll(0, mask.intersect(visibleBand).data);
         }
+        lids.data.fillRange(0, lids.data.length, 0);
+        lashes.data.fillRange(0, lashes.data.length, 0);
         lids.line(
           left,
           centerY,
