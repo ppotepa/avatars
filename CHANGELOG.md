@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Expanded deterministic image identifiers from 32 to 48 bits. Result hashes now
+  cover canvas dimensions, transparency, indexed pixels and the complete RGBA
+  palette, so color-only variants receive different 12-character identifiers.
 - Added native 48×48, 64×64, 80×80 and 96×96 rendering profiles without
   changing seed/genome identity.
 - Added basic, enhanced and rich detail profiles with directional edge light,
