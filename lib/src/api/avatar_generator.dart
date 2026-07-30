@@ -15,6 +15,7 @@ import '../rendering/parts/background_renderer.dart';
 import '../rendering/parts/face_renderer.dart';
 import '../rendering/parts/hair_renderer.dart';
 import '../rendering/parts/props_renderer.dart';
+import '../rendering/parts/v42_features_renderer.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import 'avatar_request.dart';
@@ -31,10 +32,13 @@ final class CompositeAvatarRenderer implements AvatarRenderer {
   static List<AvatarPartRenderer> get defaultParts =>
       const <AvatarPartRenderer>[
         BackgroundRenderer(),
+        ExtendedAtmosphereRenderer(),
         AnatomyRenderer(),
         ArmorRenderer(),
         FaceRenderer(),
+        ExpressionRenderer(),
         HairRenderer(),
+        ExtendedAdornmentRenderer(),
         AccessoriesRenderer(),
         PropsRenderer(),
         AvatarMotionRenderer(),
@@ -227,6 +231,7 @@ final class AvatarGenerator {
       return red * .2126 + green * .7152 + blue * .0722;
     }
 
-    return clampInt(((luma(first) - luma(second)).abs() / 1.8).round(), 0, 100);
+    return clampInt(
+        ((luma(first) - luma(second)).abs() / 1.8).round(), 0, 100);
   }
 }
