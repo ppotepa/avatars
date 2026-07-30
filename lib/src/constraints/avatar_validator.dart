@@ -32,6 +32,7 @@ final class V41AvatarValidator implements AvatarValidator {
     final facialHair = state.mask('facialHair');
     final faceMask = state.mask('faceMask');
     final eyewear = state.mask('eyewear');
+    final visibility = analyzeRenderVisibility(state.layers);
 
     if (!masksTouch(head, neck)) {
       guard.violation('attachment.headNeck', 'Head does not touch the neck.');
@@ -67,6 +68,29 @@ final class V41AvatarValidator implements AvatarValidator {
       guard.violation('collision.headwearEyewear',
           'Headwear obscures most of the eyewear.',
           severity: ValidationSeverity.soft);
+    }
+    final renderedEyes = visibility.sourcePixels['eyes'] ?? 0;
+    final visibleEyes = visibility.visiblePixels['eyes'] ?? 0;
+    if (renderedEyes > 0 && visibleEyes < 2) {
+      guard.violation(
+        'visibility.eyes',
+        'Eye details are almost completely hidden in the final composition.',
+        severity: ValidationSeverity.soft,
+      );
+    } else if (renderedEyes > 0 && visibility.visibleRatio('eyes') < .35) {
+      guard.violation(
+        'visibility.eyes',
+        'Most eye details are obscured by later layers.',
+        severity: ValidationSeverity.style,
+      );
+    }
+    final renderedMouth = visibility.sourcePixels['mouth'] ?? 0;
+    if (renderedMouth > 0 && visibility.visibleRatio('mouth') < .3) {
+      guard.violation(
+        'visibility.mouth',
+        'Most mouth details are obscured in the final composition.',
+        severity: ValidationSeverity.style,
+      );
     }
     if (image.usedColorCount > 32) {
       guard.violation('palette.limit', 'Image uses more than 32 colors.');
