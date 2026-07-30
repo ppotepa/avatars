@@ -13,13 +13,18 @@ final class AvatarMotionRenderer implements AvatarPartRenderer {
 
   @override
   void render(AvatarRenderContext context, AvatarRenderState state) {
-    if (context.string('v4.animation') != 'idle') return;
+    if (!animationChannelEnabled(
+      context.string('v4.animation'),
+      'idle',
+    )) {
+      return;
+    }
 
     final amplitude = clampInt(context.integer('v4.animationAmplitude'), 1, 4);
     final speed = clampInt(context.integer('v4.animationSpeed'), 1, 6);
     final dy = cyclicOffset(
       context.phase,
-      8 + speed * 2,
+      animationPeriod(speed, slow: 20, fast: 12),
       clampInt((amplitude + 1) ~/ 2, 1, 2),
     );
     if (dy == 0) return;
