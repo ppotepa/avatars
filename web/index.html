@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <title>Avatar Genome Editor</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/player.css">
 </head>
 <body>
   <header class="topbar">
@@ -23,16 +24,71 @@
         <div id="avatar-status" class="avatar-status"></div>
       </section>
 
+      <section class="resolution-panel" aria-labelledby="resolution-title">
+        <div class="player-section-heading">
+          <span id="resolution-title">Rozdzielczość podglądu</span>
+          <output id="resolution-value">48 × 48</output>
+        </div>
+        <div class="resolution-picker" role="group" aria-label="Wybierz rozdzielczość renderowania">
+          <button type="button" data-resolution="48" aria-pressed="true">48</button>
+          <button type="button" data-resolution="64" aria-pressed="false">64</button>
+          <button type="button" data-resolution="80" aria-pressed="false">80</button>
+          <button type="button" data-resolution="96" aria-pressed="false">96</button>
+        </div>
+      </section>
+
+      <section class="animation-player" aria-labelledby="animation-player-title">
+        <div class="player-section-heading">
+          <span id="animation-player-title">Odtwarzacz animacji</span>
+          <output id="animation-position" aria-live="polite">1 / 16</output>
+        </div>
+        <div class="player-transport" role="group" aria-label="Sterowanie animacją">
+          <button id="frame-start-button" class="player-button" type="button" aria-label="Pierwsza klatka" title="Pierwsza klatka">
+            <span aria-hidden="true">|◀</span>
+          </button>
+          <button id="frame-previous-button" class="player-button" type="button" aria-label="Poprzednia klatka" title="Poprzednia klatka">
+            <span aria-hidden="true">◀</span>
+          </button>
+          <button id="animate-button" class="player-button player-button-primary" type="button" aria-label="Odtwórz animację" title="Odtwórz animację">
+            <span aria-hidden="true">▶</span>
+          </button>
+          <button id="frame-next-button" class="player-button" type="button" aria-label="Następna klatka" title="Następna klatka">
+            <span aria-hidden="true">▶</span>
+          </button>
+          <button id="frame-end-button" class="player-button" type="button" aria-label="Ostatnia klatka" title="Ostatnia klatka">
+            <span aria-hidden="true">▶|</span>
+          </button>
+        </div>
+        <div class="player-options">
+          <label>
+            <span>Klatki</span>
+            <select id="animation-frames">
+              <option value="8">8</option>
+              <option value="16" selected>16</option>
+              <option value="24">24</option>
+              <option value="32">32</option>
+            </select>
+          </label>
+          <label>
+            <span>Prędkość</span>
+            <select id="playback-speed">
+              <option value="200">0,5×</option>
+              <option value="140" selected>1×</option>
+              <option value="90">2×</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
       <section class="toolbar" aria-label="Akcje awatara">
         <button id="generate-button" type="button" class="primary">Generuj</button>
-        <button id="animate-button" type="button">Odtwórz animację</button>
         <button id="new-seed-button" type="button">Nowy seed</button>
         <button id="reset-overrides-button" type="button">Reset nadpisań</button>
         <button id="reset-locks-button" type="button">Reset blokad</button>
       </section>
 
       <section class="render-controls" aria-label="Jakość renderowania">
-        <label>
+        <label class="legacy-resolution-control">
           <span>Rozdzielczość</span>
           <select id="quick-resolution">
             <option value="48">48 × 48</option>
@@ -47,23 +103,6 @@
             <option value="basic">Podstawowy</option>
             <option value="enhanced">Rozszerzony</option>
             <option value="rich">Bogaty</option>
-          </select>
-        </label>
-        <label>
-          <span>Klatki</span>
-          <select id="animation-frames">
-            <option value="8">8</option>
-            <option value="16" selected>16</option>
-            <option value="24">24</option>
-            <option value="32">32</option>
-          </select>
-        </label>
-        <label>
-          <span>Podgląd</span>
-          <select id="playback-speed">
-            <option value="200">Spokojny</option>
-            <option value="140" selected>Normalny</option>
-            <option value="90">Szybki</option>
           </select>
         </label>
       </section>
@@ -138,5 +177,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="/app.js" defer></script>
+  <script src="/player.js" defer></script>
 </body>
 </html>
