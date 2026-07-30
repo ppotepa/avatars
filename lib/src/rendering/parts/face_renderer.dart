@@ -42,6 +42,9 @@ final class FaceRenderer implements AvatarPartRenderer {
       ..putMask('faceInner', zones.inner);
 
     state
+      ..addLayer('eyes.outline', 89,
+          eyes.combined.outline(diagonal: true).intersect(head),
+          context.color('outlineSoft'), meta: const {'part': 'eyes'})
       ..addLayer('cheeks.shadow', 75, cheeks.shadow,
           context.color('skinShadow'), meta: const {'part': 'cheeks'})
       ..addLayer('cheeks.blush', 76, cheeks.blush,
