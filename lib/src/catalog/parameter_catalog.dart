@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'catalog_v42_extension.dart';
 import 'generated_catalog_json.dart';
 
 enum ParameterKind { range, select }
@@ -44,8 +45,9 @@ final class ParameterDefinition {
     final type = json['type']! as String;
     final auto = (json['auto'] as List<Object?>?)?.cast<num>();
     final options = (json['options'] as List<Object?>? ?? const <Object?>[])
-        .cast<Map<String, Object?>>()
-        .map(ParameterOption.fromJson)
+        .map((option) => ParameterOption.fromJson(
+              Map<String, Object?>.from(option! as Map),
+            ))
         .toList(growable: false);
     return ParameterDefinition(
       id: json['id']! as String,
@@ -160,6 +162,7 @@ final class ParameterCatalog {
     };
   }
 
+  /// Preserves the historical name while exposing the additive V4.2 extension.
   static final ParameterCatalog v41 = _decodeV41();
 
   final List<ParameterCategory> categories;
@@ -183,34 +186,44 @@ final class ParameterCatalog {
 
   static ParameterCatalog _decodeV41() {
     final root = jsonDecode(kV41CatalogJson) as Map<String, Object?>;
-    final categories = <ParameterCategory>[];
-    for (final raw in (root['categories']! as List<Object?>)) {
-      final json = raw! as Map<String, Object?>;
-      final id = json['id']! as String;
-      final group = json['group']! as String;
-      final fields = (json['fields']! as List<Object?>)
-          .cast<Map<String, Object?>>()
-          .map((field) => ParameterDefinition.fromJson(
-                field,
-                category: id,
-                group: group,
-              ))
+    final extension =
+        jsonDecode(kV42CatalogExtensionJson) as Map<String, Object?>;
+
+    final rawCategories = (root['categories']! as List<Object?>)
+        .map((raw) => Map<String, Object?>.from(raw! as Map))
+        .toList(growable: true);
+    final optionPatches = Map<String, Object?>.from(
+      extension['fieldOptions'] as Map? ?? const <String, Object?>{},
+    );
+
+    for (final category in rawCategories) {
+      final rawFields = (category['fields']! as List<Object?>)
+          .map((raw) => Map<String, Object?>.from(raw! as Map))
           .toList(growable: false);
-      final presets = <String, Map<String, Object>>{};
-      final rawPresets = json['presets']! as Map<String, Object?>;
-      for (final entry in rawPresets.entries) {
-        presets[entry.key] = Map<String, Object>.from(
-          entry.value! as Map<String, Object?>,
-        );
+      for (final field in rawFields) {
+        final patch = optionPatches[field['id']];
+        if (patch is! List) continue;
+        final options = (field['options'] as List<Object?>? ?? const <Object?>[])
+            .map((raw) => Map<String, Object?>.from(raw! as Map))
+            .toList(growable: true);
+        final existing = options.map((option) => option['value']).toSet();
+        for (final raw in patch) {
+          final option = Map<String, Object?>.from(raw! as Map);
+          if (existing.add(option['value'])) options.add(option);
+        }
+        field['options'] = options;
       }
-      categories.add(ParameterCategory(
-        id: id,
-        label: json['label']! as String,
-        group: group,
-        fields: fields,
-        presets: Map.unmodifiable(presets),
-      ));
+      category['fields'] = rawFields;
     }
+
+    for (final raw in (extension['categories'] as List<Object?>? ??
+        const <Object?>[])) {
+      rawCategories.add(Map<String, Object?>.from(raw! as Map));
+    }
+
+    final categories = rawCategories
+        .map(_categoryFromJson)
+        .toList(growable: false);
     final wholePresets = <String, WholeAvatarPreset>{};
     final rawWhole = root['presets']! as Map<String, Object?>;
     for (final entry in rawWhole.entries) {
@@ -229,6 +242,34 @@ final class ParameterCatalog {
     return ParameterCatalog._(
       categories: List.unmodifiable(categories),
       wholePresets: Map.unmodifiable(wholePresets),
+    );
+  }
+
+  static ParameterCategory _categoryFromJson(Map<String, Object?> json) {
+    final id = json['id']! as String;
+    final group = json['group']! as String;
+    final fields = (json['fields']! as List<Object?>)
+        .map((field) => ParameterDefinition.fromJson(
+              Map<String, Object?>.from(field! as Map),
+              category: id,
+              group: group,
+            ))
+        .toList(growable: false);
+    final presets = <String, Map<String, Object>>{};
+    final rawPresets = Map<String, Object?>.from(
+      json['presets'] as Map? ?? const <String, Object?>{},
+    );
+    for (final entry in rawPresets.entries) {
+      presets[entry.key] = Map<String, Object>.from(
+        entry.value! as Map,
+      );
+    }
+    return ParameterCategory(
+      id: id,
+      label: json['label']! as String,
+      group: group,
+      fields: fields,
+      presets: Map.unmodifiable(presets),
     );
   }
 }
