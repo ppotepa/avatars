@@ -101,6 +101,50 @@ h2 { margin-bottom: 0; font-size: 1.1rem; }
 .avatar-status { color: var(--muted); font-size: 0.8rem; line-height: 1.5; min-height: 2.4rem; }
 .avatar-status strong { color: var(--text); }
 .toolbar, .export-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
+.readability-card {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.readability-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.readability-heading strong { color: var(--text); }
+.readability-metrics { display: grid; gap: 0.45rem; margin-top: 0.65rem; }
+.readability-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 38px;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.readability-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #0d1219;
+}
+.readability-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+}
+.readability-fill.medium { background: var(--warning); }
+.readability-fill.low { background: var(--danger); }
+.readability-warnings {
+  margin-top: 0.65rem;
+  color: var(--warning);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
 .preset-card { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .preset-card label { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 0.35rem; }
 .inline-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; }
