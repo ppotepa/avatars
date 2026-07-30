@@ -60,6 +60,57 @@ void main() {
     expect(animationChannelEnabled('particles', 'hairWind'), isFalse);
   });
 
+  test('idle preserves the anatomical sprite footprint across frames', () {
+    final generator = AvatarGenerator();
+    const request = AvatarRequest(
+      seed: 'idle-stable-footprint',
+      overrides: <String, Object>{
+        'v4.animation': 'idle',
+        'v4.animationSpeed': 1,
+        'v4.animationAmplitude': 4,
+        'hair.lengthStyle': 'shoulder',
+        'v4.earJewelry': 'dangling',
+        'v4.aura': 'magic',
+        'v4.effect': 'snow',
+      },
+    );
+    final first = generator.generate(request.copyWith(phase: 0));
+    final later = generator.generate(request.copyWith(phase: 7));
+
+    const stableLayerIds = <String>{
+      'torso.outline',
+      'chest.skin',
+      'clothing.base',
+      'clothing.shadow',
+      'clothing.highlight',
+      'neck.outline',
+      'neck.base',
+      'neck.shadow',
+      'neck.highlight',
+      'head.outline',
+      'head.base',
+      'head.shadow',
+      'head.highlight',
+    };
+
+    Map<String, RenderLayer> stableLayers(AvatarResult result) =>
+        <String, RenderLayer>{
+          for (final layer in result.layers)
+            if (stableLayerIds.contains(layer.id)) layer.id: layer,
+        };
+
+    final firstLayers = stableLayers(first);
+    final laterLayers = stableLayers(later);
+    expect(laterLayers.keys.toSet(), firstLayers.keys.toSet());
+    for (final id in firstLayers.keys) {
+      expect(
+        laterLayers[id]!.mask.data,
+        orderedEquals(firstLayers[id]!.mask.data),
+        reason: '$id must stay anchored during idle animation',
+      );
+    }
+  });
+
   final cases = <String, Map<String, Object>>{
     'blink': <String, Object>{
       'v4.animation': 'blink',
