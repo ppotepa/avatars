@@ -461,10 +461,17 @@ final class AccessoriesRenderer implements AvatarPartRenderer {
         base.fillTriangle((x: 21, y: y), (x: 27, y: y), (x: 24, y: y + 11));
       }
     }
-    if (c.string('v4.animation') == 'jewelrySwing') {
+    if (animationChannelEnabled(
+      c.string('v4.animation'),
+      'jewelrySwing',
+    )) {
       final speed = clampInt(c.integer('v4.animationSpeed'), 1, 6);
       final amplitude = clampInt(c.integer('v4.animationAmplitude'), 1, 2);
-      final swingX = cyclicOffset(c.phase, 8 + speed * 2, amplitude);
+      final swingX = cyclicOffset(
+        c.phase - 1,
+        animationPeriod(speed, slow: 18, fast: 10),
+        amplitude,
+      );
       if (swingX != 0) {
         final earY = c.integer('ears.centerY') + 4;
         final neckY = c.integer('body.neckBaseY') + 5;

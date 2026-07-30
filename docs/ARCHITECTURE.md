@@ -73,6 +73,19 @@ The default `CompositeAvatarRenderer` can be replaced or extended by dependency 
 
 `IndexedAvatarCompositor` sorts layers stably by `z` and identifier, then writes palette indices to a 48×48 `IndexedImage`. It does not use a platform drawing API or antialiasing.
 
+### Animation channels
+
+The public catalog retains one `v4.animation` selection. Internally, the base
+renderer composes contextual channels so the `idle` selection can blink and
+move compatible hair, jewelry, smoke, aura and particle elements together.
+Explicit animation selections remain supported and also gain a natural blink.
+All channels use the shared deterministic period mapping, where a higher
+`v4.animationSpeed` consistently means a shorter cycle.
+
+Movement remains integer pixel art. Longer eased lookup-table cycles, staged
+eyelids and delayed hair tips avoid moving every attached pixel on the same
+frame and keep loops deterministic across platforms.
+
 ### Validation
 
 `V41AvatarValidator` checks attachments, bounds, collisions, component continuity, palette limits and excessive isolated pixels. `ConstraintEngine` records corrections and violations. Disabling the guard also disables corrections, which is useful for diagnostics but not recommended for production.

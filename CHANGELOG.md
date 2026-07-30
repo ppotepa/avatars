@@ -1,3 +1,18 @@
+## Unreleased
+
+- Improved the base renderer without introducing a parallel V2 mode.
+- Composed subtle blink, hair, jewelry, smoke, aura and particle channels into
+  the existing idle animation.
+- Corrected animation speed semantics and lengthened motion curves for smoother
+  loops at the 48×48 working resolution.
+- Added staged eyelid motion, delayed hair-tip motion and contextual secondary
+  animation channels.
+- Increased visible variation between robotic, rectangular, realistic, round
+  and oval eyes.
+- Added deterministic seed-level variation to uneven and choppy fringes.
+- Added palette outline contrast correction for more readable silhouettes and
+  overlapping facial, hair and clothing details.
+
 ## 1.1.0
 
 - Added a local `dart:io` avatar editor server with static web UI.

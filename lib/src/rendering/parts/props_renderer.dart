@@ -101,7 +101,10 @@ final class PropsRenderer implements AvatarPartRenderer {
     if (<String>['cigarette', 'cigar', 'pipe', 'matchstick'].contains(style) &&
         c.integer('v4.smokeAmount') > 0) {
       final amount = c.integer('v4.smokeAmount');
-      final animated = c.string('v4.animation') == 'smoke';
+      final animated = animationChannelEnabled(
+        c.string('v4.animation'),
+        'smoke',
+      );
       final phase = animated ? c.phase : 0;
       var x = style == 'pipe' ? endX + side * 2 : endX;
       var y = endY - 2;

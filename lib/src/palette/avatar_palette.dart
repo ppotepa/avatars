@@ -113,6 +113,10 @@ final class V41PaletteFactory implements PaletteFactory {
             : outlineMode == 'softDark'
                 ? _adjust(background, -0.45)
                 : '#10131a';
+    outline = _ensureReadableOutline(
+      outline,
+      <String>[skin, hair, cloth, background],
+    );
     if (style == 'warm') background = _mix(background, '#8f4c2d', 0.15);
     if (style == 'cool') background = _mix(background, '#315f86', 0.18);
     if (vivid) {
@@ -195,6 +199,32 @@ final class V41PaletteFactory implements PaletteFactory {
   static String _adjust(String hex, double amount) => amount >= 0
       ? _mix(hex, '#ffffff', amount)
       : _mix(hex, '#000000', -amount);
+
+  static String _ensureReadableOutline(String outline, List<String> surfaces) {
+    final current = _minimumLumaDistance(outline, surfaces);
+    if (current >= 52) return outline;
+    const dark = '#080a0e';
+    const light = '#f4f5f7';
+    return _minimumLumaDistance(dark, surfaces) >=
+            _minimumLumaDistance(light, surfaces)
+        ? dark
+        : light;
+  }
+
+  static double _minimumLumaDistance(String color, List<String> surfaces) {
+    final base = _luma(color);
+    var minimum = 255.0;
+    for (final surface in surfaces) {
+      final distance = (base - _luma(surface)).abs();
+      if (distance < minimum) minimum = distance;
+    }
+    return minimum;
+  }
+
+  static double _luma(String color) {
+    final rgb = _rgb(color);
+    return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
+  }
 
   static int _rgbaFromHex(String hex) =>
       (int.parse(hex.substring(1), radix: 16) << 8) | 0xff;

@@ -192,3 +192,35 @@ int cyclicOffset(int phase, int period, int amplitude) {
   if (scaled >= 0) return (scaled + 500) ~/ 1000;
   return -((-scaled + 500) ~/ 1000);
 }
+
+/// Maps the user-facing animation speed (1 = slow, 6 = fast) to a cycle
+/// duration. Keeping this in one place prevents individual renderers from
+/// accidentally making higher speed values animate more slowly.
+int animationPeriod(
+  int speed, {
+  required int slow,
+  required int fast,
+}) {
+  final normalized = clampInt(speed, 1, 6) - 1;
+  return slow - ((slow - fast) * normalized / 5).round();
+}
+
+/// Returns whether a render channel participates in the selected animation.
+///
+/// The catalog keeps its existing single animation setting for compatibility,
+/// while an idle animation composes subtle secondary motion and every active
+/// animation gains a natural blink. Explicit channel selections still work as
+/// before.
+bool animationChannelEnabled(String selected, String channel) {
+  if (selected == 'none') return false;
+  if (selected == channel) return true;
+  if (channel == 'blink') return true;
+  if (selected != 'idle') return false;
+  return const <String>{
+    'hairWind',
+    'jewelrySwing',
+    'smoke',
+    'auraPulse',
+    'particles',
+  }.contains(channel);
+}
