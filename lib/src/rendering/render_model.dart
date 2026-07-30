@@ -119,6 +119,61 @@ final class AvatarRenderState {
   }
 }
 
+final class RenderVisibility {
+  const RenderVisibility({
+    required this.visiblePixels,
+    required this.sourcePixels,
+  });
+
+  final Map<String, int> visiblePixels;
+  final Map<String, int> sourcePixels;
+
+  double visibleRatio(String part) {
+    final source = sourcePixels[part] ?? 0;
+    if (source == 0) return 1;
+    return (visiblePixels[part] ?? 0) / source;
+  }
+
+  Map<String, Object> toJson() => <String, Object>{
+        'visiblePixels': visiblePixels,
+        'sourcePixels': sourcePixels,
+        'visibleRatios': <String, double>{
+          for (final part in sourcePixels.keys) part: visibleRatio(part),
+        },
+      };
+}
+
+RenderVisibility analyzeRenderVisibility(List<RenderLayer> layers) {
+  final sorted = List<RenderLayer>.from(layers)
+    ..sort((a, b) {
+      final byZ = a.z.compareTo(b.z);
+      return byZ != 0 ? byZ : a.id.compareTo(b.id);
+    });
+  final sourceMasks = <String, PixelMask>{};
+  final owners = List<String?>.filled(48 * 48, null);
+  for (final layer in sorted) {
+    final part = layer.meta['part'] is String
+        ? layer.meta['part']! as String
+        : layer.id.split('.').first;
+    sourceMasks[part] = (sourceMasks[part] ?? PixelMask()).union(layer.mask);
+    for (var y = 0; y < 48; y++) {
+      for (var x = 0; x < 48; x++) {
+        if (layer.mask.get(x, y) != 0) owners[y * 48 + x] = part;
+      }
+    }
+  }
+  final visible = <String, int>{};
+  for (final owner in owners) {
+    if (owner != null) visible[owner] = (visible[owner] ?? 0) + 1;
+  }
+  return RenderVisibility(
+    visiblePixels: Map.unmodifiable(visible),
+    sourcePixels: Map.unmodifiable(<String, int>{
+      for (final entry in sourceMasks.entries) entry.key: entry.value.count,
+    }),
+  );
+}
+
 abstract interface class AvatarPartRenderer {
   void render(AvatarRenderContext context, AvatarRenderState state);
 }
