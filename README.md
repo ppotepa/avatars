@@ -91,7 +91,13 @@ The same request produces the same genome and indexed pixel buffer on every supp
 - render layers and masks metadata;
 - guard corrections and violations;
 - quality metrics;
-- a deterministic image hash.
+- a deterministic 48-bit image hash represented by 12 hexadecimal characters.
+
+The result-level hash covers canvas dimensions, transparency, the complete RGBA
+palette and every indexed pixel. It therefore distinguishes color-only variants
+as well as geometry and resolution changes. Expanding the hash from 32 to 48
+bits increases the identifier space and reduces collision risk; it does not
+change how genomes or avatar variations are generated.
 
 The classic indexed image stores 2304 bytes plus the palette. Larger render
 profiles retain the same genome and 32-color semantic palette while adding
