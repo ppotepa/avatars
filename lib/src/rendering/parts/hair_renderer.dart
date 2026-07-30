@@ -189,13 +189,17 @@ final class HairRenderer implements AvatarPartRenderer {
     }
     front = front.subtract(mouthSafety).subtract(noseZone);
 
-    if (c.string('v4.animation') == 'hairWind') {
+    if (animationChannelEnabled(c.string('v4.animation'), 'hairWind')) {
       final speed = clampInt(c.integer('v4.animationSpeed'), 1, 6);
       final amplitude = clampInt(c.integer('v4.animationAmplitude'), 1, 2);
-      final windX = cyclicOffset(c.phase, 9 + speed * 2, amplitude);
+      final period = animationPeriod(speed, slow: 20, fast: 10);
+      final windX = cyclicOffset(c.phase, period, amplitude);
       if (windX != 0) {
         final lowerBackZone = maskFromPredicate((x, y) => y >= eyeY + 2);
         final lowerBack = back.intersect(lowerBackZone);
+        final backTips = lowerBack.intersect(
+          maskFromPredicate((x, y) => y >= bottomY + 3),
+        );
         final lowerSeam = back.intersect(
           maskFromPredicate((x, y) => y == eyeY + 1 || y == eyeY + 2),
         );
@@ -204,6 +208,16 @@ final class HairRenderer implements AvatarPartRenderer {
               .subtract(lowerBack)
               .union(lowerBack.translated(windX, 0))
               .union(lowerSeam);
+          if (backTips.count > 0) {
+            final tipOffset = cyclicOffset(
+              c.phase - 2,
+              period,
+              clampInt(amplitude + 1, 1, 3),
+            );
+            back = back
+                .subtract(backTips.translated(windX, 0))
+                .union(backTips.translated(tipOffset, 0));
+          }
         }
 
         final sideFrontZone = maskFromPredicate((x, y) =>
@@ -328,6 +342,7 @@ final class HairRenderer implements AvatarPartRenderer {
     if (style == 'none') return result;
     final length = c.integer('hair.fringeLength');
     final density = c.integer('hair.fringeDensity');
+    final random = c.random('hair.fringe.$style');
     final left = c.integer('head.leftX') + 1;
     final right = c.integer('head.rightX') - 1;
     final targetY = clampInt(hairlineY + length, hairlineY, eyeY + 2);
@@ -344,20 +359,29 @@ final class HairRenderer implements AvatarPartRenderer {
       result.fillTriangle((x: left + 2, y: hairlineY),
           (x: right, y: hairlineY), (x: right - 4, y: targetY));
     } else if (style == 'split' || style == 'curtain') {
+      final innerLeft = style == 'curtain' ? 21 : 20;
+      final innerRight = style == 'curtain' ? 27 : 28;
       result.fillTriangle((x: left, y: hairlineY),
-          (x: 23, y: hairlineY), (x: 20, y: targetY));
+          (x: 23, y: hairlineY), (x: innerLeft, y: targetY));
       result.fillTriangle((x: 25, y: hairlineY),
-          (x: right, y: hairlineY), (x: 28, y: targetY));
+          (x: right, y: hairlineY), (x: innerRight, y: targetY));
     } else if (style == 'singleTuft') {
       result.fillTriangle((x: 21, y: hairlineY), (x: 27, y: hairlineY),
           (x: 24, y: targetY));
     } else if (style == 'choppy' || style == 'uneven') {
       final strands = clampInt(3 + density, 3, 7);
       for (var i = 0; i < strands; i++) {
-        final x = left + 2 + ((right - left - 4) * i / (strands - 1)).round();
-        final y = targetY - positiveMod(i * 2 + density, 3);
-        result.fillTriangle((x: x - 2, y: hairlineY),
-            (x: x + 2, y: hairlineY), (x: x, y: y));
+        final center = left + 2 +
+            ((right - left - 4) * i / (strands - 1)).round();
+        final jitter = random.nextInt(-1, 1);
+        final tipY = targetY -
+            positiveMod(i * 2 + density + random.nextInt(0, 2), 3);
+        final halfWidth = style == 'choppy' ? 2 : 1 + i % 2;
+        result.fillTriangle(
+          (x: center - halfWidth, y: hairlineY),
+          (x: center + halfWidth, y: hairlineY),
+          (x: center + jitter, y: tipY),
+        );
       }
     } else if (style == 'asymmetric') {
       result.fillTriangle((x: left, y: hairlineY),
