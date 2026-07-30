@@ -59,16 +59,34 @@ final class IndexedImage {
     }
   }
 
-  String get hash => hash48(
-        indices,
-        prefix: <int>[
-          width & 0xff,
-          (width >> 8) & 0xff,
-          height & 0xff,
-          (height >> 8) & 0xff,
-          transparentIndex,
-        ],
-      );
+  /// A deterministic 48-bit hash of the indexed buffer and its dimensions.
+  String get hash => hash48(indices, prefix: _hashPrefix());
+
+  /// A deterministic 48-bit hash of the complete rendered appearance.
+  ///
+  /// Indexed pixels alone do not identify an image because the same indices can
+  /// be rendered through different palettes. The result-level image hash uses
+  /// this method so color-only avatar variants receive distinct identifiers.
+  String hashWithPalette(Iterable<int> rgbaColors) =>
+      hash48(indices, prefix: _hashPrefix(rgbaColors));
+
+  List<int> _hashPrefix([Iterable<int> rgbaColors = const <int>[]]) {
+    final bytes = <int>[
+      width & 0xff,
+      (width >> 8) & 0xff,
+      height & 0xff,
+      (height >> 8) & 0xff,
+      transparentIndex & 0xff,
+    ];
+    for (final rgba in rgbaColors) {
+      bytes
+        ..add((rgba >> 24) & 0xff)
+        ..add((rgba >> 16) & 0xff)
+        ..add((rgba >> 8) & 0xff)
+        ..add(rgba & 0xff);
+    }
+    return bytes;
+  }
 
   int get usedColorCount {
     final values = <int>{};
