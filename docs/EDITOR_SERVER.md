@@ -85,6 +85,11 @@ Supported actions:
 The response contains the normalized request, resolved genome, result metadata,
 SVG preview, validation report and property state for all bindings.
 
+The result metrics also expose final-composition visibility for semantic parts.
+The browser editor displays these ratios, face readability and visibility
+warnings, and can advance `request.phase` continuously to preview the selected
+animation without a separate animation API.
+
 ### `POST /api/export/png`
 
 Returns `image/png`. The body accepts `request` and optional `scale`.
