@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import '../geometry/pixel_rect.dart';
@@ -5,7 +6,9 @@ import '../util/math_utils.dart';
 
 final class PixelMask {
   PixelMask({this.width = 48, this.height = 48, Uint8List? data})
-      : data = data == null ? Uint8List(width * height) : Uint8List.fromList(data) {
+      : data = data == null
+            ? Uint8List(width * height)
+            : Uint8List.fromList(data) {
     if (this.data.length != width * height) {
       throw ArgumentError.value(this.data.length, 'data.length');
     }
@@ -36,8 +39,11 @@ final class PixelMask {
 
   PixelMask hLine(int x1, int x2, int y, [bool value = true]) {
     if (y < 0 || y >= height) return this;
-    final a = clampInt(x1 < x2 ? x1 : x2, 0, width - 1);
-    final b = clampInt(x1 > x2 ? x1 : x2, 0, width - 1);
+    final minX = x1 < x2 ? x1 : x2;
+    final maxX = x1 > x2 ? x1 : x2;
+    if (maxX < 0 || minX >= width) return this;
+    final a = clampInt(minX, 0, width - 1);
+    final b = clampInt(maxX, 0, width - 1);
     for (var x = a; x <= b; x++) {
       set(x, y, value);
     }
@@ -45,8 +51,12 @@ final class PixelMask {
   }
 
   PixelMask vLine(int x, int y1, int y2, [bool value = true]) {
-    final a = clampInt(y1 < y2 ? y1 : y2, 0, height - 1);
-    final b = clampInt(y1 > y2 ? y1 : y2, 0, height - 1);
+    if (x < 0 || x >= width) return this;
+    final minY = y1 < y2 ? y1 : y2;
+    final maxY = y1 > y2 ? y1 : y2;
+    if (maxY < 0 || minY >= height) return this;
+    final a = clampInt(minY, 0, height - 1);
+    final b = clampInt(maxY, 0, height - 1);
     for (var y = a; y <= b; y++) {
       set(x, y, value);
     }
@@ -61,8 +71,7 @@ final class PixelMask {
     return this;
   }
 
-  PixelMask fillEllipse(num cx, num cy, num rx, num ry,
-      [bool value = true]) {
+  PixelMask fillEllipse(num cx, num cy, num rx, num ry, [bool value = true]) {
     final radiusX = rx < 0 ? 0.0 : rx.toDouble();
     final radiusY = ry < 0 ? 0.0 : ry.toDouble();
     if (radiusX == 0 && radiusY == 0) {
@@ -90,11 +99,9 @@ final class PixelMask {
     final maxY = [a.y, b.y, c.y].reduce((x, y) => x > y ? x : y).ceil();
     final minX = [a.x, b.x, c.x].reduce((x, y) => x < y ? x : y).floor();
     final maxX = [a.x, b.x, c.x].reduce((x, y) => x > y ? x : y).ceil();
-    double area(({num x, num y}) p1, ({num x, num y}) p2,
-            ({num x, num y}) p3) =>
-        (p1.x * (p2.y - p3.y) +
-                p2.x * (p3.y - p1.y) +
-                p3.x * (p1.y - p2.y))
+    double area(
+            ({num x, num y}) p1, ({num x, num y}) p2, ({num x, num y}) p3) =>
+        (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y))
             .toDouble();
     final total = area(a, b, c);
     if (total == 0) return this;
@@ -178,6 +185,46 @@ final class PixelMask {
     return output;
   }
 
+  /// Nearest-neighbour rotation around a pixel-art joint.
+  PixelMask rotated(
+    int degrees, {
+    required int pivotX,
+    required int pivotY,
+  }) {
+    if (degrees == 0) return clone();
+    final output = PixelMask(width: width, height: height);
+    final radians = degrees * math.pi / 180;
+    final cosine = math.cos(radians);
+    final sine = math.sin(radians);
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        final dx = x - pivotX;
+        final dy = y - pivotY;
+        final sourceX = pivotX + cosine * dx + sine * dy;
+        final sourceY = pivotY - sine * dx + cosine * dy;
+        if (get(sourceX.round(), sourceY.round()) != 0) {
+          output.set(x, y);
+        }
+      }
+    }
+    return output;
+  }
+
+  /// Nearest-neighbour pixel-art scaling around a stable anchor.
+  PixelMask scaled(double scale, {int anchorX = 24, int anchorY = 47}) {
+    if (scale == 1) return clone();
+    final output = PixelMask(width: width, height: height);
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        if (get(x, y) == 0) continue;
+        final nx = anchorX + ((x - anchorX) * scale).round();
+        final ny = anchorY + ((y - anchorY) * scale).round();
+        output.set(nx, ny);
+      }
+    }
+    return output;
+  }
+
   PixelMask mirrorX() {
     final output = PixelMask(width: width, height: height);
     for (var y = 0; y < height; y++) {
@@ -192,9 +239,15 @@ final class PixelMask {
     var base = clone();
     final neighbours = diagonal
         ? const <(int, int)>[
-            (-1, -1), (0, -1), (1, -1),
-            (-1, 0), (0, 0), (1, 0),
-            (-1, 1), (0, 1), (1, 1),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (0, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
           ]
         : const <(int, int)>[(0, -1), (-1, 0), (0, 0), (1, 0), (0, 1)];
     for (var iteration = 0; iteration < iterations; iteration++) {
@@ -216,9 +269,15 @@ final class PixelMask {
     final output = PixelMask(width: width, height: height);
     final neighbours = diagonal
         ? const <(int, int)>[
-            (-1, -1), (0, -1), (1, -1),
-            (-1, 0), (0, 0), (1, 0),
-            (-1, 1), (0, 1), (1, 1),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (0, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
           ]
         : const <(int, int)>[(0, -1), (-1, 0), (0, 0), (1, 0), (0, 1)];
     for (var y = 0; y < height; y++) {

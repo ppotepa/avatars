@@ -59,7 +59,14 @@ PixelMask orderedDither(PixelMask area, int amount, {int phase = 0}) {
 }
 
 double rowWidth(
-  ({double top, double temple, double cheek, double cheek2, double jaw, double chin}) controls,
+  ({
+    double top,
+    double temple,
+    double cheek,
+    double cheek2,
+    double jaw,
+    double chin
+  }) controls,
   double t,
 ) {
   final points = <(double, double)>[
@@ -104,14 +111,14 @@ PixelMask shadingMask(
               (x > centerX + 5 && y > eyeY);
           break;
         case 'hair':
-          shade = (rightEdge && x > centerX) ||
-              (bottomEdge && y > topY + 3);
+          shade = (rightEdge && x > centerX) || (bottomEdge && y > topY + 3);
           break;
         case 'neck':
           shade = x > centerX || y <= topY + strength - 1;
           break;
         case 'clothing':
-          shade = (rightEdge && x > centerX) || bottomEdge ||
+          shade = (rightEdge && x > centerX) ||
+              bottomEdge ||
               ((x - centerX).abs() > 12 && positiveMod(y, 3) == 0);
           break;
         default:
@@ -123,7 +130,8 @@ PixelMask shadingMask(
   }
   var result = shadow.intersect(base);
   if (strength == 1) {
-    result = result.intersect(maskFromPredicate((x, y) => positiveMod(x + y, 2) == 0));
+    result = result
+        .intersect(maskFromPredicate((x, y) => positiveMod(x + y, 2) == 0));
   }
   if (strength > 1) {
     result = result.union(result.translated(-1, 0).intersect(base));
@@ -153,8 +161,7 @@ PixelMask highlightMask(
       final light = switch (kind) {
         'skin' => (x < centerX - 3 && leftEdge && y < mouthY) ||
             (topEdge && x < centerX),
-        'hair' => (topEdge && x < centerX + 2) ||
-            (leftEdge && y < eyeY),
+        'hair' => (topEdge && x < centerX + 2) || (leftEdge && y < eyeY),
         'neck' => leftEdge && x < centerX,
         'clothing' => topEdge && x < centerX,
         _ => leftEdge || topEdge,
@@ -164,7 +171,8 @@ PixelMask highlightMask(
   }
   var result = output.intersect(base);
   if (strength == 1) {
-    result = result.intersect(maskFromPredicate((x, y) => positiveMod(x + y, 2) == 0));
+    result = result
+        .intersect(maskFromPredicate((x, y) => positiveMod(x + y, 2) == 0));
   }
   if (strength > 2) {
     result = result.union(result.translated(1, 0).intersect(base));
@@ -173,10 +181,38 @@ PixelMask highlightMask(
 }
 
 const List<int> _cycleLut = <int>[
-  0, 195, 383, 556, 707, 831, 924, 981,
-  1000, 981, 924, 831, 707, 556, 383, 195,
-  0, -195, -383, -556, -707, -831, -924, -981,
-  -1000, -981, -924, -831, -707, -556, -383, -195,
+  0,
+  195,
+  383,
+  556,
+  707,
+  831,
+  924,
+  981,
+  1000,
+  981,
+  924,
+  831,
+  707,
+  556,
+  383,
+  195,
+  0,
+  -195,
+  -383,
+  -556,
+  -707,
+  -831,
+  -924,
+  -981,
+  -1000,
+  -981,
+  -924,
+  -831,
+  -707,
+  -556,
+  -383,
+  -195,
 ];
 
 /// Returns a deterministic sinusoid-like integer offset.
@@ -186,8 +222,8 @@ const List<int> _cycleLut = <int>[
 int cyclicOffset(int phase, int period, int amplitude) {
   final safePeriod = period < 4 ? 4 : period;
   final safeAmplitude = amplitude < 0 ? -amplitude : amplitude;
-  final index = positiveMod((phase * _cycleLut.length) ~/ safePeriod,
-      _cycleLut.length);
+  final index =
+      positiveMod((phase * _cycleLut.length) ~/ safePeriod, _cycleLut.length);
   final scaled = _cycleLut[index] * safeAmplitude;
   if (scaled >= 0) return (scaled + 500) ~/ 1000;
   return -((-scaled + 500) ~/ 1000);

@@ -50,7 +50,8 @@ abstract class AvatarPropertyBinding {
         if (max != null) 'max': max,
         'step': step,
         if (options.isNotEmpty)
-          'options': options.map((option) => option.toJson()).toList(growable: false),
+          'options':
+              options.map((option) => option.toJson()).toList(growable: false),
       };
 }
 
@@ -113,8 +114,9 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
   bool accepts(Object? value) {
     return switch (kind) {
       EditorFieldKind.text => value is String && value.trim().isNotEmpty,
-      EditorFieldKind.integer || EditorFieldKind.range =>
-        value is int && (min == null || value >= min!) && (max == null || value <= max!),
+      EditorFieldKind.integer || EditorFieldKind.range => value is int &&
+          (min == null || value >= min!) &&
+          (max == null || value <= max!),
       EditorFieldKind.select => options.any((option) => option.value == value),
       EditorFieldKind.boolean => value is bool,
     };
@@ -123,7 +125,8 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
   @override
   AvatarRequest write(AvatarRequest request, Object? value) {
     if (!accepts(value)) {
-      throw ArgumentError.value(value, id, 'Value is not accepted by the binding.');
+      throw ArgumentError.value(
+          value, id, 'Value is not accepted by the binding.');
     }
     return switch (id) {
       'request.seed' => request.copyWith(seed: value! as String),
@@ -158,7 +161,8 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
     return switch (id) {
       'request.seed' => request.copyWith(seed: 'avatar-default'),
       'settings.presentation' => request.copyWith(
-          settings: request.settings.copyWith(presentation: defaults.presentation),
+          settings:
+              request.settings.copyWith(presentation: defaults.presentation),
         ),
       'settings.bias' => request.copyWith(
           settings: request.settings.copyWith(bias: defaults.bias),
@@ -209,7 +213,8 @@ final class CatalogPropertyBinding extends AvatarPropertyBinding {
   int get step => definition.step;
   @override
   List<EditorFieldOption> get options => definition.options
-      .map((option) => EditorFieldOption(value: option.value, label: option.label))
+      .map((option) =>
+          EditorFieldOption(value: option.value, label: option.label))
       .toList(growable: false);
 
   @override
@@ -221,7 +226,8 @@ final class CatalogPropertyBinding extends AvatarPropertyBinding {
   @override
   AvatarRequest write(AvatarRequest request, Object? value) {
     if (!accepts(value)) {
-      throw ArgumentError.value(value, id, 'Value is not accepted by the catalog.');
+      throw ArgumentError.value(
+          value, id, 'Value is not accepted by the catalog.');
     }
     return request.copyWith(
       overrides: <String, Object>{...request.overrides, id: value!},

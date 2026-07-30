@@ -255,6 +255,14 @@ dart run benchmark/avatar_benchmark.dart
 
 The test suite covers catalog completeness, deterministic output, locks, presets, JSON round-trips, codecs, animation and a 256-seed invariant sample.
 
+Generate companion and clothing animation review sheets with:
+
+```bash
+dart run tool/render_graph_matrix.dart
+```
+
+The PNGs are written to `build/render-graph-matrix`.
+
 ## Compatibility promise
 
 Persist all of these values:
@@ -262,7 +270,7 @@ Persist all of these values:
 ```json
 {
   "schemaVersion": 1,
-  "generatorVersion": "4.1.0-dart.1",
+  "generatorVersion": "4.1.0-dart.2",
   "seed": "player-42",
   "settings": {},
   "overrides": {},

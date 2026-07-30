@@ -77,7 +77,7 @@ Group: `anatomy`. Fields: 10. Presets: 4.
 
 | ID | Type | Domain |
 |---|---|---|
-| `ears.shape` | select | `none`, `humanTiny`, `humanSmall`, `humanOval`, `humanRound`, `humanRect`, `humanLong`, `humanWide`, `attached`, `protruding`, `lowSet`, `highSet`, `asymmetric`, `elfShort`, `elfMedium`, `elfLong`, `elfUp`, `elfSide`, `goblin`, `fairy`, `bat`, `cat`, `fox`, `rabbit`, `demon`, `fin`, `mechanical` |
+| `ears.shape` | select | `none`, `humanTiny`, `humanSmall`, `humanOval`, `humanRound`, `humanRect`, `humanLong`, `humanWide`, `attached`, `protruding`, `lowSet`, `highSet`, `asymmetric`, `elfShort`, `elfMedium`, `elfLong`, `elfUp`, `elfSide`, `goblin`, `fairy`, `bat`, `cat`, `fox`, `rabbit`, `owl`, `deer`, `moth`, `draconic`, `bone`, `demon`, `fin`, `mechanical` |
 | `ears.width` | range | 2…9 (auto 2…6) |
 | `ears.height` | range | 3…12 (auto 4…9) |
 | `ears.positionY` | range | -3…3 (auto -2…2) |
@@ -282,13 +282,14 @@ Group: `colors`. Fields: 9. Presets: 4.
 
 ## V4 · Świat, archetyp i randomizacja (`identityV4`)
 
-Group: `details`. Fields: 6. Presets: 3.
+Group: `details`. Fields: 7. Presets: 3.
 
 | ID | Type | Domain |
 |---|---|---|
 | `v4.worldStyle` | select | `modern`, `fantasy`, `scienceFiction`, `cyberpunk`, `steampunk`, `postApocalyptic`, `historical`, `military`, `magical`, `horror`, `royal`, `mixed` |
 | `v4.archetype` | select | `auto`, `knight`, `wanderingMage`, `rogue`, `pirateCaptain`, `cowboy`, `soldier`, `streetHacker`, `scientist`, `mechanic`, `spacePilot`, `monarch`, `priest`, `barbarian`, `forestElf`, `goblinMechanic`, `robot`, `mutant`, `vampire`, `zombie`, `detective`, `musician`, `doctor`, `chef`, `miner`, `diver` |
 | `v4.randomMode` | select | `natural`, `diverse`, `stylized`, `fantasy`, `scifi`, `chaotic`, `rareHeavy`, `minimal` |
+| `v4.morphology` | select | `human`, `skull`, `skeleton`, `undead`, `construct` |
 | `v4.complexity` | range | 0…100 (auto 25…82) |
 | `v4.rarityBias` | range | 0…100 (auto 5…65) |
 | `v4.accessoryAsymmetry` | range | 0…5 (auto 0…3) |
@@ -299,7 +300,7 @@ Group: `wearables`. Fields: 8. Presets: 4.
 
 | ID | Type | Domain |
 |---|---|---|
-| `v4.headwear` | select | `none`, `baseballCap`, `beanie`, `beret`, `fedora`, `cowboyHat`, `topHat`, `wizardHat`, `strawHat`, `hood`, `bandana`, `headband`, `turban`, `crown`, `tiara`, `wreath`, `winterHat`, `sailorCap`, `militaryCap`, `chefHat`, `pirateHat`, `helmetKnightOpen`, `helmetKnightClosed`, `helmetNorse`, `helmetGladiator`, `helmetSamurai`, `helmetFuturistic`, `spaceHelmet`, `motorcycleHelmet`, `tacticalHelmet`, `minerHelmet`, `diverHelmet`, `hornedHelmet`, `demonHelmet`, `ceremonialHelmet`, `robotHelmet` |
+| `v4.headwear` | select | `none`, `baseballCap`, `beanie`, `beret`, `fedora`, `cowboyHat`, `topHat`, `wizardHat`, `strawHat`, `hood`, `bandana`, `headband`, `turban`, `crown`, `boneCrown`, `veil`, `hornedCrown`, `halo`, `hoodedCowl`, `tiara`, `wreath`, `winterHat`, `sailorCap`, `militaryCap`, `chefHat`, `pirateHat`, `helmetKnightOpen`, `helmetKnightClosed`, `helmetNorse`, `helmetGladiator`, `helmetSamurai`, `helmetFuturistic`, `spaceHelmet`, `motorcycleHelmet`, `tacticalHelmet`, `minerHelmet`, `diverHelmet`, `hornedHelmet`, `demonHelmet`, `ceremonialHelmet`, `robotHelmet` |
 | `v4.headwearWidth` | range | 8…40 (auto 16…32) |
 | `v4.headwearHeight` | range | 2…15 (auto 4…10) |
 | `v4.headwearTilt` | range | -3…3 (auto -1…1) |
@@ -327,7 +328,7 @@ Group: `wearables`. Fields: 4. Presets: 3.
 
 | ID | Type | Domain |
 |---|---|---|
-| `v4.faceMask` | select | `none`, `surgicalMask`, `respirator`, `faceBandana`, `ninjaMask`, `gasMask`, `theaterMask`, `venetianMask`, `demonMask`, `robotMask`, `halfMask`, `hockeyMask`, `ceremonialMask`, `balaclava`, `scarfMask` |
+| `v4.faceMask` | select | `none`, `surgicalMask`, `respirator`, `faceBandana`, `ninjaMask`, `gasMask`, `theaterMask`, `venetianMask`, `demonMask`, `robotMask`, `halfMask`, `hockeyMask`, `ceremonialMask`, `skullPlate`, `boneJaw`, `plagueMask`, `oniMask`, `porcelainMask`, `balaclava`, `scarfMask` |
 | `v4.maskCoverage` | range | 1…6 (auto 2…5) |
 | `v4.maskFilterSize` | range | 0…4 (auto 1…3) |
 | `v4.maskDamage` | range | 0…4 (auto 0…2) |

@@ -6,8 +6,7 @@ double clampDouble(double value, double min, double max) =>
 
 int roundInt(num value) => value.round();
 
-double lerpDouble(num a, num b, double t) =>
-    (a + (b - a) * t).toDouble();
+double lerpDouble(num a, num b, double t) => (a + (b - a) * t).toDouble();
 
 int positiveMod(int value, int modulus) =>
     ((value % modulus) + modulus) % modulus;

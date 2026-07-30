@@ -1,0 +1,12 @@
+{
+  "name": "avatar-genome-editor-web",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "check:web": "node --check web/app.js",
+    "smoke:frontend": "playwright test scripts/frontend_smoke.spec.js --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.0"
+  }
+}

@@ -72,7 +72,11 @@ final class V41LayoutResolver implements LayoutResolver {
       ..addDerived(
         'body.shoulderY',
         'landmark',
-        const <String>['body.verticalPosition', 'body.heightBias', 'shoulders.height'],
+        const <String>[
+          'body.verticalPosition',
+          'body.heightBias',
+          'shoulders.height'
+        ],
         (v) => clampInt(
           35 +
               (v['body.verticalPosition']! as int) +
@@ -125,7 +129,8 @@ final class V41LayoutResolver implements LayoutResolver {
         'head.topY',
         'landmark',
         const <String>['head.bottomY', 'head.actualHeight'],
-        (v) => (v['head.bottomY']! as int) - (v['head.actualHeight']! as int) + 1,
+        (v) =>
+            (v['head.bottomY']! as int) - (v['head.actualHeight']! as int) + 1,
       )
       ..addDerived(
         'head.leftX',
@@ -146,7 +151,10 @@ final class V41LayoutResolver implements LayoutResolver {
         'face.eyeY',
         'landmark',
         const <String>[
-          'head.topY', 'forehead.height', 'eyes.positionY', 'head.actualHeight',
+          'head.topY',
+          'forehead.height',
+          'eyes.positionY',
+          'head.actualHeight',
         ],
         (v) => clampInt(
           (v['head.topY']! as int) +
@@ -177,10 +185,17 @@ final class V41LayoutResolver implements LayoutResolver {
       ..addDerived(
         'face.noseTipY',
         'landmark',
-        const <String>['face.eyeY', 'nose.length', 'nose.positionY', 'head.bottomY'],
+        const <String>[
+          'face.eyeY',
+          'nose.length',
+          'nose.positionY',
+          'head.bottomY'
+        ],
         (v) => clampInt(
           (v['face.eyeY']! as int) +
-              ((v['nose.length']! as int) < 2 ? 2 : (v['nose.length']! as int)) +
+              ((v['nose.length']! as int) < 2
+                  ? 2
+                  : (v['nose.length']! as int)) +
               (v['nose.positionY']! as int),
           (v['face.eyeY']! as int) + 2,
           (v['head.bottomY']! as int) - 7,
@@ -229,14 +244,16 @@ final class V41LayoutResolver implements LayoutResolver {
         'hair.topY',
         'landmark',
         const <String>['head.topY', 'hair.actualTopVolume'],
-        (v) => clampInt((v['head.topY']! as int) - (v['hair.actualTopVolume']! as int), 0, 47),
+        (v) => clampInt(
+            (v['head.topY']! as int) - (v['hair.actualTopVolume']! as int),
+            0,
+            47),
       )
       ..addDerived(
         'torso.topY',
         'landmark',
         const <String>['body.shoulderY', 'torso.height'],
-        (v) => (v['body.shoulderY']! as int) <
-                48 - (v['torso.height']! as int)
+        (v) => (v['body.shoulderY']! as int) < 48 - (v['torso.height']! as int)
             ? (v['body.shoulderY']! as int)
             : 48 - (v['torso.height']! as int),
       )

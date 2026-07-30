@@ -7,7 +7,7 @@ void main() {
 
     test('contains the complete HTML catalog', () {
       expect(catalog.categoryCount, 26);
-      expect(catalog.fieldCount, 223);
+      expect(catalog.fieldCount, 224);
       expect(catalog.wholePresets.length, 13);
     });
 

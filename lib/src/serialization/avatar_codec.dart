@@ -44,8 +44,8 @@ final class AvatarSvgCodec implements AvatarCodec<String> {
           'viewBox="0 0 ${image.width} ${image.height}" '
           'shape-rendering="crispEdges">');
     if (includeMetadata) {
-      final metadata = const JsonEncoder()
-          .convert(result.toJson(includePixels: false));
+      final metadata =
+          const JsonEncoder().convert(result.toJson(includePixels: false));
       buffer.writeln(
         '<metadata>${const HtmlEscape().convert(metadata)}</metadata>',
       );

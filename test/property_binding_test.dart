@@ -5,7 +5,8 @@ void main() {
   test('registry exposes request and all catalog fields', () {
     final registry = AvatarPropertyRegistry();
     expect(registry.requestBindings, hasLength(8));
-    expect(registry.catalogBindings, hasLength(ParameterCatalog.v41.fieldCount));
+    expect(
+        registry.catalogBindings, hasLength(ParameterCatalog.v41.fieldCount));
     expect(registry.bindings, hasLength(ParameterCatalog.v41.fieldCount + 8));
     expect(registry.bindingById['hair.length'], isNotNull);
     expect(registry.bindingById['settings.age'], isNotNull);

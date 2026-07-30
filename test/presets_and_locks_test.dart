@@ -39,7 +39,8 @@ void main() {
       original.genome,
       'hair',
     );
-    final changedSeed = generator.generate(locked.copyWith(seed: 'category-lock-b'));
+    final changedSeed =
+        generator.generate(locked.copyWith(seed: 'category-lock-b'));
     for (final field in ParameterCatalog.v41.categoryById['hair']!.fields) {
       expect(
         changedSeed.genome.values[field.id],

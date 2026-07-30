@@ -1,6 +1,7 @@
 import 'avatar_version.dart';
 
 enum AvatarPresentation { neutral, masculine, feminine }
+
 enum FantasyLevel { none, subtle, moderate, strong }
 
 final class GenomeSettings {
@@ -78,22 +79,22 @@ final class AvatarRequest {
       throw FormatException('Unsupported AvatarRequest schema: $schema.');
     }
     return AvatarRequest(
-        seed: json['seed']! as String,
-        settings: GenomeSettings.fromJson(
-          Map<String, Object?>.from(
-            json['settings'] as Map? ?? const <String, Object?>{},
-          ),
+      seed: json['seed']! as String,
+      settings: GenomeSettings.fromJson(
+        Map<String, Object?>.from(
+          json['settings'] as Map? ?? const <String, Object?>{},
         ),
-        overrides: _objectMap(json['overrides']),
-        lockedParameters: _objectMap(json['lockedParameters']),
-        lockedCategories: _nestedObjectMap(json['lockedCategories']),
-        categoryNonces: <String, int>{
-          for (final entry in _objectMap(json['categoryNonces']).entries)
-            entry.key: (entry.value as num).toInt(),
-        },
-        phase: (json['phase'] as num?)?.toInt() ?? 0,
-        guardEnabled: json['guardEnabled'] as bool? ?? true,
-      );
+      ),
+      overrides: _objectMap(json['overrides']),
+      lockedParameters: _objectMap(json['lockedParameters']),
+      lockedCategories: _nestedObjectMap(json['lockedCategories']),
+      categoryNonces: <String, int>{
+        for (final entry in _objectMap(json['categoryNonces']).entries)
+          entry.key: (entry.value as num).toInt(),
+      },
+      phase: (json['phase'] as num?)?.toInt() ?? 0,
+      guardEnabled: json['guardEnabled'] as bool? ?? true,
+    );
   }
 
   final String seed;

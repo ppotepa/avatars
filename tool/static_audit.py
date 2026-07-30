@@ -102,7 +102,7 @@ def catalog_errors() -> list[str]:
     errors: list[str] = []
     ids = [field["id"] for field in fields]
     if len(categories) != 26: errors.append(f"catalog categories: expected 26, got {len(categories)}")
-    if len(fields) != 223: errors.append(f"catalog fields: expected 223, got {len(fields)}")
+    if len(fields) != 224: errors.append(f"catalog fields: expected 224, got {len(fields)}")
     if len(ids) != len(set(ids)): errors.append("catalog contains duplicate field identifiers")
 
     library_text = "\n".join(
@@ -174,7 +174,9 @@ def project_contract_errors() -> list[str]:
     app_js = (ROOT / "web" / "app.js").read_text(encoding="utf-8") if (ROOT / "web" / "app.js").is_file() else ""
     data = json.loads(CATALOG.read_text(encoding="utf-8"))
     field_ids = [field["id"] for category in data["categories"] for field in category["fields"]]
-    hardcoded = [field_id for field_id in field_ids if field_id in app_js]
+    # Animation is a runtime player control, not an editable catalog binding.
+    hardcoded = [field_id for field_id in field_ids
+                 if field_id != "v4.animation" and field_id in app_js]
     if hardcoded:
         errors.append("frontend hardcodes catalog fields instead of using bindings: " + ", ".join(hardcoded[:10]))
     return errors
@@ -192,7 +194,7 @@ def main() -> int:
         return 1
     print("STATIC AUDIT PASSED")
     print("- 26 categories")
-    print("- 223 referenced fields")
+    print("- 224 referenced fields")
     print(f"- {len(dart_files())} Dart files with balanced delimiters")
     print("- all relative imports resolve")
     print("Run `dart analyze` and `dart test` in a Dart SDK environment for compiler-level validation.")

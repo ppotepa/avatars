@@ -11,7 +11,8 @@ final class AvatarPresetService {
   AvatarRequest applyWholePreset(AvatarRequest request, String presetId) {
     final preset = catalog.wholePresets[presetId];
     if (preset == null) {
-      throw ArgumentError.value(presetId, 'presetId', 'Unknown whole-avatar preset.');
+      throw ArgumentError.value(
+          presetId, 'presetId', 'Unknown whole-avatar preset.');
     }
     final settings = request.settings.copyWith(
       presentation: _presentation(preset.global['presentation'] as String?),
@@ -37,8 +38,8 @@ final class AvatarPresetService {
     }
     final preset = category.presets[presetId];
     if (preset == null) {
-      throw ArgumentError.value(presetId, 'presetId',
-          'Unknown preset for category $categoryId.');
+      throw ArgumentError.value(
+          presetId, 'presetId', 'Unknown preset for category $categoryId.');
     }
     return request.copyWith(
       overrides: <String, Object>{...request.overrides, ...preset},

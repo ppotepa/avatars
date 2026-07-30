@@ -32,11 +32,23 @@ final class IndexedImage {
         transparentIndex: transparentIndex,
       );
 
+  IndexedImage crop(int x, int y, int cropWidth, int cropHeight) {
+    final output = IndexedImage(
+      width: cropWidth,
+      height: cropHeight,
+      transparentIndex: transparentIndex,
+    );
+    for (var yy = 0; yy < cropHeight; yy++) {
+      for (var xx = 0; xx < cropWidth; xx++) {
+        output.setPixel(xx, yy, get(x + xx, y + yy));
+      }
+    }
+    return output;
+  }
 
-  int get(int x, int y) =>
-      x >= 0 && x < width && y >= 0 && y < height
-          ? indices[y * width + x]
-          : transparentIndex;
+  int get(int x, int y) => x >= 0 && x < width && y >= 0 && y < height
+      ? indices[y * width + x]
+      : transparentIndex;
 
   Map<String, Object> toJson() => <String, Object>{
         'width': width,

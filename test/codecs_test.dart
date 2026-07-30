@@ -31,4 +31,38 @@ void main() {
     final png = const AvatarPngCodec(scale: 2).encode(result);
     expect(png.sublist(0, 8), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
   });
+
+  test('GIF animation export has stable, opaque feed-safe frames', () {
+    final animation = AvatarGenerator().generateAnimation(
+      const AvatarRequest(
+        seed: 'feed-safe-animation',
+        overrides: <String, Object>{'v4.animation': 'idle'},
+      ),
+      frameCount: 16,
+    );
+    final first = animation.frames.first.image;
+    expect(
+      animation.frames.every((frame) =>
+          frame.image.width == first.width &&
+          frame.image.height == first.height),
+      isTrue,
+    );
+    expect(
+      animation.frames.every((frame) => frame.image.indices
+          .every((index) => index != frame.image.transparentIndex)),
+      isTrue,
+    );
+    final gif = const AvatarGifCodec(scale: 8).encode(animation);
+    expect(String.fromCharCodes(gif.sublist(0, 6)), 'GIF89a');
+
+    final manifest = AvatarFeedManifest.forGif(
+      animation: animation,
+      animationId: 'idle',
+      scale: 8,
+    ).toJson();
+    expect(manifest['feedSafe'], isTrue);
+    expect(manifest['fps'], 8);
+    expect(manifest['animation'], 'idle');
+    expect(manifest['canvas'], isA<Map>());
+  });
 }

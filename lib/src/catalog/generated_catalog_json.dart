@@ -1,4 +1,4 @@
-// GENERATED FROM avatar-generator-v4.1.html. Do not edit manually.
+// GENERATED FROM tool/catalog_v41.json. Do not edit manually.
 const String kV41CatalogJson = r'''
 {
   "categories": [
@@ -952,6 +952,26 @@ const String kV41CatalogJson = r'''
             {
               "value": "humanWide",
               "label": "humanWide"
+            },
+            {
+              "value": "owl",
+              "label": "owl"
+            },
+            {
+              "value": "deer",
+              "label": "deer"
+            },
+            {
+              "value": "moth",
+              "label": "moth"
+            },
+            {
+              "value": "draconic",
+              "label": "draconic"
+            },
+            {
+              "value": "bone",
+              "label": "bone"
             },
             {
               "value": "attached",
@@ -4763,6 +4783,33 @@ const String kV41CatalogJson = r'''
           ]
         },
         {
+          "id": "v4.morphology",
+          "label": "Profil morfologiczny",
+          "type": "select",
+          "options": [
+            {
+              "value": "human",
+              "label": "human"
+            },
+            {
+              "value": "skull",
+              "label": "skull"
+            },
+            {
+              "value": "skeleton",
+              "label": "skeleton"
+            },
+            {
+              "value": "undead",
+              "label": "undead"
+            },
+            {
+              "value": "construct",
+              "label": "construct"
+            }
+          ]
+        },
+        {
           "id": "v4.complexity",
           "label": "Budżet złożoności",
           "type": "range",
@@ -4884,6 +4931,26 @@ const String kV41CatalogJson = r'''
             {
               "value": "crown",
               "label": "crown"
+            },
+            {
+              "value": "boneCrown",
+              "label": "boneCrown"
+            },
+            {
+              "value": "veil",
+              "label": "veil"
+            },
+            {
+              "value": "hornedCrown",
+              "label": "hornedCrown"
+            },
+            {
+              "value": "halo",
+              "label": "halo"
+            },
+            {
+              "value": "hoodedCowl",
+              "label": "hoodedCowl"
             },
             {
               "value": "tiara",
@@ -5320,6 +5387,26 @@ const String kV41CatalogJson = r'''
             {
               "value": "ceremonialMask",
               "label": "ceremonialMask"
+            },
+            {
+              "value": "skullPlate",
+              "label": "skullPlate"
+            },
+            {
+              "value": "boneJaw",
+              "label": "boneJaw"
+            },
+            {
+              "value": "plagueMask",
+              "label": "plagueMask"
+            },
+            {
+              "value": "oniMask",
+              "label": "oniMask"
+            },
+            {
+              "value": "porcelainMask",
+              "label": "porcelainMask"
             },
             {
               "value": "balaclava",
@@ -6562,6 +6649,54 @@ const String kV41CatalogJson = r'''
             {
               "value": "particles",
               "label": "particles"
+            },
+            {
+              "value": "talking",
+              "label": "talking"
+            },
+            {
+              "value": "laughing",
+              "label": "laughing"
+            },
+            {
+              "value": "sleeping",
+              "label": "sleeping"
+            },
+            {
+              "value": "scared",
+              "label": "scared"
+            },
+            {
+              "value": "surprised",
+              "label": "surprised"
+            },
+            {
+              "value": "angry",
+              "label": "angry"
+            },
+            {
+              "value": "sad",
+              "label": "sad"
+            },
+            {
+              "value": "happy",
+              "label": "happy"
+            },
+            {
+              "value": "thinking",
+              "label": "thinking"
+            },
+            {
+              "value": "confused",
+              "label": "confused"
+            },
+            {
+              "value": "hurt",
+              "label": "hurt"
+            },
+            {
+              "value": "celebration",
+              "label": "celebration"
             }
           ]
         },

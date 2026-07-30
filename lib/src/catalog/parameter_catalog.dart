@@ -7,7 +7,8 @@ enum ParameterKind { range, select }
 final class ParameterOption {
   const ParameterOption({required this.value, required this.label});
 
-  factory ParameterOption.fromJson(Map<String, Object?> json) => ParameterOption(
+  factory ParameterOption.fromJson(Map<String, Object?> json) =>
+      ParameterOption(
         value: json['value']! as String,
         label: json['label']! as String,
       );
@@ -86,7 +87,8 @@ final class ParameterDefinition {
         if (autoMin != null) 'autoMin': autoMin,
         if (autoMax != null) 'autoMax': autoMax,
         if (options.isNotEmpty)
-          'options': options.map((option) => option.toJson()).toList(growable: false),
+          'options':
+              options.map((option) => option.toJson()).toList(growable: false),
       };
 
   bool accepts(Object value) {

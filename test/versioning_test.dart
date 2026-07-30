@@ -6,7 +6,8 @@ void main() {
     const request = AvatarRequest(seed: 'version-contract');
     final result = AvatarGenerator().generate(request);
 
-    expect(request.toJson()['schemaVersion'], AvatarGenomeVersion.requestSchema);
+    expect(
+        request.toJson()['schemaVersion'], AvatarGenomeVersion.requestSchema);
     expect(result.toJson()['schemaVersion'], AvatarGenomeVersion.resultSchema);
     expect(result.genome.generatorVersion, AvatarGenomeVersion.generator);
     expect(result.palette.id, contains(AvatarGenomeVersion.palette));

@@ -24,7 +24,8 @@ final class GraphNode {
 }
 
 final class GraphEdge {
-  const GraphEdge({required this.from, required this.to, required this.relation});
+  const GraphEdge(
+      {required this.from, required this.to, required this.relation});
 
   final String from;
   final String to;
@@ -116,8 +117,9 @@ final class AvatarGraph {
     return this;
   }
 
-  Map<String, Object?> values() =>
-      <String, Object?>{for (final entry in nodes.entries) entry.key: entry.value.value};
+  Map<String, Object?> values() => <String, Object?>{
+        for (final entry in nodes.entries) entry.key: entry.value.value
+      };
 
   Map<String, Object> snapshot() => <String, Object>{
         'nodes': nodes.values.map((node) => node.toJson()).toList(),

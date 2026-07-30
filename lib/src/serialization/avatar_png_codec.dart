@@ -132,7 +132,7 @@ final class AvatarSpriteSheetCodec {
 
   Map<String, Object> metadata(AvatarAnimation animation) => <String, Object>{
         'frameCount': animation.frames.length,
-        'frameDurationMs': animation.frameDuration.inMilliseconds,
+        'frameDurationMs': animation.safeFrameDuration.inMilliseconds,
         'loop': animation.loop,
         'columns': columns,
         'frameWidth':

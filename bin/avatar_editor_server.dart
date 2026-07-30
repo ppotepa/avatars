@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:avatar_genome/avatar_genome_io.dart';
@@ -47,9 +48,11 @@ Options:
       exit(0);
     }
     final host = _argumentValue(arguments, '--host') ?? '127.0.0.1';
-    final port = int.tryParse(_argumentValue(arguments, '--port') ?? '') ?? 8080;
+    final port =
+        int.tryParse(_argumentValue(arguments, '--port') ?? '') ?? 8080;
     if (port < 0 || port > 65535) {
-      throw ArgumentError.value(port, 'port', 'Port must be between 0 and 65535.');
+      throw ArgumentError.value(
+          port, 'port', 'Port must be between 0 and 65535.');
     }
     return ServerConfig(
       host: host,
@@ -114,11 +117,33 @@ final class AvatarEditorHttpApplication {
         );
         return;
       }
+      if (request.method == 'POST' && path == '/api/animation-preview') {
+        final payload = await _readJson(request);
+        final preview = _generateAnimationPreviewFromPayload(payload);
+        await _json(request, preview.toJson());
+        return;
+      }
+      if (request.method == 'POST' && path == '/api/avatar-bundle') {
+        final payload = await _readJson(request);
+        final bundle = _generateAnimationBundleFromPayload(payload);
+        await _json(request, bundle.toJson());
+        return;
+      }
+      if (request.method == 'POST' && path == '/api/avatar-clip') {
+        final payload = await _readJson(request);
+        final clip = await Isolate.run(
+          () => _generateAnimationClipPayload(payload),
+        );
+        await _json(request, clip);
+        return;
+      }
       if (request.method == 'POST' && path == '/api/export/png') {
         final payload = await _readJson(request);
         final editorResponse = _generateFromPayload(payload);
-        final scale = _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
-        final bytes = AvatarPngCodec(scale: scale).encode(editorResponse.result);
+        final scale =
+            _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final bytes =
+            AvatarPngCodec(scale: scale).encode(editorResponse.result);
         await _binary(
           request,
           bytes,
@@ -130,7 +155,8 @@ final class AvatarEditorHttpApplication {
       if (request.method == 'POST' && path == '/api/export/svg') {
         final payload = await _readJson(request);
         final editorResponse = _generateFromPayload(payload);
-        final scale = _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final scale =
+            _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
         final svg = AvatarSvgCodec(
           scale: scale,
           includeMetadata: true,
@@ -143,12 +169,38 @@ final class AvatarEditorHttpApplication {
         );
         return;
       }
+      if (request.method == 'POST' && path == '/api/export/gif') {
+        final payload = await _readJson(request);
+        final animation = _generateAnimationFromPayload(payload);
+        final scale =
+            _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final bytes = AvatarGifCodec(scale: scale).encode(animation);
+        final hash = animation.frames.isNotEmpty
+            ? animation.frames.first.imageHash
+            : 'avatar';
+        await _binary(
+          request,
+          bytes,
+          contentType: ContentType('image', 'gif'),
+          fileName: 'avatar-$hash.gif',
+        );
+        return;
+      }
       if (request.method == 'POST' && path == '/api/save') {
         final payload = await _readJson(request);
         final response = _generateFromPayload(payload);
-        final id = _safeId(payload['id'] as String? ?? response.result.imageHash);
-        final scale = _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
-        final saved = await _saveAvatar(id, response, scale: scale);
+        final id =
+            _safeId(payload['id'] as String? ?? response.result.imageHash);
+        final scale =
+            _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final animationId = _stringOption(payload, 'animationId') ??
+            _resolvedAnimationId(response);
+        final saved = await _saveAvatar(
+          id,
+          response,
+          scale: scale,
+          animationId: animationId,
+        );
         await _json(request, saved);
         return;
       }
@@ -180,7 +232,8 @@ final class AvatarEditorHttpApplication {
     } on AvatarRequestValidationException catch (error) {
       await _json(request, error.toJson(), statusCode: HttpStatus.badRequest);
     } on FormatException catch (error) {
-      await _error(request, HttpStatus.badRequest, 'Invalid JSON', error.message);
+      await _error(
+          request, HttpStatus.badRequest, 'Invalid JSON', error.message);
     } on ArgumentError catch (error) {
       await _error(
         request,
@@ -189,7 +242,8 @@ final class AvatarEditorHttpApplication {
         error.message?.toString() ?? error.toString(),
       );
     } on TypeError catch (error) {
-      await _error(request, HttpStatus.badRequest, 'Invalid type', error.toString());
+      await _error(
+          request, HttpStatus.badRequest, 'Invalid type', error.toString());
     } catch (error, stackTrace) {
       stderr.writeln('Unhandled request error: $error\n$stackTrace');
       try {
@@ -233,10 +287,78 @@ final class AvatarEditorHttpApplication {
     );
   }
 
+  AvatarAnimationPreviewResponse _generateAnimationPreviewFromPayload(
+    Map<String, Object?> payload,
+  ) {
+    final requestJson = payload['request'] is Map
+        ? Map<String, Object?>.from(payload['request']! as Map)
+        : payload;
+    final avatarRequest = AvatarRequest.fromJson(requestJson);
+    final actions = (payload['actions'] as List<Object?>? ?? const <Object?>[])
+        .map((value) => AvatarEditorAction.fromJson(
+              Map<String, Object?>.from(value! as Map),
+            ))
+        .toList(growable: false);
+    final phaseStep =
+        _integerOption(payload, 'phaseStep', fallback: 2, min: 1, max: 8);
+    return service.generateAnimationPreview(
+      avatarRequest,
+      actions: actions,
+      svgScale:
+          _integerOption(payload, 'svgScale', fallback: 8, min: 1, max: 64),
+      frameCount:
+          _integerOption(payload, 'frameCount', fallback: 4, min: 1, max: 16),
+      phaseStep: phaseStep,
+    );
+  }
+
+  AvatarAnimation _generateAnimationFromPayload(
+    Map<String, Object?> payload,
+  ) {
+    final requestJson = payload['request'] is Map
+        ? Map<String, Object?>.from(payload['request']! as Map)
+        : payload;
+    final avatarRequest = AvatarRequest.fromJson(requestJson);
+    final actions = (payload['actions'] as List<Object?>? ?? const <Object?>[])
+        .map((value) => AvatarEditorAction.fromJson(
+              Map<String, Object?>.from(value! as Map),
+            ))
+        .toList(growable: false);
+    return service.generatePreviewAnimation(
+      avatarRequest,
+      actions: actions,
+      frameCount:
+          _integerOption(payload, 'frameCount', fallback: 4, min: 1, max: 16),
+      phaseStep:
+          _integerOption(payload, 'phaseStep', fallback: 2, min: 1, max: 8),
+    );
+  }
+
+  AvatarAnimationBundleResponse _generateAnimationBundleFromPayload(
+    Map<String, Object?> payload,
+  ) {
+    final requestJson = payload['request'] is Map
+        ? Map<String, Object?>.from(payload['request']! as Map)
+        : payload;
+    final avatarRequest = AvatarRequest.fromJson(requestJson);
+    final actions = (payload['actions'] as List<Object?>? ?? const <Object?>[])
+        .map((value) => AvatarEditorAction.fromJson(
+              Map<String, Object?>.from(value! as Map),
+            ))
+        .toList(growable: false);
+    return service.generateAnimationBundle(
+      avatarRequest,
+      actions: actions,
+      svgScale:
+          _integerOption(payload, 'svgScale', fallback: 8, min: 1, max: 64),
+    );
+  }
+
   Future<Map<String, Object>> _saveAvatar(
     String id,
     AvatarEditorResponse response, {
     required int scale,
+    required String animationId,
   }) async {
     final directory = Directory.fromUri(outputDirectory.uri.resolve('$id/'));
     await directory.create(recursive: true);
@@ -245,29 +367,69 @@ final class AvatarEditorHttpApplication {
     final resultFile = File.fromUri(directory.uri.resolve('avatar.json'));
     final svgFile = File.fromUri(directory.uri.resolve('avatar.svg'));
     final pngFile = File.fromUri(directory.uri.resolve('avatar.png'));
+    final gifFile = File.fromUri(directory.uri.resolve('avatar.gif'));
+    final animationFile = File.fromUri(directory.uri.resolve('animation.json'));
+    final animationBundleFile =
+        File.fromUri(directory.uri.resolve('animation_bundle.json'));
+    final savedRequest = response.request.copyWith(
+      overrides: <String, Object>{
+        ...response.request.overrides,
+        'v4.animation': animationId,
+      },
+    );
+    final savedResponse = service.generate(savedRequest, svgScale: scale);
+    final animation = service.generatePreviewAnimation(
+      savedRequest,
+      frameCount: 16,
+      phaseStep: 1,
+    );
+    final bundle = service.generateAnimationBundle(
+      savedRequest,
+      svgScale: scale,
+    );
+    final manifest = AvatarFeedManifest.forGif(
+      animation: animation,
+      animationId: animationId,
+      scale: scale,
+    ).toJson();
 
-    await requestFile.writeAsString(pretty.convert(response.request.toJson()));
+    await requestFile.writeAsString(pretty.convert(savedRequest.toJson()));
     await resultFile.writeAsString(
-      pretty.convert(response.result.toJson(includePixels: false)),
+      pretty.convert(savedResponse.result.toJson(includePixels: false)),
     );
     await svgFile.writeAsString(
-      AvatarSvgCodec(scale: scale, includeMetadata: true).encode(response.result),
+      AvatarSvgCodec(scale: scale, includeMetadata: true).encode(
+        savedResponse.result,
+      ),
     );
     await pngFile.writeAsBytes(
-      AvatarPngCodec(scale: scale).encode(response.result),
+      AvatarPngCodec(scale: scale).encode(savedResponse.result),
     );
+    await gifFile.writeAsBytes(AvatarGifCodec(scale: scale).encode(animation));
+    await animationFile.writeAsString(pretty.convert(manifest));
+    await animationBundleFile.writeAsString(pretty.convert(bundle.toJson()));
 
     return <String, Object>{
       'id': id,
-      'imageHash': response.result.imageHash,
+      'imageHash': savedResponse.result.imageHash,
       'directory': 'output/avatars/$id',
       'files': const <String>[
         'request.json',
         'avatar.json',
         'avatar.svg',
         'avatar.png',
+        'avatar.gif',
+        'animation.json',
+        'animation_bundle.json',
       ],
     };
+  }
+
+  String _resolvedAnimationId(AvatarEditorResponse response) {
+    final animationId = response.propertyState['v4.animation'] is Map
+        ? (response.propertyState['v4.animation'] as Map)['resolvedValue']
+        : null;
+    return animationId?.toString() ?? 'idle';
   }
 
   Future<Map<String, Object?>> _readJson(HttpRequest request) async {
@@ -388,6 +550,32 @@ final class AvatarEditorHttpApplication {
   }
 }
 
+Map<String, Object?> _generateAnimationClipPayload(
+  Map<String, Object?> payload,
+) {
+  final requestJson = payload['request'] is Map
+      ? Map<String, Object?>.from(payload['request']! as Map)
+      : payload;
+  final avatarRequest = AvatarRequest.fromJson(requestJson);
+  final actions = (payload['actions'] as List<Object?>? ?? const <Object?>[])
+      .map(
+        (value) => AvatarEditorAction.fromJson(
+          Map<String, Object?>.from(value! as Map),
+        ),
+      )
+      .toList(growable: false);
+  final animationId = _stringOption(payload, 'animationId') ?? 'idle';
+  return AvatarEditorService()
+      .generateAnimationClip(
+        avatarRequest,
+        animationId: animationId,
+        actions: actions,
+        svgScale:
+            _integerOption(payload, 'svgScale', fallback: 8, min: 1, max: 64),
+      )
+      .toJson();
+}
+
 Directory _resolveProjectRoot(String? explicitPath) {
   if (explicitPath != null) {
     return Directory(explicitPath).absolute;
@@ -425,6 +613,13 @@ int _integerOption(
 bool? _boolOption(Map<String, Object?> payload, String name) {
   final value = payload[name];
   return value is bool ? value : null;
+}
+
+String? _stringOption(Map<String, Object?> payload, String name) {
+  final value = payload[name];
+  if (value is! String) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
 
 String _safeId(String value) {

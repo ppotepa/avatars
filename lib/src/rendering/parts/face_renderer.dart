@@ -12,6 +12,12 @@ final class FaceRenderer implements AvatarPartRenderer {
   void render(AvatarRenderContext context, AvatarRenderState state) {
     final head = state.mask('head');
     if (head.count == 0) return;
+    state.metadata['featureRequested.eyes'] =
+        context.string('eyes.shape') != 'none';
+    state.metadata['featureRequested.nose'] =
+        context.string('nose.shape') != 'none';
+    state.metadata['featureRequested.mouth'] =
+        context.string('mouth.shape') != 'none';
 
     final eyes = _eyes(context, head);
     final mouth = _mouth(context, head);
@@ -42,67 +48,141 @@ final class FaceRenderer implements AvatarPartRenderer {
       ..putMask('faceInner', zones.inner);
 
     state
-      ..addLayer('cheeks.shadow', 75, cheeks.shadow,
-          context.color('skinShadow'), meta: const {'part': 'cheeks'})
-      ..addLayer('cheeks.blush', 76, cheeks.blush,
-          context.color('skinAccent'), meta: const {'part': 'cheeks'})
-      ..addLayer('skin.details.shadow', 77, details.shadow,
-          context.color('skinDeep'), meta: const {'part': 'skinDetails'})
+      ..addLayer(
+          'cheeks.shadow', 75, cheeks.shadow, context.color('skinShadow'),
+          meta: const {'part': 'cheeks'})
+      ..addLayer('cheeks.blush', 76, cheeks.blush, context.color('skinAccent'),
+          meta: const {'part': 'cheeks'})
+      ..addLayer(
+          'skin.details.shadow', 77, details.shadow, context.color('skinDeep'),
+          meta: const {'part': 'skinDetails'})
       ..addLayer('skin.details.accent', 78, details.accent,
-          context.color('skinAccent'), meta: const {'part': 'skinDetails'})
-      ..addLayer('eyes.sclera', 90, eyes.sclera,
-          context.color('sclera'), meta: const {'part': 'eyes'})
-      ..addLayer('eyes.iris.dark', 92, eyes.irisDark,
-          context.color('irisDark'), meta: const {'part': 'eyes'})
-      ..addLayer('eyes.iris', 93, eyes.iris,
-          context.color('irisBase'), meta: const {'part': 'eyes'})
-      ..addLayer('eyes.iris.light', 94, eyes.irisLight,
-          context.color('irisLight'), meta: const {'part': 'eyes'})
-      ..addLayer('eyes.pupil', 95, eyes.pupil,
-          context.color('pupil'), meta: const {'part': 'eyes'})
-      ..addLayer('eyes.lids', 96, eyes.lids,
-          context.color('outlineSoft'), meta: const {'part': 'eyes'})
-      ..addLayer('eyes.lashes', 97, eyes.lashes,
-          context.color('outline'), meta: const {'part': 'eyes'})
-      ..addLayer('nose.shadow', 101, nose.shadow,
-          context.color('skinShadow'), meta: const {'part': 'nose'})
-      ..addLayer('nose.deep', 102, nose.deep,
-          context.color('skinDeep'), meta: const {'part': 'nose'})
-      ..addLayer('nose.highlight', 103, nose.highlight,
-          context.color('skinLight'), meta: const {'part': 'nose'})
-      ..addLayer('mouth.dark', 110, mouth.dark,
-          _mouthDarkColor(context), meta: const {'part': 'mouth'})
-      ..addLayer('mouth.base', 111, mouth.base,
-          _mouthBaseColor(context), meta: const {'part': 'mouth'})
-      ..addLayer('mouth.light', 112, mouth.light,
-          context.color('mouthLight'), meta: const {'part': 'mouth'})
-      ..addLayer('brows', 120, brows,
-          _browColor(context), meta: const {'part': 'brows'});
+          context.color('skinAccent'),
+          meta: const {'part': 'skinDetails'})
+      ..addLayer('eyes.sclera', 90, eyes.sclera, context.color('sclera'),
+          meta: const {'part': 'eyes'})
+      ..addLayer('eyes.iris.dark', 92, eyes.irisDark, context.color('irisDark'),
+          meta: const {'part': 'eyes'})
+      ..addLayer('eyes.iris', 93, eyes.iris, context.color('irisBase'),
+          meta: const {'part': 'eyes'})
+      ..addLayer(
+          'eyes.iris.light', 94, eyes.irisLight, context.color('irisLight'),
+          meta: const {'part': 'eyes'})
+      ..addLayer('eyes.pupil', 95, eyes.pupil, context.color('pupil'),
+          meta: const {'part': 'eyes'})
+      ..addLayer('eyes.lids', 96, eyes.lids, context.color('outlineSoft'),
+          meta: const {'part': 'eyes'})
+      ..addLayer('eyes.lashes', 97, eyes.lashes, context.color('outline'),
+          meta: const {'part': 'eyes'})
+      ..addLayer('nose.shadow', 101, nose.shadow, context.color('skinShadow'),
+          meta: const {'part': 'nose'})
+      ..addLayer('nose.deep', 102, nose.deep, context.color('skinDeep'),
+          meta: const {'part': 'nose'})
+      ..addLayer(
+          'nose.highlight', 103, nose.highlight, context.color('skinLight'),
+          meta: const {'part': 'nose'})
+      ..addLayer('mouth.dark', 110, mouth.dark, _mouthDarkColor(context),
+          meta: const {'part': 'mouth'})
+      ..addLayer('mouth.base', 111, mouth.base, _mouthBaseColor(context),
+          meta: const {'part': 'mouth'})
+      ..addLayer('mouth.light', 112, mouth.light, context.color('mouthLight'),
+          meta: const {'part': 'mouth'})
+      ..addLayer('brows', 120, brows, _browColor(context),
+          meta: const {'part': 'brows'});
   }
 
   _EyeResult _eyes(AvatarRenderContext c, PixelMask head) {
-    final leftCenter = c.integer('face.leftEyeX');
-    final rightCenter = c.integer('face.rightEyeX');
     final eyeY = c.integer('face.eyeY');
-    final width = clampInt(c.integer('eyes.width'), 1, 7);
+    final leftRow = rowBounds(head, eyeY);
+    final rightRow = rowBounds(
+      head,
+      eyeY + clampInt(c.integer('eyes.asymmetry'), -1, 1),
+    );
+    final width = _fitEyeWidth(c, head, eyeY);
     final height = clampInt(c.integer('eyes.height'), 1, 4);
     final asymmetry = clampInt(c.integer('eyes.asymmetry'), -1, 1);
+    final leftCenter = _fitEyeCenter(
+      requestedCenter: c.integer('face.leftEyeX'),
+      requestedWidth: width,
+      row: leftRow,
+      fallback: c.integer('face.leftEyeX'),
+    );
+    final rightCenter = _fitEyeCenter(
+      requestedCenter: c.integer('face.rightEyeX'),
+      requestedWidth: width,
+      row: rightRow,
+      fallback: c.integer('face.rightEyeX'),
+    );
 
     final left = _oneEye(c, leftCenter, eyeY, width, height, -1);
     final right = _oneEye(c, rightCenter, eyeY + asymmetry, width, height, 1);
 
-    PixelMask clip(PixelMask mask) => mask.intersect(head.eroded());
+    PixelMask clip(PixelMask mask) {
+      final clipped = mask.intersect(head.eroded());
+      return clipped.count > 0 ? clipped : mask.intersect(head);
+    }
+
+    var leftShape = clip(left.shape);
+    var rightShape = clip(right.shape);
+    var sclera = clip(left.sclera.union(right.sclera));
+    final irisDark = clip(left.irisDark.union(right.irisDark));
+    final iris = clip(left.iris.union(right.iris));
+    final irisLight = clip(left.irisLight.union(right.irisLight));
+    final pupil = clip(left.pupil.union(right.pupil));
+    final lids = clip(left.lids.union(right.lids));
+    final lashes = clip(left.lashes.union(right.lashes));
+
+    if (leftShape.count == 0 && rightShape.count == 0) {
+      leftShape = PixelMask()..set(leftCenter, clampInt(eyeY, 0, 47));
+      rightShape = PixelMask()
+        ..set(rightCenter, clampInt(eyeY + asymmetry, 0, 47));
+      sclera = leftShape.union(rightShape).intersect(head);
+    }
+
     return _EyeResult(
-      left: clip(left.shape),
-      right: clip(right.shape),
-      sclera: clip(left.sclera.union(right.sclera)),
-      irisDark: clip(left.irisDark.union(right.irisDark)),
-      iris: clip(left.iris.union(right.iris)),
-      irisLight: clip(left.irisLight.union(right.irisLight)),
-      pupil: clip(left.pupil.union(right.pupil)),
-      lids: clip(left.lids.union(right.lids)),
-      lashes: clip(left.lashes.union(right.lashes)),
+      left: leftShape,
+      right: rightShape,
+      sclera: sclera,
+      irisDark: irisDark,
+      iris: iris,
+      irisLight: irisLight,
+      pupil: pupil,
+      lids: lids,
+      lashes: lashes,
     );
+  }
+
+  int _fitEyeWidth(AvatarRenderContext c, PixelMask head, int eyeY) {
+    final requested = clampInt(c.integer('eyes.width'), 1, 7);
+    final leftRow = rowBounds(head, eyeY);
+    final rightRow = rowBounds(
+      head,
+      eyeY + clampInt(c.integer('eyes.asymmetry'), -1, 1),
+    );
+    final available = <int>[
+      if (leftRow != null) leftRow.right - leftRow.left + 1,
+      if (rightRow != null) rightRow.right - rightRow.left + 1,
+    ];
+    if (available.isEmpty) return requested;
+    final spacing = clampInt(c.integer('eyes.spacing'), 0, 20);
+    final maxWidth = clampInt(
+        ((available.reduce((a, b) => a < b ? a : b) - spacing - 2) ~/ 2), 1, 7);
+    return clampInt(requested, 1, maxWidth);
+  }
+
+  int _fitEyeCenter({
+    required int requestedCenter,
+    required int requestedWidth,
+    required ({int left, int right})? row,
+    required int fallback,
+  }) {
+    if (row == null) return fallback;
+    final minCenter = row.left + requestedWidth ~/ 2;
+    final maxCenter = row.right - (requestedWidth - 1) ~/ 2;
+    if (minCenter > maxCenter) {
+      return ((row.left + row.right) / 2).round();
+    }
+    return clampInt(requestedCenter, minCenter, maxCenter);
   }
 
   _SingleEye _oneEye(
@@ -122,6 +202,7 @@ final class FaceRenderer implements AvatarPartRenderer {
     final pupil = PixelMask();
     final lids = PixelMask();
     final lashes = PixelMask();
+    final animation = c.animation;
     final angle = clampInt(c.integer('eyes.outerAngle'), -2, 2);
     final left = centerX - width ~/ 2;
     final top = centerY - height ~/ 2;
@@ -140,15 +221,17 @@ final class FaceRenderer implements AvatarPartRenderer {
       );
     } else if (shape == 'rectangular' || shape == 'robotic') {
       outline.fillRect(left, top, width, height);
-    } else if (shape == 'narrow' || shape == 'horizontal' || shape == 'deepSet') {
+    } else if (shape == 'narrow' ||
+        shape == 'horizontal' ||
+        shape == 'deepSet') {
       outline.line(left, centerY, left + width - 1, centerY + angle * side.sign,
           thickness: height > 2 ? 2 : 1);
     } else if (shape == 'upturned' || shape == 'downturned') {
       final direction = shape == 'upturned' ? -1 : 1;
       outline.line(left, centerY, centerX, centerY - direction * side,
           thickness: height > 2 ? 2 : 1);
-      outline.line(centerX, centerY - direction * side,
-          left + width - 1, centerY + direction * side,
+      outline.line(centerX, centerY - direction * side, left + width - 1,
+          centerY + direction * side,
           thickness: height > 2 ? 2 : 1);
     } else if (shape == 'almond' || shape == 'realistic') {
       outline.line(left, centerY, centerX, top, thickness: 1);
@@ -156,7 +239,8 @@ final class FaceRenderer implements AvatarPartRenderer {
           thickness: 1);
       outline.line(left, centerY, centerX, top + height - 1, thickness: 1);
       outline.line(centerX, top + height - 1, left + width - 1,
-          centerY + angle * side.sign, thickness: 1);
+          centerY + angle * side.sign,
+          thickness: 1);
     } else {
       final rx = (width - 1) / 2;
       final ry = shape == 'cartoon' || shape == 'wide'
@@ -200,21 +284,26 @@ final class FaceRenderer implements AvatarPartRenderer {
         iris.set(centerX, centerY);
       } else if (irisStyle == 'ring') {
         final ring = PixelMask()..fillEllipse(centerX, centerY, radius, radius);
-        iris.data.setAll(0, ring.subtract(PixelMask()..set(centerX, centerY)).data);
+        iris.data
+            .setAll(0, ring.subtract(PixelMask()..set(centerX, centerY)).data);
       } else {
         iris.fillEllipse(centerX, centerY, radius, radius);
       }
       iris.data.setAll(0, iris.intersect(outline.dilated()).data);
       if (irisStyle == 'twoTone') {
-        irisDark.data.setAll(0,
-            iris.intersect(maskFromPredicate((x, y) => x <= centerX)).data);
-        irisLight.data.setAll(0,
-            iris.intersect(maskFromPredicate((x, y) => x > centerX && y <= centerY)).data);
+        irisDark.data.setAll(
+            0, iris.intersect(maskFromPredicate((x, y) => x <= centerX)).data);
+        irisLight.data.setAll(
+            0,
+            iris
+                .intersect(
+                    maskFromPredicate((x, y) => x > centerX && y <= centerY))
+                .data);
       } else if (irisStyle == 'glow') {
         irisLight.data.setAll(0, iris.dilated().intersect(outline).data);
       } else {
-        irisDark.data.setAll(0,
-            iris.intersect(maskFromPredicate((x, y) => y > centerY)).data);
+        irisDark.data.setAll(
+            0, iris.intersect(maskFromPredicate((x, y) => y > centerY)).data);
         irisLight.set(centerX - 1, centerY - 1);
       }
     }
@@ -223,14 +312,14 @@ final class FaceRenderer implements AvatarPartRenderer {
     final pupilSize = clampInt(c.integer('eyes.pupilSize'), 1, 3);
     if (pupilStyle != 'none') {
       if (pupilStyle == 'vertical') {
-        pupil.vLine(centerX, centerY - pupilSize ~/ 2,
-            centerY + pupilSize ~/ 2);
+        pupil.vLine(
+            centerX, centerY - pupilSize ~/ 2, centerY + pupilSize ~/ 2);
       } else if (pupilStyle == 'horizontal') {
-        pupil.hLine(centerX - pupilSize ~/ 2,
-            centerX + pupilSize ~/ 2, centerY);
+        pupil.hLine(
+            centerX - pupilSize ~/ 2, centerX + pupilSize ~/ 2, centerY);
       } else if (pupilStyle == 'square') {
-        pupil.fillRect(centerX - pupilSize ~/ 2,
-            centerY - pupilSize ~/ 2, pupilSize, pupilSize);
+        pupil.fillRect(centerX - pupilSize ~/ 2, centerY - pupilSize ~/ 2,
+            pupilSize, pupilSize);
       } else if (pupilStyle == 'fullBlack') {
         pupil.data.setAll(0, (iris.count > 0 ? iris : outline).data);
       } else {
@@ -243,36 +332,42 @@ final class FaceRenderer implements AvatarPartRenderer {
       }
       pupil.data.setAll(0, pupil.intersect(outline.dilated()).data);
       if (pupilStyle == 'glowing') {
-        irisLight.data.setAll(0, irisLight.union(pupil.dilated()).intersect(outline).data);
+        irisLight.data.setAll(
+            0, irisLight.union(pupil.dilated()).intersect(outline).data);
       }
     }
 
-    if (c.string('v4.animation') == 'lookAround') {
-      final speed = clampInt(c.integer('v4.animationSpeed'), 1, 6);
-      final amplitude = clampInt(c.integer('v4.animationAmplitude'), 1, 2);
-      final lookX = cyclicOffset(c.phase, 10 + speed * 2, amplitude);
-      if (lookX != 0) {
-        void shiftInsideEye(PixelMask target) {
-          final shifted = target.translated(lookX, 0).intersect(outline);
-          target.data.setAll(0, shifted.data);
-        }
-
-        shiftInsideEye(irisDark);
-        shiftInsideEye(iris);
-        shiftInsideEye(irisLight);
-        shiftInsideEye(pupil);
+    final lookX = animation.eyeOffsetX();
+    if (lookX != 0) {
+      void shiftInsideEye(PixelMask target) {
+        final targetBounds = target.bounds;
+        final outlineBounds = outline.bounds;
+        if (targetBounds == null || outlineBounds == null) return;
+        final minShift = outlineBounds.left - targetBounds.left;
+        final maxShift = outlineBounds.right - targetBounds.right;
+        final safeLookX = clampInt(lookX, minShift, maxShift);
+        final shifted = target.translated(safeLookX, 0).intersect(outline);
+        target.data.setAll(0, shifted.count > 0 ? shifted.data : target.data);
       }
+
+      shiftInsideEye(irisDark);
+      shiftInsideEye(iris);
+      shiftInsideEye(irisLight);
+      shiftInsideEye(pupil);
     }
 
     final eyelid = c.string('eyes.eyelid');
     final lidThickness = clampInt(c.integer('eyes.lidThickness'), 0, 2);
     if (eyelid != 'none' && lidThickness > 0 && outline.count > 2) {
-      final upper = PixelMask()..line(left, top, left + width - 1,
-          top + angle * side.sign, thickness: lidThickness);
-      final lower = PixelMask()..line(left, top + height - 1,
-          left + width - 1, top + height - 1 + angle * side.sign,
-          thickness: 1);
-      if (<String>['upper', 'heavy', 'drooping', 'double', 'both'].contains(eyelid)) {
+      final upper = PixelMask()
+        ..line(left, top, left + width - 1, top + angle * side.sign,
+            thickness: lidThickness);
+      final lower = PixelMask()
+        ..line(left, top + height - 1, left + width - 1,
+            top + height - 1 + angle * side.sign,
+            thickness: 1);
+      if (<String>['upper', 'heavy', 'drooping', 'double', 'both']
+          .contains(eyelid)) {
         lids.data.setAll(0, lids.union(upper).data);
       }
       if (<String>['lower', 'both'].contains(eyelid)) {
@@ -292,7 +387,16 @@ final class FaceRenderer implements AvatarPartRenderer {
       final outerX = side < 0 ? left : left + width - 1;
       final innerX = side < 0 ? left + width - 1 : left;
       final direction = side < 0 ? -1 : 1;
-      if (<String>['single', 'short', 'medium', 'long', 'outerShort', 'outerLong', 'stylized', 'upper'].contains(lashStyle)) {
+      if (<String>[
+        'single',
+        'short',
+        'medium',
+        'long',
+        'outerShort',
+        'outerLong',
+        'stylized',
+        'upper'
+      ].contains(lashStyle)) {
         lashes.line(outerX, top, outerX + direction * lashLength,
             top - clampInt(lashLength, 1, 2));
       }
@@ -303,45 +407,62 @@ final class FaceRenderer implements AvatarPartRenderer {
         lashes.line(innerX, top, innerX - direction, top - 1);
       }
       if (lashStyle == 'lower') {
-        lashes.line(outerX, top + height - 1,
-            outerX + direction * lashLength, top + height);
+        lashes.line(outerX, top + height - 1, outerX + direction * lashLength,
+            top + height);
       }
     }
 
-    if (c.string('v4.animation') == 'blink') {
-      final speed = clampInt(c.integer('v4.animationSpeed'), 1, 6);
-      final cycleLength = 7 + speed;
-      final step = positiveMod(c.phase, cycleLength);
-      final closing = step == cycleLength - 2
-          ? 1
-          : step == cycleLength - 1
-              ? 2
-              : 0;
-      if (closing > 0) {
-        for (final mask in <PixelMask>[
-          sclera,
-          irisDark,
-          iris,
-          irisLight,
-          pupil,
-          lids,
-          lashes,
-        ]) {
-          mask.data.fillRange(0, mask.data.length, 0);
-        }
-        lids.line(
-          left,
-          centerY,
-          left + width - 1,
-          centerY + angle * side.sign,
-          thickness: closing == 2 ? 2 : 1,
-        );
+    final blinkStep = positiveMod(animation.phase, 8);
+    final forcedClosed = animation.blinkFrame() ||
+        (animation.id == 'blink' && blinkStep >= 2 && blinkStep <= 5);
+    if (forcedClosed) {
+      final closing = animation.id == 'sleeping'
+          ? 2
+          : animation.id == 'blink'
+              ? (blinkStep == 3 || blinkStep == 4 ? 2 : 1)
+              : 1 + (animation.phase.isOdd ? 1 : 0);
+      for (final mask in <PixelMask>[
+        sclera,
+        irisDark,
+        iris,
+        irisLight,
+        pupil,
+        lids,
+        lashes,
+      ]) {
+        mask.data.fillRange(0, mask.data.length, 0);
+      }
+      lids.line(
+        left,
+        centerY,
+        left + width - 1,
+        centerY + angle * side.sign,
+        thickness: closing == 2 ? 2 : 1,
+      );
+    } else {
+      if (animation.id == 'scared' || animation.id == 'surprised') {
+        sclera.data.setAll(0, sclera.union(outline.eroded()).data);
+        irisLight.data.setAll(0, irisLight.union(outline.eroded()).data);
+      }
+      if (animation.id == 'angry') {
+        lids.line(left, top + 1, centerX, top + 1 + side.sign);
+        lids.line(centerX, top + 1 + side.sign, left + width - 1, top);
+      }
+      if (animation.id == 'sad' || animation.id == 'hurt') {
+        lids.line(left, top, centerX, top + 1);
+        lids.line(centerX, top + 1, left + width - 1, top + side.sign.abs());
       }
     }
 
-    return _SingleEye(outline, sclera.intersect(outline), irisDark,
-        iris.intersect(outline), irisLight.intersect(outline), pupil,
-        lids, lashes);
+    return _SingleEye(
+        outline,
+        sclera.intersect(outline),
+        irisDark,
+        iris.intersect(outline),
+        irisLight.intersect(outline),
+        pupil,
+        lids,
+        lashes);
   }
 
   PixelMask _brows(
@@ -365,6 +486,7 @@ final class FaceRenderer implements AvatarPartRenderer {
     final leftCenter = c.integer('face.leftEyeX') - centerGap ~/ 2;
     final rightCenter = c.integer('face.rightEyeX') + centerGap ~/ 2;
     final asym = clampInt(c.integer('brows.asymmetry'), -1, 1);
+    final animation = c.animation;
 
     PixelMask one(int centerX, int side, int yOffset) {
       final base = PixelMask();
@@ -374,7 +496,8 @@ final class FaceRenderer implements AvatarPartRenderer {
       for (var i = 0; i < width; i++) {
         final normalized = width <= 1 ? 0.0 : i / (width - 1);
         var y = baseY;
-        if (<String>['rounded', 'highArch', 'lowArch', 'bushy'].contains(shape)) {
+        if (<String>['rounded', 'highArch', 'lowArch', 'bushy']
+            .contains(shape)) {
           final peak = (1 - (normalized * 2 - 1).abs());
           var amplitude = arch.abs() + (shape == 'highArch' ? 2 : 1);
           if (shape == 'lowArch') amplitude = (amplitude / 2).ceil();
@@ -402,8 +525,24 @@ final class FaceRenderer implements AvatarPartRenderer {
     }
 
     var result = one(leftCenter, -1, 0).union(one(rightCenter, 1, asym));
+    if (animation.id == 'angry') {
+      result =
+          result.union(one(leftCenter, -1, 1)).union(one(rightCenter, 1, -1));
+    } else if (animation.id == 'sad' || animation.id == 'hurt') {
+      result =
+          result.union(one(leftCenter, -1, -1)).union(one(rightCenter, 1, 1));
+    } else if (animation.id == 'thinking') {
+      result = result.union(one(leftCenter, -1, -1));
+    } else if (animation.id == 'confused') {
+      result = one(leftCenter, -1, -1).union(one(rightCenter, 1, asym + 1));
+    } else if (animation.id == 'surprised' || animation.id == 'scared') {
+      result = result.translated(0, -1);
+    }
     final safe = eyes.dilated(diagonal: true, iterations: 1);
-    result = result.subtract(safe).intersect(head.eroded()).intersect(zones.forehead.dilated());
+    result = result
+        .subtract(safe)
+        .intersect(head.eroded())
+        .intersect(zones.forehead.dilated());
     return result.removeSmallComponents(1, maxComponents: 4);
   }
 
@@ -460,10 +599,13 @@ final class FaceRenderer implements AvatarPartRenderer {
           (x: centerX - tipWidth / 2, y: tipY),
           (x: centerX + tipWidth / 2, y: tipY),
         );
-      } else if (style == 'rounded' || style == 'button' || style == 'largeTip') {
+      } else if (style == 'rounded' ||
+          style == 'button' ||
+          style == 'largeTip') {
         shadow.fillEllipse(centerX, tipY, tipWidth / 2, 1);
       } else if (style == 'upturned') {
-        shadow.hLine(centerX - tipWidth ~/ 2, centerX + tipWidth ~/ 2, tipY - 1);
+        shadow.hLine(
+            centerX - tipWidth ~/ 2, centerX + tipWidth ~/ 2, tipY - 1);
         deep.set(centerX - 1, tipY).set(centerX + 1, tipY);
       } else {
         shadow.hLine(centerX - tipWidth ~/ 2, centerX + tipWidth ~/ 2, tipY);
@@ -476,18 +618,43 @@ final class FaceRenderer implements AvatarPartRenderer {
     }
 
     final unsafe = eyes.dilated(diagonal: true).union(mouth.dilated());
-    final clip = zones.noseZone.intersect(head.eroded()).subtract(unsafe);
+    final erodedClip = zones.noseZone.intersect(head.eroded()).subtract(unsafe);
+    final clip = erodedClip.count > 0
+        ? erodedClip
+        : zones.noseZone.intersect(head).subtract(unsafe);
     final strength = clampInt(c.integer('nose.shadowStrength'), 0, 3);
     var finalShadow = shadow.intersect(clip);
     if (strength == 0) finalShadow = PixelMask();
-    if (strength >= 2) finalShadow = finalShadow.union(finalShadow.translated(1, 0)).intersect(clip);
-    if (strength >= 3) finalShadow = finalShadow.union(finalShadow.translated(0, 1)).intersect(clip);
-    return _NoseResult(finalShadow, deep.intersect(clip), light.intersect(clip));
+    if (strength >= 2)
+      finalShadow =
+          finalShadow.union(finalShadow.translated(1, 0)).intersect(clip);
+    if (strength >= 3)
+      finalShadow =
+          finalShadow.union(finalShadow.translated(0, 1)).intersect(clip);
+    final finalDeep = deep.intersect(clip);
+    final finalLight = light.intersect(clip);
+    if (finalShadow.count == 0 &&
+        finalDeep.count == 0 &&
+        finalLight.count == 0) {
+      final fallback = PixelMask();
+      final fallbackRow = rowBounds(head, tipY) ??
+          rowBounds(head, clampInt(tipY - 1, 0, 47)) ??
+          rowBounds(head, clampInt(tipY + 1, 0, 47));
+      if (fallbackRow != null) {
+        fallback.set(clampInt(centerX, fallbackRow.left, fallbackRow.right),
+            clampInt(tipY, 0, 47));
+      } else {
+        fallback.data.setAll(0, zones.noseZone.intersect(head).data);
+      }
+      return _NoseResult(PixelMask(), fallback.intersect(head), PixelMask());
+    }
+    return _NoseResult(finalShadow, finalDeep, finalLight);
   }
 
   _MouthResult _mouth(AvatarRenderContext c, PixelMask head) {
     final shape = c.string('mouth.shape');
     if (shape == 'none') return _MouthResult.empty();
+    final animation = c.animation;
     final centerX = 24 + clampInt(c.integer('mouth.asymmetry'), -1, 1);
     final centerY = c.integer('face.mouthY');
     var width = clampInt(c.integer('mouth.width'), 2, 12);
@@ -498,15 +665,18 @@ final class FaceRenderer implements AvatarPartRenderer {
     final dark = PixelMask();
     final base = PixelMask();
     final light = PixelMask();
-    if (shape == 'pixel') {
+    if (animation.id == 'sleeping') {
+      dark
+          .set(centerX - 1, centerY)
+          .set(centerX, centerY + 1)
+          .set(centerX + 1, centerY);
+    } else if (shape == 'pixel') {
       dark.set(centerX, centerY);
     } else if (shape == 'smallRound') {
       dark.fillEllipse(centerX, centerY, width / 4, height / 2);
     } else if (shape == 'angular') {
-      dark.line(centerX - width ~/ 2, centerY,
-          centerX, centerY + 1);
-      dark.line(centerX, centerY + 1,
-          centerX + width ~/ 2, centerY);
+      dark.line(centerX - width ~/ 2, centerY, centerX, centerY + 1);
+      dark.line(centerX, centerY + 1, centerX + width ~/ 2, centerY);
     } else {
       if (shape == 'shortLine') width = clampInt(width - 2, 2, 12);
       if (shape == 'wideLine') width = clampInt(width + 2, 2, 14);
@@ -517,12 +687,15 @@ final class FaceRenderer implements AvatarPartRenderer {
         dark.set(centerX, centerY + (dip > 0 ? 1 : 0));
         dark.set(centerX - 1, centerY - 1).set(centerX + 1, centerY - 1);
       }
-      if (<String>['full', 'upperFull', 'twoTone'].contains(shape) || upper > 0) {
+      if (<String>['full', 'upperFull', 'twoTone'].contains(shape) ||
+          upper > 0) {
         for (var t = 1; t <= (shape == 'upperFull' ? 2 : upper); t++) {
           base.hLine(left + t, right - t, centerY - t);
         }
       }
-      if (<String>['full', 'lowerFull', 'twoTone', 'shadowed'].contains(shape) || lower > 0) {
+      if (<String>['full', 'lowerFull', 'twoTone', 'shadowed']
+              .contains(shape) ||
+          lower > 0) {
         for (var t = 1; t <= (shape == 'lowerFull' ? 2 : lower); t++) {
           base.hLine(left + t, right - t, centerY + t);
         }
@@ -536,8 +709,40 @@ final class FaceRenderer implements AvatarPartRenderer {
       light.hLine(centerX - width ~/ 4, centerX + width ~/ 4,
           centerY + (lower > 0 ? 1 : 0));
     }
-    final clip = head.eroded().intersect(maskFromPredicate((x, y) => y < c.integer('head.bottomY') - 1));
-    return _MouthResult(dark.intersect(clip), base.intersect(clip), light.intersect(clip));
+    final openAmount = animation.mouthOpenAmount();
+    if (openAmount > 0) {
+      final mouthWidth = clampInt(width - 2 + openAmount, 2, 14);
+      final left = centerX - mouthWidth ~/ 2;
+      final right = centerX + mouthWidth ~/ 2;
+      dark.fillEllipse(
+          centerX, centerY + 1, mouthWidth / 2, openAmount / 2 + 1);
+      if (animation.id == 'laughing' ||
+          animation.id == 'happy' ||
+          animation.id == 'celebration') {
+        light.hLine(left + 1, right - 1, centerY - 1);
+      }
+    }
+    if (animation.id == 'sad' || animation.id == 'hurt') {
+      dark.line(centerX - width ~/ 2, centerY + 1, centerX, centerY);
+      dark.line(centerX, centerY, centerX + width ~/ 2, centerY + 1);
+    } else if (animation.id == 'happy' || animation.id == 'celebration') {
+      dark.line(centerX - width ~/ 2, centerY, centerX, centerY + 1);
+      dark.line(centerX, centerY + 1, centerX + width ~/ 2, centerY);
+      light.hLine(centerX - width ~/ 4, centerX + width ~/ 4, centerY - 1);
+    } else if (animation.id == 'angry') {
+      dark.line(
+          centerX - width ~/ 2, centerY + 1, centerX + width ~/ 2, centerY);
+    } else if (animation.id == 'thinking') {
+      dark.line(
+          centerX - width ~/ 3, centerY + 1, centerX + width ~/ 2, centerY);
+    } else if (animation.id == 'confused') {
+      dark.line(
+          centerX - width ~/ 2, centerY, centerX + width ~/ 3, centerY + 1);
+    }
+    final clip = head.eroded().intersect(
+        maskFromPredicate((x, y) => y < c.integer('head.bottomY') - 1));
+    return _MouthResult(
+        dark.intersect(clip), base.intersect(clip), light.intersect(clip));
   }
 
   _CheekResult _cheeks(AvatarRenderContext c, _FaceZones zones) {
@@ -555,10 +760,13 @@ final class FaceRenderer implements AvatarPartRenderer {
     PixelMask shapedArea() {
       if (width == 0 || height == 0) return PixelMask();
       final left = PixelMask()
-        ..fillEllipse(c.integer('face.leftEyeX') - 1, centerY, radiusX, radiusY);
+        ..fillEllipse(
+            c.integer('face.leftEyeX') - 1, centerY, radiusX, radiusY);
       final right = PixelMask()
-        ..fillEllipse(c.integer('face.rightEyeX') + 1, centerY, radiusX, radiusY);
-      var area = left.intersect(zones.cheekLeft)
+        ..fillEllipse(
+            c.integer('face.rightEyeX') + 1, centerY, radiusX, radiusY);
+      var area = left
+          .intersect(zones.cheekLeft)
           .union(right.intersect(zones.cheekRight));
       if (roundness == 0 || shape == 'sharp') {
         area = area.intersect(maskFromPredicate(
@@ -566,8 +774,8 @@ final class FaceRenderer implements AvatarPartRenderer {
         ));
       } else if (roundness >= 3 || shape == 'round' || shape == 'full') {
         area = area.dilated().intersect(
-          zones.cheekLeft.union(zones.cheekRight),
-        );
+              zones.cheekLeft.union(zones.cheekRight),
+            );
       }
       return area;
     }
@@ -588,7 +796,8 @@ final class FaceRenderer implements AvatarPartRenderer {
     final blushStrength = clampInt(c.integer('cheeks.blush'), 0, 3);
     if (blushStrength > 0) {
       final area = geometricArea.eroded();
-      blush.data.setAll(0, orderedDither(area, 1 + blushStrength, phase: 1).data);
+      blush.data
+          .setAll(0, orderedDither(area, 1 + blushStrength, phase: 1).data);
     }
     return _CheekResult(shadow, blush);
   }
@@ -621,12 +830,17 @@ final class FaceRenderer implements AvatarPartRenderer {
     }
 
     if (style == 'freckles' || style == 'manyFreckles') {
-      final area = zones.cheekLeft.union(zones.cheekRight)
-          .union(zones.noseZone.intersect(maskFromPredicate((x, y) => y >= c.integer('face.eyeY'))));
-      accent.data.setAll(0, deterministicPoints(area,
-          (style == 'manyFreckles' ? 7 : 3) * density).data);
+      final area = zones.cheekLeft.union(zones.cheekRight).union(zones.noseZone
+          .intersect(maskFromPredicate((x, y) => y >= c.integer('face.eyeY'))));
+      accent.data.setAll(
+          0,
+          deterministicPoints(area, (style == 'manyFreckles' ? 7 : 3) * density)
+              .data);
     } else if (style == 'moles') {
-      accent.data.setAll(0, deterministicPoints(zones.inner.subtract(eyes.dilated()), density).data);
+      accent.data.setAll(
+          0,
+          deterministicPoints(zones.inner.subtract(eyes.dilated()), density)
+              .data);
     } else if (style == 'scar') {
       shadow.line(c.integer('face.leftEyeX') - 2, c.integer('face.eyeY') - 3,
           c.integer('face.leftEyeX') + 2, c.integer('face.eyeY') + 4);
@@ -636,20 +850,31 @@ final class FaceRenderer implements AvatarPartRenderer {
       }
     } else if (style == 'underEyeWrinkles' || style == 'underEyeShadow') {
       final y = c.integer('face.eyeY') + 2;
-      shadow.hLine(c.integer('face.leftEyeX') - 2, c.integer('face.leftEyeX') + 2, y);
-      shadow.hLine(c.integer('face.rightEyeX') - 2, c.integer('face.rightEyeX') + 2, y);
+      shadow.hLine(
+          c.integer('face.leftEyeX') - 2, c.integer('face.leftEyeX') + 2, y);
+      shadow.hLine(
+          c.integer('face.rightEyeX') - 2, c.integer('face.rightEyeX') + 2, y);
     } else if (style == 'cheekLines') {
-      shadow.line(15, c.integer('face.mouthY') - 3, 18, c.integer('face.mouthY') - 1);
-      shadow.line(32, c.integer('face.mouthY') - 3, 29, c.integer('face.mouthY') - 1);
+      shadow.line(
+          15, c.integer('face.mouthY') - 3, 18, c.integer('face.mouthY') - 1);
+      shadow.line(
+          32, c.integer('face.mouthY') - 3, 29, c.integer('face.mouthY') - 1);
     } else if (style == 'blush') {
-      accent.data.setAll(0, orderedDither(zones.cheekLeft.union(zones.cheekRight), 3).data);
+      accent.data.setAll(
+          0, orderedDither(zones.cheekLeft.union(zones.cheekRight), 3).data);
     } else if (style == 'mechanicalJoints') {
       shadow.line(14, c.integer('face.eyeY'), 18, c.integer('face.mouthY'));
-      accent.set(15, c.integer('face.eyeY') + 2).set(32, c.integer('face.eyeY') + 3);
+      accent
+          .set(15, c.integer('face.eyeY') + 2)
+          .set(32, c.integer('face.eyeY') + 3);
     } else if (style == 'scales' || style == 'spots') {
-      accent.data.setAll(0, deterministicPoints(zones.inner.subtract(eyes.dilated()), density * 5).data);
+      accent.data.setAll(
+          0,
+          deterministicPoints(zones.inner.subtract(eyes.dilated()), density * 5)
+              .data);
     }
-    return _SkinDetails(shadow.intersect(zones.inner), accent.intersect(zones.inner));
+    return _SkinDetails(
+        shadow.intersect(zones.inner), accent.intersect(zones.inner));
   }
 
   _FaceZones _zones(
@@ -665,29 +890,48 @@ final class FaceRenderer implements AvatarPartRenderer {
     final bottom = c.integer('head.bottomY');
     final forehead = inner.intersect(maskFromPredicate((x, y) => y < eyeY - 1));
     final eyeSafety = eyes.dilated(diagonal: true, iterations: 1);
-    final noseZone = inner.intersect(maskFromPredicate((x, y) =>
-        x >= 19 && x <= 28 && y >= eyeY + 1 && y <= mouthY - 1));
-    final mouthSafety = mouth.dilated(diagonal: true, iterations: 1)
+    final noseZone = inner.intersect(maskFromPredicate(
+        (x, y) => x >= 19 && x <= 28 && y >= eyeY + 1 && y <= mouthY - 1));
+    final mouthSafety = mouth
+        .dilated(diagonal: true, iterations: 1)
         .union(maskRect(17, mouthY - 2, 15, 5).intersect(inner));
-    final chin = inner.intersect(maskFromPredicate((x, y) => y > mouthY + 1 && y <= bottom));
-    final jawLeft = inner.intersect(maskFromPredicate((x, y) =>
-        x < 24 && y >= noseY && y <= bottom));
-    final jawRight = inner.intersect(maskFromPredicate((x, y) =>
-        x >= 24 && y >= noseY && y <= bottom));
-    final cheekLeft = inner.intersect(maskFromPredicate((x, y) =>
-        x < 21 && y > eyeY + 1 && y < mouthY + 1));
-    final cheekRight = inner.intersect(maskFromPredicate((x, y) =>
-        x > 26 && y > eyeY + 1 && y < mouthY + 1));
-    final sideburns = inner.intersect(maskFromPredicate((x, y) =>
-        (x < 16 || x > 31) && y >= eyeY - 2 && y <= mouthY + 3));
-    final beardGrowth = jawLeft.union(jawRight).union(chin)
-        .union(cheekLeft).union(cheekRight).union(sideburns)
-        .subtract(eyeSafety).subtract(mouthSafety).subtract(noseZone);
-    final centralFace = inner.intersect(maskFromPredicate((x, y) =>
-        x >= 16 && x <= 31 && y >= eyeY - 1 && y <= mouthY + 2));
-    return _FaceZones(inner, forehead, eyeSafety, noseZone, mouthSafety,
-        chin, jawLeft, jawRight, cheekLeft, cheekRight, sideburns,
-        beardGrowth, centralFace);
+    final chin = inner
+        .intersect(maskFromPredicate((x, y) => y > mouthY + 1 && y <= bottom));
+    final jawLeft = inner.intersect(
+        maskFromPredicate((x, y) => x < 24 && y >= noseY && y <= bottom));
+    final jawRight = inner.intersect(
+        maskFromPredicate((x, y) => x >= 24 && y >= noseY && y <= bottom));
+    final cheekLeft = inner.intersect(
+        maskFromPredicate((x, y) => x < 21 && y > eyeY + 1 && y < mouthY + 1));
+    final cheekRight = inner.intersect(
+        maskFromPredicate((x, y) => x > 26 && y > eyeY + 1 && y < mouthY + 1));
+    final sideburns = inner.intersect(maskFromPredicate(
+        (x, y) => (x < 16 || x > 31) && y >= eyeY - 2 && y <= mouthY + 3));
+    final beardGrowth = jawLeft
+        .union(jawRight)
+        .union(chin)
+        .union(cheekLeft)
+        .union(cheekRight)
+        .union(sideburns)
+        .subtract(eyeSafety)
+        .subtract(mouthSafety)
+        .subtract(noseZone);
+    final centralFace = inner.intersect(maskFromPredicate(
+        (x, y) => x >= 16 && x <= 31 && y >= eyeY - 1 && y <= mouthY + 2));
+    return _FaceZones(
+        inner,
+        forehead,
+        eyeSafety,
+        noseZone,
+        mouthSafety,
+        chin,
+        jawLeft,
+        jawRight,
+        cheekLeft,
+        cheekRight,
+        sideburns,
+        beardGrowth,
+        centralFace);
   }
 
   int _browColor(AvatarRenderContext c) {
@@ -728,9 +972,16 @@ final class _SingleEye {
 }
 
 final class _EyeResult {
-  const _EyeResult({required this.left, required this.right, required this.sclera,
-    required this.irisDark, required this.iris, required this.irisLight,
-    required this.pupil, required this.lids, required this.lashes});
+  const _EyeResult(
+      {required this.left,
+      required this.right,
+      required this.sclera,
+      required this.irisDark,
+      required this.iris,
+      required this.irisLight,
+      required this.pupil,
+      required this.lids,
+      required this.lashes});
   final PixelMask left;
   final PixelMask right;
   final PixelMask sclera;
@@ -745,7 +996,8 @@ final class _EyeResult {
 
 final class _MouthResult {
   const _MouthResult(this.dark, this.base, this.light);
-  factory _MouthResult.empty() => _MouthResult(PixelMask(), PixelMask(), PixelMask());
+  factory _MouthResult.empty() =>
+      _MouthResult(PixelMask(), PixelMask(), PixelMask());
   final PixelMask dark;
   final PixelMask base;
   final PixelMask light;
@@ -754,7 +1006,8 @@ final class _MouthResult {
 
 final class _NoseResult {
   const _NoseResult(this.shadow, this.deep, this.highlight);
-  factory _NoseResult.empty() => _NoseResult(PixelMask(), PixelMask(), PixelMask());
+  factory _NoseResult.empty() =>
+      _NoseResult(PixelMask(), PixelMask(), PixelMask());
   final PixelMask shadow;
   final PixelMask deep;
   final PixelMask highlight;
@@ -774,10 +1027,20 @@ final class _SkinDetails {
 }
 
 final class _FaceZones {
-  const _FaceZones(this.inner, this.forehead, this.eyeSafety, this.noseZone,
-      this.mouthSafety, this.chin, this.jawLeft, this.jawRight,
-      this.cheekLeft, this.cheekRight, this.sideburns,
-      this.beardGrowth, this.centralFace);
+  const _FaceZones(
+      this.inner,
+      this.forehead,
+      this.eyeSafety,
+      this.noseZone,
+      this.mouthSafety,
+      this.chin,
+      this.jawLeft,
+      this.jawRight,
+      this.cheekLeft,
+      this.cheekRight,
+      this.sideburns,
+      this.beardGrowth,
+      this.centralFace);
   final PixelMask inner;
   final PixelMask forehead;
   final PixelMask eyeSafety;

@@ -15,7 +15,8 @@ final class ArmorRenderer implements AvatarPartRenderer {
       ..putMask('cape', cape.base)
       ..putMask('armor', armor.base)
       ..addLayer('cape.outline', 10, cape.base.outline(diagonal: true),
-          context.color('outline'), meta: const {'part': 'cape'})
+          context.color('outline'),
+          meta: const {'part': 'cape'})
       ..addLayer('cape.base', 11, cape.base, context.color('clothDark'),
           meta: const {'part': 'cape'})
       ..addLayer('cape.light', 12, cape.light, context.color('clothBase'),
@@ -23,17 +24,19 @@ final class ArmorRenderer implements AvatarPartRenderer {
       ..addLayer('cape.detail', 13, cape.detail, context.color('clothAccent'),
           meta: const {'part': 'cape'})
       ..addLayer('armor.outline', 154, armor.base.outline(diagonal: true),
-          context.color('outline'), meta: const {'part': 'armor'})
+          context.color('outline'),
+          meta: const {'part': 'armor'})
       ..addLayer('armor.base', 155, armor.base, context.color('clothBase'),
           meta: const {'part': 'armor'})
       ..addLayer('armor.shadow', 156, armor.shadow, context.color('clothDark'),
           meta: const {'part': 'armor'})
       ..addLayer('armor.light', 157, armor.light, context.color('clothLight'),
           meta: const {'part': 'armor'})
-      ..addLayer('armor.accent', 158, armor.accent,
-          context.color('clothAccent'), meta: const {'part': 'armor'})
-      ..addLayer('armor.glow', 159, armor.glow,
-          context.color('fantasyLight'), meta: const {'part': 'armor'});
+      ..addLayer(
+          'armor.accent', 158, armor.accent, context.color('clothAccent'),
+          meta: const {'part': 'armor'})
+      ..addLayer('armor.glow', 159, armor.glow, context.color('fantasyLight'),
+          meta: const {'part': 'armor'});
   }
 
   _Cape _cape(AvatarRenderContext c) {
@@ -56,7 +59,12 @@ final class ArmorRenderer implements AvatarPartRenderer {
     } else if (style == 'furCollar') {
       for (var x = 10; x <= 38; x += 4) base.fillEllipse(x, 34, 3, 3);
       light.hLine(12, 36, 32);
-    } else if (<String>['angelWings', 'demonWings', 'dragonWings', 'mechanicalWings'].contains(style)) {
+    } else if (<String>[
+      'angelWings',
+      'demonWings',
+      'dragonWings',
+      'mechanicalWings'
+    ].contains(style)) {
       final feathered = style == 'angelWings';
       final mechanical = style == 'mechanicalWings';
       base.fillTriangle((x: 13, y: 34), (x: 1, y: 16), (x: 8, y: 42));
@@ -87,7 +95,8 @@ final class ArmorRenderer implements AvatarPartRenderer {
           thickness: style == 'energyRifleBack' ? 3 : 2);
       detail.line(left ? 9 : 39, 42, left ? 15 : 33, 46, thickness: 2);
     } else if (style == 'mechanicalTubes') {
-      base.line(14, 47, 10, 32, thickness: 2)
+      base
+          .line(14, 47, 10, 32, thickness: 2)
           .line(34, 47, 38, 32, thickness: 2);
       detail.set(10, 32).set(38, 32).set(14, 46).set(34, 46);
     }
@@ -108,20 +117,35 @@ final class ArmorRenderer implements AvatarPartRenderer {
     final glow = PixelMask();
 
     // Soft clothes stay close to the base torso; hard armor expands shoulders.
-    final hard = <String>['leatherArmor', 'chainmail', 'plateArmor',
-      'samuraiArmor', 'gladiatorArmor', 'ceremonialArmor', 'magicArmor',
-      'iceArmor', 'demonArmor', 'mechanicalArmor', 'spaceArmor', 'scrapArmor'];
+    final hard = <String>[
+      'leatherArmor',
+      'chainmail',
+      'plateArmor',
+      'samuraiArmor',
+      'gladiatorArmor',
+      'ceremonialArmor',
+      'magicArmor',
+      'iceArmor',
+      'demonArmor',
+      'mechanicalArmor',
+      'spaceArmor',
+      'scrapArmor'
+    ];
     if (hard.contains(style)) {
       base = base.union(base.dilated(iterations: clampInt(bulk ~/ 2, 0, 2)));
       if (pauldron > 0) {
         base.fillEllipse(8, 36, 3 + pauldron, 2 + pauldron ~/ 2);
         base.fillEllipse(39, 36, 3 + pauldron, 2 + pauldron ~/ 2);
       }
-      shadow.data.setAll(0, shadingMask(base, kind: 'clothing', strength: 2).data);
-      light.data.setAll(0, highlightMask(base, kind: 'clothing', strength: 2).data);
+      shadow.data
+          .setAll(0, shadingMask(base, kind: 'clothing', strength: 2).data);
+      light.data
+          .setAll(0, highlightMask(base, kind: 'clothing', strength: 2).data);
     } else {
-      shadow.data.setAll(0, shadingMask(base, kind: 'clothing', strength: 1).data);
-      light.data.setAll(0, highlightMask(base, kind: 'clothing', strength: 1).data);
+      shadow.data
+          .setAll(0, shadingMask(base, kind: 'clothing', strength: 1).data);
+      light.data
+          .setAll(0, highlightMask(base, kind: 'clothing', strength: 1).data);
     }
 
     if (style == 'chainmail') {
@@ -137,12 +161,13 @@ final class ArmorRenderer implements AvatarPartRenderer {
       accent.line(12, 35, 24, 47).line(36, 35, 24, 47);
     } else if (style == 'ceremonialArmor') {
       accent.vLine(24, 34, 47).hLine(15, 33, 36);
-    } else if (style == 'magicArmor' || style == 'iceArmor' || style == 'demonArmor') {
+    } else if (style == 'magicArmor' ||
+        style == 'iceArmor' ||
+        style == 'demonArmor') {
       accent.fillTriangle((x: 19, y: 38), (x: 29, y: 38), (x: 24, y: 46));
       for (var i = 0; i < glowAmount; i++) glow.set(22 + i * 2, 41);
     } else if (style == 'mechanicalArmor') {
-      accent.fillRect(14, 36, 6, 5).fillRect(28, 36, 6, 5)
-          .line(20, 38, 28, 38);
+      accent.fillRect(14, 36, 6, 5).fillRect(28, 36, 6, 5).line(20, 38, 28, 38);
       glow.set(17, 38).set(31, 38);
     } else if (style == 'scrapArmor') {
       accent.line(11, 38, 20, 35).line(28, 36, 38, 42);
@@ -151,7 +176,10 @@ final class ArmorRenderer implements AvatarPartRenderer {
     } else if (style == 'shirt' || style == 'blazer' || style == 'uniform') {
       accent.vLine(24, 35, 47);
       accent.line(17, 35, 24, 40).line(31, 35, 24, 40);
-    } else if (style == 'jacket' || style == 'coat' || style == 'travelerCoat' || style == 'pirateCoat') {
+    } else if (style == 'jacket' ||
+        style == 'coat' ||
+        style == 'travelerCoat' ||
+        style == 'pirateCoat') {
       accent.line(16, 34, 22, 47).line(32, 34, 26, 47);
       accent.vLine(24, 39, 47);
     } else if (style == 'apron' || style == 'labCoat') {
@@ -160,17 +188,21 @@ final class ArmorRenderer implements AvatarPartRenderer {
     } else if (style == 'wizardRobe' || style == 'priestRobe') {
       accent.vLine(24, 34, 47);
       if (style == 'priestRobe') accent.hLine(20, 28, 38);
-      if (style == 'wizardRobe') accent.fillTriangle((x: 20, y: 39), (x: 28, y: 39), (x: 24, y: 45));
+      if (style == 'wizardRobe')
+        accent.fillTriangle((x: 20, y: 39), (x: 28, y: 39), (x: 24, y: 45));
     } else if (style == 'cowboyVest' || style == 'vest') {
       accent.line(14, 35, 20, 47).line(34, 35, 28, 47);
-    } else if (style == 'tshirt' || style == 'sweater' || style == 'turtleneck') {
+    } else if (style == 'tshirt' ||
+        style == 'sweater' ||
+        style == 'turtleneck') {
       accent.hLine(18, 30, 36);
     }
 
     if (c.integer('v4.emblemSize') > 0) {
       final size = c.integer('v4.emblemSize');
       accent.fillEllipse(24, 40, size, size);
-      shadow.fillEllipse(24, 40, clampInt(size - 1, 0, 5), clampInt(size - 1, 0, 5));
+      shadow.fillEllipse(
+          24, 40, clampInt(size - 1, 0, 5), clampInt(size - 1, 0, 5));
     }
     if (damage > 0) {
       final rng = c.random('armor.damage.$style');
@@ -181,8 +213,34 @@ final class ArmorRenderer implements AvatarPartRenderer {
       }
       base = base.subtract(holes);
     }
-    return _Armor(base.removeSmallComponents(2, maxComponents: 4),
-        shadow.intersect(base), light.intersect(base), accent.intersect(base),
+    if (glowAmount > 0 &&
+        <String>{
+          'idle',
+          'talking',
+          'laughing',
+          'glowPulse',
+          'celebration',
+          'scared',
+          'surprised',
+          'angry',
+          'sad',
+          'happy',
+          'thinking',
+          'confused',
+          'hurt',
+        }.contains(c.animation.id)) {
+      final pulse = c.animation.pulse(basePeriod: 8, peak: 2);
+      if (pulse > 0) {
+        glow
+          ..fillEllipse(24, 40, 1 + pulse, 1 + pulse)
+          ..hLine(21 - pulse, 27 + pulse, 40);
+      }
+    }
+    return _Armor(
+        base.removeSmallComponents(2, maxComponents: 4),
+        shadow.intersect(base),
+        light.intersect(base),
+        accent.intersect(base),
         glow.intersect(base));
   }
 }
@@ -197,7 +255,8 @@ final class _Cape {
 
 final class _Armor {
   const _Armor(this.base, this.shadow, this.light, this.accent, this.glow);
-  factory _Armor.empty() => _Armor(PixelMask(), PixelMask(), PixelMask(), PixelMask(), PixelMask());
+  factory _Armor.empty() =>
+      _Armor(PixelMask(), PixelMask(), PixelMask(), PixelMask(), PixelMask());
   final PixelMask base;
   final PixelMask shadow;
   final PixelMask light;

@@ -1,4 +1,5 @@
 enum ValidationStatus { ok, corrected, violation }
+
 enum ValidationSeverity { info, style, soft, hard }
 
 final class ValidationEntry {
@@ -33,8 +34,9 @@ final class ValidationReport {
 
   final List<ValidationEntry> entries;
 
-  int get correctionCount =>
-      entries.where((entry) => entry.status == ValidationStatus.corrected).length;
+  int get correctionCount => entries
+      .where((entry) => entry.status == ValidationStatus.corrected)
+      .length;
   int get hardViolationCount => entries
       .where((entry) =>
           entry.status == ValidationStatus.violation &&

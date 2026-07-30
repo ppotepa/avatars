@@ -37,7 +37,8 @@ void main() {
     );
   });
 
-  test('category nonce rerolls only the requested category at genome level', () {
+  test('category nonce rerolls only the requested category at genome level',
+      () {
     const request = AvatarRequest(seed: 'category-reroll');
     final base = generator.generate(request);
     final rerolled = generator.generate(
