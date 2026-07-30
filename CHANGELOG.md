@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Kept idle animation inside stable sprite bounds by removing whole-avatar canvas
+  translation; local blink, hair, jewelry, smoke, aura and particle motion remains.
+- Added a regression test that verifies anatomical layers stay pixel-aligned across
+  idle frames, preventing clipping and empty edge strips in sprite sheets.
 - Made every catalogued background reachable through automatic generation while
   preserving world-aware preferences and removing invalid post-apocalyptic
   background candidates.
