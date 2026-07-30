@@ -132,7 +132,7 @@ final class AvatarGenerator {
       layers: List.unmodifiable(state.layers),
       validation: guard.report(),
       metrics: metrics,
-      imageHash: image.hash,
+      imageHash: image.hashWithPalette(palette.colors),
     );
   }
 
