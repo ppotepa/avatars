@@ -10,6 +10,7 @@ const state = {
   activeGroup: 'all',
   search: '',
   changedOnly: false,
+  animationTimer: null,
 };
 
 const fieldViews = new Map();
@@ -45,18 +46,20 @@ async function bootstrap() {
 function bindElements() {
   const ids = [
     'connection-status', 'avatar-preview', 'avatar-status', 'request-json',
-    'generate-button', 'new-seed-button', 'reset-overrides-button',
+    'generate-button', 'animate-button', 'new-seed-button', 'reset-overrides-button',
     'reset-locks-button', 'export-request-button', 'export-result-button',
     'download-svg-button', 'download-png-button', 'save-server-button',
     'import-request-button', 'import-request-file', 'whole-preset',
     'apply-whole-preset-button', 'global-fields', 'property-search',
     'changed-only', 'group-tabs', 'parameter-categories', 'toast',
+    'readability-score', 'readability-metrics', 'readability-warnings',
   ];
   for (const id of ids) elements[id] = document.getElementById(id);
 }
 
 function bindStaticActions() {
   elements['generate-button'].addEventListener('click', () => queueRender([], true));
+  elements['animate-button'].addEventListener('click', toggleAnimation);
   elements['new-seed-button'].addEventListener('click', () => {
     queueRender([{ op: 'set', id: 'request.seed', value: randomSeed() }], true);
   });
@@ -310,6 +313,7 @@ function syncUi() {
     ${validation.isValid ? 'Guard: OK' : `Guard: ${validation.hardViolationCount} błędów`} ·
     ${metrics.usedColorCount} kolorów · ${metrics.layerCount} warstw`;
   elements['request-json'].textContent = JSON.stringify(state.request, null, 2);
+  renderReadability(metrics, validation);
 
   for (const [id, view] of globalViews) {
     const property = state.response.properties[id];
@@ -338,6 +342,55 @@ function syncUi() {
     view.lock.textContent = locked ? 'Odblokuj kategorię' : 'Zablokuj kategorię';
   }
   applyFilters();
+}
+
+function renderReadability(metrics, validation) {
+  const score = Number(metrics.faceReadabilityScore ?? 0);
+  elements['readability-score'].textContent = `${score}/100`;
+  const visibility = metrics.visibility || {};
+  const ratios = visibility.visibleRatios || {};
+  const labels = {
+    eyes: 'Oczy',
+    mouth: 'Usta',
+    jewelry: 'Biżuteria',
+    armor: 'Pancerz',
+    eyewear: 'Okulary',
+    headwear: 'Nakrycie',
+  };
+  elements['readability-metrics'].replaceChildren();
+  for (const [part, label] of Object.entries(labels)) {
+    if (ratios[part] === undefined) continue;
+    const value = Math.max(0, Math.min(100, Math.round(Number(ratios[part]) * 100)));
+    const row = document.createElement('div');
+    row.className = 'readability-row';
+    const fillClass = value < 35 ? 'low' : value < 65 ? 'medium' : '';
+    row.innerHTML = `
+      <span>${escapeHtml(label)}</span>
+      <span class="readability-track"><span class="readability-fill ${fillClass}" style="width:${value}%"></span></span>
+      <span>${value}%</span>`;
+    elements['readability-metrics'].append(row);
+  }
+  const warnings = (validation.entries || [])
+    .filter(entry => entry.id?.startsWith('visibility.') && entry.status === 'violation')
+    .map(entry => entry.reason);
+  elements['readability-warnings'].textContent = warnings.length
+    ? warnings.join(' ')
+    : 'Najważniejsze elementy twarzy pozostają czytelne.';
+}
+
+function toggleAnimation() {
+  if (state.animationTimer) {
+    clearInterval(state.animationTimer);
+    state.animationTimer = null;
+    elements['animate-button'].textContent = 'Odtwórz animację';
+    return;
+  }
+  elements['animate-button'].textContent = 'Zatrzymaj animację';
+  state.animationTimer = setInterval(() => {
+    if (!state.request || state.rendering || state.pendingActions.length) return;
+    const phase = (Number(state.request.phase || 0) + 1) % 64;
+    queueRender([{ op: 'set', id: 'request.phase', value: phase }], true);
+  }, 140);
 }
 
 function syncControl(view, value) {
