@@ -17,6 +17,7 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
+      - run: python3 tool/static_audit.py
       - run: dart pub get
       - run: dart format lib test bin tool benchmark
       - run: dart analyze
