@@ -12,13 +12,27 @@ double lerpDouble(num a, num b, double t) =>
 int positiveMod(int value, int modulus) =>
     ((value % modulus) + modulus) % modulus;
 
+/// Deterministic 48-bit text hash retained under the historical API name.
+///
+/// Forty-eight bits remain exactly representable in Dart Web numbers while
+/// increasing the generator's seed space from 2^32 to 2^48. Callers that need
+/// a 32-bit value must explicitly mask the result.
 int fnv1a32(String text) {
-  var hash = 0x811c9dc5;
+  const mask24 = 0xffffff;
+  var high = 0x811c9d;
+  var low = 0xc5a5b7;
   for (final codeUnit in text.codeUnits) {
-    hash ^= codeUnit;
-    hash = ((hash * 0x01000193) & 0xffffffff);
+    final lowByte = codeUnit & 0xff;
+    final highByte = (codeUnit >> 8) & 0xff;
+    for (final byte in <int>[lowByte, highByte]) {
+      high = ((high ^ byte) * 0x010193) & mask24;
+      low = ((low ^ byte) * 0x0001b3) & mask24;
+      high = (high + (low >> 7)) & mask24;
+      low = (low + (high >> 5)) & mask24;
+    }
   }
-  return hash & 0xffffffff;
+  final value = (high << 24) | low;
+  return value == 0 ? 0x6d2b79f5a5b7 : value;
 }
 
 String hex32(int value) =>
