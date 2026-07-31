@@ -4,8 +4,9 @@ import '../pixels/indexed_image.dart';
 import 'render_model.dart';
 
 /// Expands the canonical 48×48 composition into a resolution-aware pixel
-/// render. The legacy canvas is returned byte-for-byte; larger profiles add
-/// deterministic sub-pixel bevels, material highlights and ordered dithering.
+/// render. Destination sampling is centered and mirrored around the canvas axis
+/// so non-integer profiles such as 64×64 and 80×80 do not accumulate all narrow
+/// source cells on one side of the face.
 final class ResolutionAwareRenderer {
   const ResolutionAwareRenderer();
 
@@ -23,9 +24,9 @@ final class ResolutionAwareRenderer {
     final output = IndexedImage(width: size, height: size);
     final owners = _owners(layers, source.width, source.height);
     for (var y = 0; y < size; y++) {
-      final sy = y * source.height ~/ size;
+      final sy = _sourceCoordinate(y, size, source.height);
       for (var x = 0; x < size; x++) {
-        final sx = x * source.width ~/ size;
+        final sx = _sourceCoordinate(x, size, source.width);
         final color = source.get(sx, sy);
         if (color == source.transparentIndex) continue;
         output.setPixel(
@@ -48,6 +49,20 @@ final class ResolutionAwareRenderer {
     return output;
   }
 
+  /// Maps a destination coordinate to the center of a source pixel while
+  /// explicitly mirroring the second half. This produces the same cell-width
+  /// sequence from both sides of an even-sized sprite.
+  int _sourceCoordinate(int destination, int destinationSize, int sourceSize) {
+    final mirrored = destination >= destinationSize ~/ 2;
+    final localDestination =
+        mirrored ? destinationSize - 1 - destination : destination;
+    final halfDestination = destinationSize ~/ 2;
+    final halfSource = sourceSize ~/ 2;
+    final localSource =
+        ((2 * localDestination + 1) * halfSource) ~/ (2 * halfDestination);
+    return mirrored ? sourceSize - 1 - localSource : localSource;
+  }
+
   int _detailColor({
     required IndexedImage source,
     required AvatarPalette palette,
@@ -66,20 +81,23 @@ final class ResolutionAwareRenderer {
     }
 
     final size = settings.size;
-    final cellLeft = (sx * size + source.width - 1) ~/ source.width;
-    final cellRight = (((sx + 1) * size + source.width - 1) ~/ source.width) - 1;
-    final cellTop = (sy * size + source.height - 1) ~/ source.height;
-    final cellBottom =
-        (((sy + 1) * size + source.height - 1) ~/ source.height) - 1;
+    final leftEdge =
+        x == 0 || _sourceCoordinate(x - 1, size, source.width) != sx;
+    final rightEdge = x == size - 1 ||
+        _sourceCoordinate(x + 1, size, source.width) != sx;
+    final topEdge =
+        y == 0 || _sourceCoordinate(y - 1, size, source.height) != sy;
+    final bottomEdge = y == size - 1 ||
+        _sourceCoordinate(y + 1, size, source.height) != sy;
+
     final owner = owners[sy * source.width + sx] ?? '';
     final frontal =
         settings.lightingDirection == AvatarLightingDirection.frontal;
     final lightFromRight =
         settings.lightingDirection == AvatarLightingDirection.upperRight;
-    final lightEdge = y == cellTop ||
-        (!frontal && (lightFromRight ? x == cellRight : x == cellLeft));
-    final shadowEdge = y == cellBottom ||
-        (!frontal && (lightFromRight ? x == cellLeft : x == cellRight));
+    final lightEdge = topEdge || (!frontal && (lightFromRight ? rightEdge : leftEdge));
+    final shadowEdge =
+        bottomEdge || (!frontal && (lightFromRight ? leftEdge : rightEdge));
     final lightNeighbourX = lightFromRight ? sx + 1 : sx - 1;
     final shadowNeighbourX = lightFromRight ? sx - 1 : sx + 1;
     final exposedToLight =
