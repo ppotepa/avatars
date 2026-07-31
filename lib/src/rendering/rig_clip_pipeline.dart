@@ -10,6 +10,7 @@ import '../pixels/pixel_mask.dart';
 import 'animation_controller.dart';
 import 'canonical_rig.dart';
 import 'clip_camera.dart';
+import 'clip_camera_cache.dart';
 import 'expressive_motion_policy.dart';
 import 'parts/accessories_renderer.dart';
 import 'parts/anatomy_renderer.dart';
@@ -97,8 +98,10 @@ final class RigClipPipeline {
     required this.compositor,
     required this.validator,
     List<AvatarPartRenderer>? parts,
+    ClipCameraCache? cameraCache,
     this.canvas = const OverscanCanvas(),
-  }) : parts = List.unmodifiable(parts ?? defaultParts);
+  })  : parts = List.unmodifiable(parts ?? defaultParts),
+        cameraCache = cameraCache ?? ClipCameraCache();
 
   final GenomeGenerator genomeGenerator;
   final LayoutResolver layoutResolver;
@@ -106,6 +109,7 @@ final class RigClipPipeline {
   final AvatarCompositor compositor;
   final AvatarValidator validator;
   final List<AvatarPartRenderer> parts;
+  final ClipCameraCache cameraCache;
   final OverscanCanvas canvas;
 
   static List<AvatarPartRenderer> get defaultParts =>
@@ -167,6 +171,19 @@ final class RigClipPipeline {
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
     );
+    final key = cameraCache.key(
+      genome: prepared.genome,
+      rendering: request.rendering,
+      sampleCount: frameCount,
+    );
+    cameraCache.put(key, camera);
+    for (final frame in raw) {
+      frame.state.metadata['cameraCache'] = <String, Object>{
+        'hit': false,
+        'sampleCount': frameCount,
+        'entries': cameraCache.length,
+      };
+    }
     return RigPipelineClip(
       prepared: prepared,
       camera: camera,
@@ -179,16 +196,46 @@ final class RigClipPipeline {
   RigPipelineClip renderSingle(AvatarRequest request) {
     const cameraSampleCount = 16;
     final prepared = prepare(request);
-    final raw = <_RawRigFrame>[
-      for (var phase = 0; phase < cameraSampleCount; phase++)
-        _renderRaw(prepared, request.rendering, phase),
-    ];
-    final camera = ClipCameraFitter.fitFrames(
-      raw.map((frame) => ClipCameraFitter.frameBounds(frame.state.layers)),
-      canvasWidth: canvas.width,
-      canvasHeight: canvas.height,
+    final key = cameraCache.key(
+      genome: prepared.genome,
+      rendering: request.rendering,
+      sampleCount: cameraSampleCount,
     );
-    final selected = raw[request.phase % cameraSampleCount];
+    final cached = cameraCache.get(key);
+    late final ClipCamera camera;
+    late final _RawRigFrame selected;
+
+    if (cached != null) {
+      camera = cached;
+      selected = _renderRaw(
+        prepared,
+        request.rendering,
+        request.phase % cameraSampleCount,
+      );
+      selected.state.metadata['cameraCache'] = <String, Object>{
+        'hit': true,
+        'sampleCount': cameraSampleCount,
+        'entries': cameraCache.length,
+      };
+    } else {
+      final raw = <_RawRigFrame>[
+        for (var phase = 0; phase < cameraSampleCount; phase++)
+          _renderRaw(prepared, request.rendering, phase),
+      ];
+      camera = ClipCameraFitter.fitFrames(
+        raw.map((frame) => ClipCameraFitter.frameBounds(frame.state.layers)),
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+      );
+      cameraCache.put(key, camera);
+      selected = raw[request.phase % cameraSampleCount];
+      selected.state.metadata['cameraCache'] = <String, Object>{
+        'hit': false,
+        'sampleCount': cameraSampleCount,
+        'entries': cameraCache.length,
+      };
+    }
+
     return RigPipelineClip(
       prepared: prepared,
       camera: camera,
