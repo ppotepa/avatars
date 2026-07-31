@@ -175,6 +175,16 @@ final class V41PaletteFactory implements PaletteFactory {
         'bgDark': 24, 'bg': 25, 'bgLight': 26,
         'fantasyDark': 27, 'fantasyBase': 28, 'fantasyLight': 29,
         'browIndependent': 30, 'detail': 30, 'white': 31,
+        // Semantic weather roles deliberately alias the stable 32-color
+        // palette. Weather renderers no longer need to borrow fantasy names.
+        'weatherRainDark': 26,
+        'weatherRainBase': 28,
+        'weatherRainLight': 29,
+        'weatherLightning': 31,
+        'weatherFogDark': 24,
+        'weatherFogLight': 26,
+        'weatherSnow': 31,
+        'weatherEmber': 29,
       },
     );
   }
