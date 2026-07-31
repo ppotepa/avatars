@@ -28,19 +28,13 @@ final class BudgetedGenomeGenerator implements GenomeGenerator {
     final generated = base.generate(request, guard);
     final values = <String, Object>{...generated.values};
     final sources = <String, GenomeValueSource>{...generated.sources};
-    final report = SceneVisualNoise.enforce(
+    SceneVisualNoise.enforce(
       values: values,
       sources: sources,
       catalog: catalog,
       random: RandomStream(
         fnv1a32('${generated.generatorVersion}:${generated.seed}:scene-budget'),
       ),
-    );
-
-    sources['v4.visualNoiseScore'] = GenomeValueSource(
-      source: 'sceneVisualNoise:${report.finalScore}/${report.targetScore}',
-      priority: 1,
-      category: 'effects',
     );
 
     return AvatarGenome(
