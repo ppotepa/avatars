@@ -4,12 +4,13 @@ import 'package:avatar_genome/avatar_genome.dart';
 import 'package:avatar_genome/src/constraints/validation.dart';
 import 'package:avatar_genome/src/genome/budgeted_genome_generator.dart';
 import 'package:avatar_genome/src/quality/scene_visual_noise.dart';
+import 'package:avatar_genome/src/random/random_stream.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('automatic generation keeps one probabilistic scene channel', () {
+  test('automatic generation keeps one channel with probabilistic targets', () {
     final generator = BudgetedGenomeGenerator();
-    final winners = <String>{};
+    final targets = <int>{};
 
     for (var index = 0; index < 120; index++) {
       final genome = generator.generate(
@@ -23,14 +24,14 @@ void main() {
         lessThanOrEqualTo(SceneVisualNoise.hardLimit),
         reason: genome.seed,
       );
-      if (active.isNotEmpty) winners.add(active.single);
+      targets.add(SceneVisualNoise.probabilisticTarget(
+        genome.values,
+        RandomStream(index + 17),
+      ));
     }
 
-    expect(
-      winners.length,
-      greaterThanOrEqualTo(3),
-      reason: 'the probabilistic budget must not collapse to one effect type',
-    );
+    expect(targets.length, greaterThanOrEqualTo(4));
+    expect(targets.every((value) => value >= 24 && value <= 40), isTrue);
   });
 
   test('conflicting explicit scene effects keep the semantic primary channel', () {
