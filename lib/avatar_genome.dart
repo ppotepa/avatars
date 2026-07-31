@@ -24,6 +24,7 @@ export 'src/rendering/animation_controller.dart';
 export 'src/rendering/canonical_rig.dart';
 export 'src/rendering/clip_camera.dart';
 export 'src/rendering/render_model.dart';
+export 'src/rendering/resolution_profile.dart';
 export 'src/rendering/resolution_renderer.dart';
 export 'src/rendering/rig_anchor_resolver.dart';
 export 'src/rendering/rig_clip_pipeline.dart';
