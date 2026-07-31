@@ -19,6 +19,7 @@ jobs:
           sdk: stable
       - run: python3 tool/static_audit.py
       - run: python3 tool/companion_audit.py
+      - run: python3 tool/visual_noise_audit.py
       - run: node --check web/app.js
       - run: node --check web/player.js
       - run: dart pub get
