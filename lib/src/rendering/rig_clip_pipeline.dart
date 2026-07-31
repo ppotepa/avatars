@@ -35,10 +35,12 @@ import 'parts/v42_emote_event_renderer.dart';
 import 'parts/v42_features_renderer.dart';
 import 'parts/v42_motion_renderer.dart';
 import 'parts/v42_scenic_light_renderer.dart';
+import 'parts/world_smoke_emitter_renderer.dart';
 import 'render_model.dart';
 import 'rig_layer_binding.dart';
 import 'rig_model.dart';
 import 'rig_pose_applier.dart';
+import 'rig_quality_evaluator.dart';
 import 'runtime_rig_builder.dart';
 import 'wearable_attachment_policy.dart';
 
@@ -279,6 +281,12 @@ final class RigClipPipeline {
       graph,
       requestedPose,
     );
+    final constraintQuality =
+        const RigQualityEvaluator().evaluate(graph, solvedPose);
+
+    // Emitters are evaluated only after the actor pose. Their origin follows
+    // the transformed wearable, while emitted particles remain in scene space.
+    const WorldSmokeEmitterRenderer().render(context, state);
 
     state.metadata
       ..['motionSample'] = <String, Object>{
@@ -291,6 +299,7 @@ final class RigClipPipeline {
       ..['rigConstraints'] = graph.constraints
           .map((constraint) => constraint.toJson())
           .toList(growable: false)
+      ..['rigConstraintQuality'] = constraintQuality.toJson()
       ..['rigGraph'] = graph.toJson();
   }
 
