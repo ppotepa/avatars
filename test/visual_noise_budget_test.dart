@@ -33,7 +33,7 @@ void main() {
     );
   });
 
-  test('conflicting explicit scene effects are reduced to one channel', () {
+  test('conflicting explicit scene effects keep the semantic primary channel', () {
     final result = AvatarGenerator().generate(const AvatarRequest(
       seed: 'explicit-scene-conflict',
       overrides: <String, Object>{
@@ -61,12 +61,13 @@ void main() {
     ));
 
     final active = SceneVisualNoise.activeChannels(result.genome.values);
-    expect(active, hasLength(1));
+    expect(active, <String>['v4.weather']);
     expect(
       SceneVisualNoise.score(result.genome.values),
       lessThanOrEqualTo(SceneVisualNoise.hardLimit),
     );
     final diagnostics = result.layout.graph.nodes['rig.visualNoise']!.value as Map;
+    expect(diagnostics['activeChannel'], 'v4.weather');
     expect(diagnostics['activeChannelCount'], lessThanOrEqualTo(1));
     expect(diagnostics['configuredScore'], lessThanOrEqualTo(42));
   });
