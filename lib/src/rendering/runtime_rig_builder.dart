@@ -1,4 +1,5 @@
 import '../geometry/avatar_layout.dart';
+import '../geometry/pixel_rect.dart';
 import '../geometry/point.dart';
 import 'canonical_rig.dart';
 import 'render_model.dart';
@@ -238,8 +239,8 @@ final class RuntimeRigBuilder {
     );
   }
 
-  dynamic _boundsFor(AvatarRenderState state, String nodeId) {
-    dynamic result;
+  PixelRect? _boundsFor(AvatarRenderState state, String nodeId) {
+    PixelRect? result;
     for (final layer in state.layers.where((layer) => layer.nodeId == nodeId)) {
       final current = layer.mask.bounds;
       if (current == null) continue;
@@ -252,11 +253,11 @@ final class RuntimeRigBuilder {
         final bottom = result.bottom > current.bottom
             ? result.bottom
             : current.bottom;
-        result = result.copyWith(
-          x: left,
-          y: top,
-          width: right - left + 1,
-          height: bottom - top + 1,
+        result = PixelRect(
+          left,
+          top,
+          right - left + 1,
+          bottom - top + 1,
         );
       }
     }
