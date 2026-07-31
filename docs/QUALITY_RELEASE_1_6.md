@@ -1,6 +1,6 @@
 # Avatar Genome 1.6 quality release
 
-Version: package `1.6.0`, generator `4.6.0-dart.1`, catalog `4.4`.
+Version: package `1.6.1`, generator `4.6.0-dart.2`, catalog `4.4`.
 
 ## Completed scope
 
@@ -11,7 +11,7 @@ rendering, rigging, effects and validation.
 
 - 72×72 overscan work canvas for a 48×48 public viewport.
 - Automatic portrait, expressive and wide camera profiles.
-- Core occupancy and safety coverage diagnostics.
+- Core occupancy, safety coverage and critical-gesture coverage diagnostics.
 - Pre-camera clipping detection.
 - Separate semantic slots for background base/detail, atmosphere, jewelry,
   rear/front arms and foreground effects.
@@ -31,22 +31,46 @@ rendering, rigging, effects and validation.
 - One-bit silhouette, icon downscale and face-visibility validation.
 - Scene visual-noise budget and one dominant environmental channel.
 - Semantic masks rebuilt from final transformed layers.
+- Background detail belongs to scene/atmosphere ownership and is never counted
+  as actor geometry.
 
-### High-resolution output
+### Native high-resolution output
 
-The identity silhouette remains defined in logical 48-space for deterministic
-compatibility. Sizes 64, 80 and 96 use:
+The identity remains defined in logical 48-space for deterministic
+compatibility. Sizes 64, 80 and 96 now use a native semantic raster pipeline:
 
-- centered destination sampling;
-- increasing semantic detail budgets;
-- material-aware skin, hair, cloth, metal, glass and background treatment;
-- regional detail priority favouring face, eyes, mouth, hair and hands;
-- a bounded immutable LRU cache for destination-grid rendering.
+1. Every render layer is independently rasterized on the destination grid.
+2. Layer ownership, render slots and local paint order remain intact.
+3. Selected contours gain destination-grid diagonal and corner bridges.
+4. Material-aware directional lighting runs on the native geometry.
+5. Regional semantic detail enriches face, eyes, mouth, hair, hands, clothing,
+   armor, jewelry, cybernetics, companions and backgrounds.
 
-This is a completed hybrid multi-resolution pipeline. It deliberately does not
-claim that every silhouette is independently authored at every output size.
-Instead it preserves one deterministic identity while adding meaningful
-resolution-specific information.
+This replaces enlargement of a flattened 48×48 image. The main identity model
+is still shared between resolutions, but the destination image is composed from
+semantic layers rather than copied final pixels.
+
+### Resolution diagnostics
+
+Every result exposes:
+
+- `metrics.nativeGeometryPixelCount`;
+- `metrics.nativeGeometryPixelRatio`;
+- `metrics.geometryProfile`.
+
+The first two values compare the final render with a nearest-neighbour baseline.
+They make the resolution-specific information gain measurable in API responses
+and tests. Profiles use names such as `canonical48`, `native64.budget1`,
+`native80.budget2` and `native96.budget3`.
+
+### Caching
+
+- Destination-grid renders use a bounded immutable LRU cache.
+- Cached images are cloned on read and write.
+- Cache keys include source appearance, destination settings, animation phase,
+  semantic layer ownership, slot, order, pixel count and bounds.
+- Resolution diagnostics are retained by final image hash in a separate bounded
+  registry, including cache-hit results.
 
 ## Quality gates
 
@@ -57,7 +81,10 @@ Tests cover:
 - forearm/wrist hierarchy and constraints;
 - wearable attachment metadata;
 - clipping and background clarity stages;
-- resolution detail budgets and material detail passes;
+- native semantic layer rasterization;
+- measurable differences from nearest-neighbour enlargement;
+- deterministic repeated rendering and cache behaviour;
+- native resolution metrics in both objects and serialized results;
 - visual-noise and semantic mask ownership.
 
 GitHub Actions status must still be treated as external evidence. A missing run
