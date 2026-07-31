@@ -1,6 +1,7 @@
 import 'animation_controller.dart';
 import 'render_helpers.dart';
 import 'render_model.dart';
+import 'rig_model.dart';
 
 /// Removes central transforms for parts whose geometry renderer already emitted
 /// phase-dependent articulation.
@@ -12,7 +13,7 @@ final class MotionOwnershipPolicy {
   const MotionOwnershipPolicy();
 
   MotionSample apply(AvatarRenderContext context, MotionSample sample) {
-    final transforms = <String, dynamic>{...sample.transforms};
+    final transforms = <String, RigTransform>{...sample.transforms};
     final animation = context.string('v4.animation');
     final faceAnimation = context.string('v4.faceAnimation');
 
@@ -74,11 +75,7 @@ final class MotionOwnershipPolicy {
 
     return MotionSample(
       phase: sample.phase,
-      transforms: Map.unmodifiable(
-        transforms.cast<String, dynamic>().map(
-              (key, value) => MapEntry(key, value),
-            ),
-      ).cast(),
+      transforms: Map.unmodifiable(transforms),
       channelWeights: sample.channelWeights,
       events: sample.events,
     );
