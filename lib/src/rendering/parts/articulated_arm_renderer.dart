@@ -6,8 +6,8 @@ import '../rig_model.dart';
 /// Splits side geometry from torso/clothing/armor layers into real arm nodes.
 ///
 /// The anatomy renderer historically unions visible arms into the torso mask.
-/// This post-process keeps the generated silhouette but gives arm pixels an
-/// independent owner and shoulder pivot for animation.
+/// This post-process keeps the generated silhouette but gives arm and hand
+/// pixels independent owners and anatomical pivots for animation.
 final class ArticulatedArmRenderer implements AvatarPartRenderer {
   const ArticulatedArmRenderer();
 
@@ -47,9 +47,6 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       }
     }
 
-    // Extremely broad torsos can cover the generated arm extension completely.
-    // Reserve the outer edge of each occupied row so animation never targets an
-    // empty arm node.
     if (torso.intersect(leftZone).count == 0 ||
         torso.intersect(rightZone).count == 0) {
       for (var y = top + 2; y <= armBottom; y++) {
@@ -64,7 +61,7 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       }
     }
 
-    final replacement = <RenderLayer>[];
+    final firstPass = <RenderLayer>[];
     final leftCombined = PixelMask(width: torso.width, height: torso.height);
     final rightCombined = PixelMask(width: torso.width, height: torso.height);
 
@@ -72,16 +69,16 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       final splittable = <String>{'torso', 'clothing', 'armor', 'chest'}
           .contains(layer.nodeId);
       if (!splittable) {
-        replacement.add(layer);
+        firstPass.add(layer);
         continue;
       }
       final left = layer.mask.intersect(leftZone);
       final right = layer.mask.intersect(rightZone);
       final core = layer.mask.subtract(left.union(right));
-      if (core.count > 0) replacement.add(layer.copyWith(mask: core));
+      if (core.count > 0) firstPass.add(layer.copyWith(mask: core));
       if (left.count > 0) {
         leftCombined.data.setAll(0, leftCombined.union(left).data);
-        replacement.add(layer.copyWith(
+        firstPass.add(layer.copyWith(
           mask: left,
           nodeId: 'leftArm',
           slot: RenderSlot.frontArms,
@@ -94,7 +91,7 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       }
       if (right.count > 0) {
         rightCombined.data.setAll(0, rightCombined.union(right).data);
-        replacement.add(layer.copyWith(
+        firstPass.add(layer.copyWith(
           mask: right,
           nodeId: 'rightArm',
           slot: RenderSlot.frontArms,
@@ -107,13 +104,11 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       }
     }
 
-    state.layers
-      ..clear()
-      ..addAll(replacement);
-
     PixelMask handFrom(PixelMask arm) {
       final armBounds = arm.bounds;
-      if (armBounds == null) return PixelMask(width: arm.width, height: arm.height);
+      if (armBounds == null) {
+        return PixelMask(width: arm.width, height: arm.height);
+      }
       final handZone = PixelMask(width: arm.width, height: arm.height)
         ..fillRect(
           armBounds.left,
@@ -126,9 +121,40 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
 
     final leftHand = handFrom(leftCombined);
     final rightHand = handFrom(rightCombined);
+    final articulated = <RenderLayer>[];
+    for (final layer in firstPass) {
+      final handMask = switch (layer.nodeId) {
+        'leftArm' => layer.mask.intersect(leftHand),
+        'rightArm' => layer.mask.intersect(rightHand),
+        _ => PixelMask(width: layer.mask.width, height: layer.mask.height),
+      };
+      if (handMask.count == 0) {
+        articulated.add(layer);
+        continue;
+      }
+      final armCore = layer.mask.subtract(handMask);
+      if (armCore.count > 0) articulated.add(layer.copyWith(mask: armCore));
+      final handNode = layer.nodeId == 'leftArm' ? 'leftHand' : 'rightHand';
+      articulated.add(layer.copyWith(
+        mask: handMask,
+        nodeId: handNode,
+        slot: RenderSlot.frontArms,
+        localOrder: layer.localOrder + 1,
+        meta: <String, Object?>{
+          ...layer.meta,
+          'rigSegment': handNode,
+          'sourceArmNode': layer.nodeId,
+        },
+      ));
+    }
+
+    state.layers
+      ..clear()
+      ..addAll(articulated);
+
     state
-      ..putMask('leftArm', leftCombined)
-      ..putMask('rightArm', rightCombined)
+      ..putMask('leftArm', leftCombined.subtract(leftHand))
+      ..putMask('rightArm', rightCombined.subtract(rightHand))
       ..putMask('leftHand', leftHand)
       ..putMask('rightHand', rightHand)
       ..parentNode('leftArm', 'leftShoulder')
