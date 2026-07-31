@@ -1,6 +1,6 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
-import '../genome/diversity_genome_generator.dart';
+import '../genome/budgeted_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../graph/avatar_graph.dart';
@@ -27,7 +27,7 @@ final class AvatarGenerator {
     RigClipPipeline? pipeline,
   })  : catalog = catalog ?? ParameterCatalog.v41,
         genomeService = genomeService ??
-            DiversityGenomeGenerator(catalog: catalog ?? ParameterCatalog.v41),
+            BudgetedGenomeGenerator(catalog: catalog ?? ParameterCatalog.v41),
         layoutResolver = layoutResolver ?? const V41LayoutResolver(),
         paletteFactory = paletteFactory ?? const V41PaletteFactory(),
         compositor = compositor ?? const IndexedAvatarCompositor(),
@@ -37,7 +37,7 @@ final class AvatarGenerator {
         pipeline = pipeline ??
             RigClipPipeline(
               genomeGenerator: genomeService ??
-                  DiversityGenomeGenerator(
+                  BudgetedGenomeGenerator(
                     catalog: catalog ?? ParameterCatalog.v41,
                   ),
               layoutResolver: layoutResolver ?? const V41LayoutResolver(),
@@ -153,6 +153,8 @@ final class AvatarGenerator {
       ..sort();
     final constraintQuality = frame.state.metadata['rigConstraintQuality'] ??
         const <String, Object>{};
+    final visualNoise = frame.state.metadata['visualNoise'] ??
+        const <String, Object>{};
 
     graph
       ..addValue('rig.camera', 'clipCamera', frame.camera.toJson())
@@ -186,6 +188,11 @@ final class AvatarGenerator {
         'rigWorldTransforms',
         frame.state.metadata['rigWorldTransforms'],
       )
+      ..addValue(
+        'rig.visualNoise',
+        'sceneVisualNoise',
+        visualNoise,
+      )
       ..addValue('rig.hair', 'secondaryRig', frame.state.metadata['hairRig'])
       ..addValue(
         'rig.jewelry',
@@ -218,9 +225,11 @@ final class AvatarGenerator {
           'unparentedNodes': unparented,
           'wearableNodes': wearableNodes,
           'actorOccupancy': frame.camera.actorOccupancy,
+          'safetyCoverage': frame.camera.safetyCoverage,
           'cameraScale': frame.camera.scale,
           'layerCount': frame.state.layers.length,
           'constraintQuality': constraintQuality,
+          'visualNoise': visualNoise,
         },
       );
     return AvatarLayout(
