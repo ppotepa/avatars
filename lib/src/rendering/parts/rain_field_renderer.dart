@@ -47,7 +47,8 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         'heavyRain' => 2 + depth,
         _ => 2 + depth,
       };
-      final cycle = clampInt(58 ~/ speedY + 5 + baseRandom.nextInt(0, 5), 10, 36);
+      final cycle =
+          clampInt(58 ~/ speedY + 5 + baseRandom.nextInt(0, 5), 10, 36);
       final spawnPhase = baseRandom.nextInt(0, cycle - 1);
       final cycleIndex = (context.phase - spawnPhase) ~/ cycle;
       final age = positiveMod(context.phase - spawnPhase, cycle);
@@ -93,7 +94,11 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         back,
         context.color('bgLight'),
         nodeId: 'atmosphere',
-        meta: const <String, Object?>{'part': 'rain', 'depth': 'back'},
+        meta: const <String, Object?>{
+          'part': 'rain',
+          'depth': 'back',
+          'rigSegment': 'atmosphere',
+        },
       )
       ..addLayer(
         'rain.field.middle',
@@ -101,7 +106,11 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         middle,
         context.color('fantasyBase'),
         nodeId: 'foreground',
-        meta: const <String, Object?>{'part': 'rain', 'depth': 'middle'},
+        meta: const <String, Object?>{
+          'part': 'rain',
+          'depth': 'middle',
+          'rigSegment': 'foreground',
+        },
       )
       ..addLayer(
         'rain.field.front',
@@ -109,7 +118,11 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         front,
         context.color('fantasyLight'),
         nodeId: 'foreground',
-        meta: const <String, Object?>{'part': 'rain', 'depth': 'front'},
+        meta: const <String, Object?>{
+          'part': 'rain',
+          'depth': 'front',
+          'rigSegment': 'foreground',
+        },
       )
       ..addLayer(
         'rain.field.splash',
@@ -117,7 +130,10 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         splash,
         context.color('white'),
         nodeId: 'foreground',
-        meta: const <String, Object?>{'part': 'rainSplash'},
+        meta: const <String, Object?>{
+          'part': 'rainSplash',
+          'rigSegment': 'foreground',
+        },
       );
 
     state.metadata['rainField'] = <String, Object>{
