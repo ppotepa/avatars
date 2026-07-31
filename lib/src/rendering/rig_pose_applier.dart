@@ -3,12 +3,11 @@ import 'render_model.dart';
 import 'rig_model.dart';
 import 'rig_transform_solver.dart';
 
-/// Applies a solved pose to every layer exactly once.
+/// Applies a solved pose to every render layer exactly once.
 ///
-/// This replaces sequential subtree translations, which caused a head to move
-/// once for the torso, once for the neck and once for the head itself. World
-/// matrices already contain inherited motion, so every pixel is transformed by
-/// only the matrix of its owning node.
+/// Semantic masks are rebuilt from transformed layers by [RigClipPipeline].
+/// Keeping ownership on [RenderLayer.nodeId] removes the former second mapping
+/// based on mask-name prefixes.
 final class RigPoseApplier {
   const RigPoseApplier();
 
@@ -27,12 +26,6 @@ final class RigPoseApplier {
       state.layers[index] = layer.copyWith(
         mask: _transformMask(layer.mask, matrix),
       );
-    }
-
-    for (final entry in state.masks.entries.toList(growable: false)) {
-      final nodeId = _maskNode(entry.key);
-      final matrix = matrices[nodeId] ?? RigMatrix.identity;
-      state.masks[entry.key] = _transformMask(entry.value, matrix);
     }
 
     state.nodeTransforms
@@ -138,6 +131,7 @@ final class RigPoseApplier {
     final inverseC = -matrix.c / determinant;
     final inverseD = matrix.a / determinant;
 
+    // Inverse sampling keeps filled surfaces continuous.
     for (var y = 0; y < output.height; y++) {
       for (var x = 0; x < output.width; x++) {
         final shiftedX = x - matrix.tx;
@@ -147,6 +141,17 @@ final class RigPoseApplier {
         if (source.get(sourceX.round(), sourceY.round()) != 0) {
           output.set(x, y);
         }
+      }
+    }
+
+    // Forward sampling preserves one-pixel tips, pivots and thin chains that can
+    // otherwise disappear between inverse-sampled destination centers.
+    for (var y = 0; y < source.height; y++) {
+      for (var x = 0; x < source.width; x++) {
+        if (source.get(x, y) == 0) continue;
+        final destinationX = matrix.a * x + matrix.c * y + matrix.tx;
+        final destinationY = matrix.b * x + matrix.d * y + matrix.ty;
+        output.set(destinationX.round(), destinationY.round());
       }
     }
     return output;
@@ -159,51 +164,4 @@ final class RigPoseApplier {
       (matrix.d - 1).abs() < .000001 &&
       matrix.tx.abs() < .000001 &&
       matrix.ty.abs() < .000001;
-
-  String _maskNode(String id) {
-    if (id.startsWith('hair.back.root')) return 'hairBackRoot';
-    if (id.startsWith('hair.back.middle')) return 'hairBackMiddle';
-    if (id.startsWith('hair.back.tips')) return 'hairBackTips';
-    if (id.startsWith('hair.side.left.root')) return 'hairSideLeftRoot';
-    if (id.startsWith('hair.side.left.tip')) return 'hairSideLeftTip';
-    if (id.startsWith('hair.side.right.root')) return 'hairSideRightRoot';
-    if (id.startsWith('hair.side.right.tip')) return 'hairSideRightTip';
-    if (id.startsWith('hair.back')) return 'hairBack';
-    if (id.startsWith('hair.front') || id == 'hair.all') return 'hairFront';
-    if (id.startsWith('headwear')) return 'headwear';
-    if (id.startsWith('headAdornment')) return 'headAdornment';
-    if (id.startsWith('head')) return 'head';
-    if (id.startsWith('eyewear')) return 'eyewear';
-    if (id.startsWith('faceMask')) return 'faceMask';
-    if (id.startsWith('leftArm')) return 'leftArm';
-    if (id.startsWith('rightArm')) return 'rightArm';
-    if (id.startsWith('leftHand')) return 'leftHand';
-    if (id.startsWith('rightHand')) return 'rightHand';
-    if (id.startsWith('cape')) return 'cape';
-    if (id.startsWith('armor')) return 'armor';
-    if (id.startsWith('clothing')) return 'clothing';
-    if (id.startsWith('neck')) return 'neck';
-    if (id.startsWith('torso') || id == 'skinChest') return 'torso';
-    if (id.startsWith('eye')) return 'eyes';
-    if (id.startsWith('mouthProp')) return 'mouthProp';
-    if (id.startsWith('mouth')) return 'mouth';
-    if (id.startsWith('leftEar')) return 'leftEar';
-    if (id.startsWith('rightEar')) return 'rightEar';
-    if (id.startsWith('ear')) return 'ears';
-    if (id.startsWith('necklace.left')) return 'necklaceLeft';
-    if (id.startsWith('necklace.right')) return 'necklaceRight';
-    if (id.startsWith('necklace.pendant')) return 'pendant';
-    if (id.startsWith('jewelry.rig.leftEar')) return 'leftEarJewelry';
-    if (id.startsWith('jewelry.rig.rightEar')) return 'rightEarJewelry';
-    if (id.startsWith('jewelry')) return 'necklace';
-    if (id.startsWith('companion.body')) return 'companionBody';
-    if (id.startsWith('companion.head')) return 'companionHead';
-    if (id.startsWith('companion.wings')) return 'companionWings';
-    if (id.startsWith('companion.tail')) return 'companionTail';
-    if (id.startsWith('companion.ears')) return 'companionEars';
-    if (id.startsWith('companion.beak')) return 'companionBeak';
-    if (id.startsWith('companion.eyes')) return 'companionEyes';
-    if (id.startsWith('shoulderProp')) return 'shoulderObject';
-    return 'actor';
-  }
 }
