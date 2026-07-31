@@ -7,11 +7,8 @@ import 'rig_anchor_resolver.dart';
 import 'rig_model.dart';
 
 /// Builds the executable graph used by animation after geometry is embedded on
-/// the overscan canvas.
-///
-/// Renderer-defined parents always win over canonical defaults. This is
-/// required for asymmetric attachments such as a companion placed on the right
-/// shoulder.
+/// the overscan canvas. Renderer-defined parents and anchors always win over
+/// canonical defaults.
 final class RuntimeRigBuilder {
   const RuntimeRigBuilder();
 
@@ -105,6 +102,7 @@ final class RuntimeRigBuilder {
       if (!nodeIds.contains(parentNode) || !nodeIds.contains(childNode)) return;
       if (!byAnchor.containsKey(parentAnchor) ||
           !byAnchor.containsKey(childAnchor)) return;
+      if (constraints.any((constraint) => constraint.id == id)) return;
       constraints.add(RigConstraint(
         id: id,
         kind: RigConstraintKind.attach,
@@ -114,49 +112,45 @@ final class RuntimeRigBuilder {
       ));
     }
 
-    attach(
-      'neck-to-head',
-      'neck',
-      'head',
-      'neck.top',
-      'head.neckJoint',
-    );
-    attach(
-      'left-shoulder-to-arm',
-      'leftShoulder',
-      'leftArm',
-      'leftShoulder.joint',
-      'leftArm.root',
-    );
-    attach(
-      'right-shoulder-to-arm',
-      'rightShoulder',
-      'rightArm',
-      'rightShoulder.joint',
-      'rightArm.root',
-    );
-    attach(
-      'left-arm-to-hand',
-      'leftArm',
-      'leftHand',
-      'leftArm.hand',
-      'leftHand.root',
-    );
-    attach(
-      'right-arm-to-hand',
-      'rightArm',
-      'rightHand',
-      'rightArm.hand',
-      'rightHand.root',
-    );
+    attach('neck-to-head', 'neck', 'head', 'neck.top', 'head.neckJoint');
+    for (final side in const <String>['left', 'right']) {
+      attach(
+        '$side-shoulder-to-arm',
+        '${side}Shoulder',
+        '${side}Arm',
+        '${side}Shoulder.joint',
+        '${side}Arm.root',
+      );
+      attach(
+        '$side-arm-to-forearm',
+        '${side}Arm',
+        '${side}Forearm',
+        '${side}Arm.elbow',
+        '${side}Forearm.root',
+      );
+      attach(
+        '$side-forearm-to-wrist',
+        '${side}Forearm',
+        '${side}Wrist',
+        '${side}Forearm.wrist',
+        '${side}Wrist.center',
+      );
+      attach(
+        '$side-wrist-to-hand',
+        '${side}Wrist',
+        '${side}Hand',
+        '${side}Wrist.center',
+        '${side}Hand.root',
+      );
+    }
 
     // Every explicit renderer attachment receives a child-side root at the
-    // same rest-canvas point. The solver can then preserve the attachment after
-    // parent and child animation transforms diverge.
+    // same rest-canvas point. This preserves asymmetric and wearable-defined
+    // relationships without overriding the canonical chain above.
     for (final entry in state.nodeAnchors.entries) {
       final target = byAnchor[entry.value];
       if (target == null || !nodeIds.contains(entry.key)) continue;
-      final childAnchorId = '${entry.key}.root';
+      final childAnchorId = '${entry.key}.attachmentRoot';
       if (!byAnchor.containsKey(childAnchorId)) {
         final child = RigAnchor(
           id: childAnchorId,
@@ -166,13 +160,16 @@ final class RuntimeRigBuilder {
         anchors.add(child);
         byAnchor[childAnchorId] = child;
       }
-      constraints.add(RigConstraint(
-        id: 'attach.${entry.key}',
-        kind: RigConstraintKind.attach,
-        nodeIds: <String>[target.nodeId, entry.key],
-        anchorIds: <String>[target.id, childAnchorId],
-        stiffness: 1,
-      ));
+      final parent = state.nodeParents[entry.key] ?? CanonicalRig.parents[entry.key];
+      if (parent == null || parent == target.nodeId) {
+        attach(
+          'attach.${entry.key}',
+          target.nodeId,
+          entry.key,
+          target.id,
+          childAnchorId,
+        );
+      }
     }
 
     _addChainConstraints(nodeIds, anchors, byAnchor, constraints);
@@ -192,29 +189,35 @@ final class RuntimeRigBuilder {
     required int offsetX,
     required int offsetY,
   }) {
-    final leftShoulder = byAnchor['leftShoulder.joint']?.localPosition;
-    final rightShoulder = byAnchor['rightShoulder.joint']?.localPosition;
-    if (leftShoulder != null) {
-      ensureAnchor('leftArm.root', 'leftArm', leftShoulder);
-    }
-    if (rightShoulder != null) {
-      ensureAnchor('rightArm.root', 'rightArm', rightShoulder);
-    }
+    for (final side in const <String>['left', 'right']) {
+      final shoulder = byAnchor['${side}Shoulder.joint']?.localPosition;
+      if (shoulder != null) {
+        ensureAnchor('${side}Arm.root', '${side}Arm', shoulder);
+      }
 
-    void handAnchors(String side) {
       final arm = state.mask('${side}Arm');
-      final bounds = arm.bounds;
-      if (bounds == null) return;
-      final point = PixelPoint(
-        bounds.center.x + offsetX,
-        bounds.bottom + offsetY,
-      );
-      ensureAnchor('${side}Arm.hand', '${side}Arm', point);
-      ensureAnchor('${side}Hand.root', '${side}Hand', point);
-    }
+      final forearm = state.mask('${side}Forearm');
+      final hand = state.mask('${side}Hand');
+      final armBounds = arm.bounds;
+      final forearmBounds = forearm.bounds;
+      final handBounds = hand.bounds;
+      final elbow = byAnchor['${side}Forearm.elbow']?.localPosition ??
+          PixelPoint(
+            (forearmBounds?.center.x ?? armBounds?.center.x ?? 24) + offsetX,
+            (forearmBounds?.top ?? armBounds?.center.y ?? 38) + offsetY,
+          );
+      final wrist = byAnchor['${side}Wrist.center']?.localPosition ??
+          PixelPoint(
+            (handBounds?.center.x ?? forearmBounds?.center.x ?? 24) + offsetX,
+            (handBounds?.top ?? forearmBounds?.bottom ?? 45) + offsetY,
+          );
 
-    handAnchors('left');
-    handAnchors('right');
+      ensureAnchor('${side}Arm.elbow', '${side}Arm', elbow);
+      ensureAnchor('${side}Forearm.root', '${side}Forearm', elbow);
+      ensureAnchor('${side}Forearm.wrist', '${side}Forearm', wrist);
+      ensureAnchor('${side}Wrist.center', '${side}Wrist', wrist);
+      ensureAnchor('${side}Hand.root', '${side}Hand', wrist);
+    }
   }
 
   String? _defaultAnchor(String id, Map<String, RigAnchor> anchors) {
@@ -227,6 +230,10 @@ final class RuntimeRigBuilder {
       'mouth' || 'mouthProp' || 'smokeEmitter' => 'mouth.center',
       'leftShoulder' || 'leftArm' => 'leftShoulder.joint',
       'rightShoulder' || 'rightArm' => 'rightShoulder.joint',
+      'leftForearm' => 'leftForearm.elbow',
+      'rightForearm' => 'rightForearm.elbow',
+      'leftWrist' => 'leftWrist.center',
+      'rightWrist' => 'rightWrist.center',
       'leftHand' => 'leftHand.root',
       'rightHand' => 'rightHand.root',
       'leftEar' || 'leftEarJewelry' || 'leftEarWearable' => 'leftEar.center',
@@ -234,7 +241,11 @@ final class RuntimeRigBuilder {
       'hairBack' || 'hairBackRoot' || 'hairFront' => 'hair.rootCenter',
       'capeLeftRoot' => 'cape.leftRoot',
       'capeRightRoot' => 'cape.rightRoot',
-      'capeCenter' || 'backAdornment' || 'rigidBackWearable' || 'backEmitter' =>
+      'capeCenter' ||
+      'backAdornment' ||
+      'rigidBackWearable' ||
+      'backEmitter' ||
+      'backWearableFront' =>
         'cape.center',
       _ => null,
     };
@@ -325,7 +336,6 @@ final class RuntimeRigBuilder {
       'hair.middle.tip',
       hairRoot?.translate(0, 7),
     );
-
     seam(
       'cape-left-root',
       'leftShoulder',
