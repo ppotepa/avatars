@@ -23,7 +23,7 @@ jobs:
       - run: node --check web/app.js
       - run: node --check web/player.js
       - run: dart pub get
-      - run: dart format lib test bin tool benchmark
-      - run: dart analyze --no-fatal-warnings
+      - run: dart format --output=none --set-exit-if-changed lib test bin tool benchmark
+      - run: dart analyze
       - run: dart test
       - run: dart run tool/variation_audit.dart --samples 50
