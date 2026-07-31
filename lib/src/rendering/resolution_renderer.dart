@@ -1,6 +1,7 @@
 import '../api/avatar_request.dart';
 import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
+import 'native_detail_renderer.dart';
 import 'render_model.dart';
 
 /// Expands the canonical 48×48 composition into a resolution-aware pixel
@@ -8,7 +9,11 @@ import 'render_model.dart';
 /// so non-integer profiles such as 64×64 and 80×80 do not accumulate all narrow
 /// source cells on one side of the face.
 final class ResolutionAwareRenderer {
-  const ResolutionAwareRenderer();
+  const ResolutionAwareRenderer({
+    this.nativeDetails = const NativeDetailRenderer(),
+  });
+
+  final NativeDetailRenderer nativeDetails;
 
   IndexedImage render({
     required IndexedImage source,
@@ -46,12 +51,16 @@ final class ResolutionAwareRenderer {
         );
       }
     }
-    return output;
+    return nativeDetails.enhance(
+      image: output,
+      source: source,
+      layers: layers,
+      palette: palette,
+      settings: settings,
+      phase: phase,
+    );
   }
 
-  /// Maps a destination coordinate to the center of a source pixel while
-  /// explicitly mirroring the second half. This produces the same cell-width
-  /// sequence from both sides of an even-sized sprite.
   int _sourceCoordinate(int destination, int destinationSize, int sourceSize) {
     final mirrored = destination >= destinationSize ~/ 2;
     final localDestination =
@@ -95,17 +104,18 @@ final class ResolutionAwareRenderer {
         settings.lightingDirection == AvatarLightingDirection.frontal;
     final lightFromRight =
         settings.lightingDirection == AvatarLightingDirection.upperRight;
-    final lightEdge = topEdge || (!frontal && (lightFromRight ? rightEdge : leftEdge));
+    final lightEdge =
+        topEdge || (!frontal && (lightFromRight ? rightEdge : leftEdge));
     final shadowEdge =
         bottomEdge || (!frontal && (lightFromRight ? leftEdge : rightEdge));
     final lightNeighbourX = lightFromRight ? sx + 1 : sx - 1;
     final shadowNeighbourX = lightFromRight ? sx - 1 : sx + 1;
     final exposedToLight =
         (!frontal && source.get(lightNeighbourX, sy) != original) ||
-        source.get(sx, sy - 1) != original;
+            source.get(sx, sy - 1) != original;
     final exposedToShadow =
         (!frontal && source.get(shadowNeighbourX, sy) != original) ||
-        source.get(sx, sy + 1) != original;
+            source.get(sx, sy + 1) != original;
 
     if (lightEdge && exposedToLight) {
       return _ramp(original, palette, lighter: true, owner: owner);
@@ -146,12 +156,22 @@ final class ResolutionAwareRenderer {
       }
       if ((owner == 'hair' || owner == 'clothing') &&
           (x * 3 + y + phase ~/ 16) % 13 == 0) {
-        return _ramp(original, palette, lighter: y < size ~/ 2, owner: owner);
+        return _ramp(
+          original,
+          palette,
+          lighter: y < size ~/ 2,
+          owner: owner,
+        );
       }
       if (owner == 'clothing' &&
           y > size * 2 ~/ 3 &&
           (x - size ~/ 2).abs() % 11 == 0) {
-        return _ramp(original, palette, lighter: x < size ~/ 2, owner: owner);
+        return _ramp(
+          original,
+          palette,
+          lighter: x < size ~/ 2,
+          owner: owner,
+        );
       }
     }
     return original;
