@@ -60,6 +60,37 @@ final class AvatarMetrics {
   final double nativeGeometryPixelRatio;
   final String geometryProfile;
 
+  AvatarMetrics withNativeGeometry(Map<String, Object> diagnostics) =>
+      AvatarMetrics(
+        usedColorCount: usedColorCount,
+        occupiedPixelCount: occupiedPixelCount,
+        isolatedPixelCount: isolatedPixelCount,
+        connectedComponentCount: connectedComponentCount,
+        actorOccupiedPixelCount: actorOccupiedPixelCount,
+        actorIsolatedPixelCount: actorIsolatedPixelCount,
+        actorConnectedComponentCount: actorConnectedComponentCount,
+        actorWidthOccupancy: actorWidthOccupancy,
+        actorHeightOccupancy: actorHeightOccupancy,
+        actorAreaOccupancy: actorAreaOccupancy,
+        faceHeightOccupancy: faceHeightOccupancy,
+        sceneEffectPixelRatio: sceneEffectPixelRatio,
+        layerCount: layerCount,
+        visibility: visibility,
+        faceReadabilityScore: faceReadabilityScore,
+        canvasWidth: canvasWidth,
+        canvasHeight: canvasHeight,
+        detailLevel: detailLevel,
+        eyeContrastScore: eyeContrastScore,
+        silhouetteContrastScore: silhouetteContrastScore,
+        visualDensityScore: visualDensityScore,
+        nativeGeometryPixelCount:
+            (diagnostics['nativeGeometryPixelCount'] as num?)?.toInt() ?? 0,
+        nativeGeometryPixelRatio:
+            (diagnostics['nativeGeometryPixelRatio'] as num?)?.toDouble() ?? 0,
+        geometryProfile:
+            diagnostics['geometryProfile']?.toString() ?? 'canonical48',
+      );
+
   Map<String, Object> toJson() => <String, Object>{
         'usedColorCount': usedColorCount,
         'occupiedPixelCount': occupiedPixelCount,
@@ -117,10 +148,10 @@ final class AvatarResult {
     required this.image,
     required this.layers,
     required this.validation,
-    required this.metrics,
+    required AvatarMetrics metrics,
     required this.imageHash,
     this.effectiveAdjustments = const <EffectiveAdjustment>[],
-  });
+  }) : _metrics = metrics;
 
   final AvatarGenome genome;
   final AvatarLayout layout;
@@ -128,12 +159,15 @@ final class AvatarResult {
   final IndexedImage image;
   final List<RenderLayer> layers;
   final ValidationReport validation;
-  final AvatarMetrics metrics;
+  final AvatarMetrics _metrics;
   final String imageHash;
   final List<EffectiveAdjustment> effectiveAdjustments;
 
   Map<String, Object> get nativeGeometryDiagnostics =>
       ResolutionAwareRenderer.diagnosticsFor(image, palette);
+
+  AvatarMetrics get metrics =>
+      _metrics.withNativeGeometry(nativeGeometryDiagnostics);
 
   Map<String, Object?> toJson({bool includePixels = true}) => <String, Object?>{
         'schemaVersion': AvatarGenomeVersion.resultSchema,
@@ -156,10 +190,7 @@ final class AvatarResult {
         'palette': palette.toJson(),
         'layers': layers.map((layer) => layer.toJson()).toList(growable: false),
         'validation': validation.toJson(),
-        'metrics': <String, Object>{
-          ...metrics.toJson(),
-          ...nativeGeometryDiagnostics,
-        },
+        'metrics': metrics.toJson(),
         if (includePixels) 'image': image.toJson(),
       };
 }
