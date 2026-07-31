@@ -29,8 +29,10 @@ void main() {
       }
     }
     expect(cameras, hasLength(1));
-    expect(animation.frames.map((frame) => frame.imageHash).toSet().length,
-        greaterThan(1));
+    expect(
+      animation.frames.map((frame) => frame.imageHash).toSet().length,
+      greaterThan(1),
+    );
   });
 
   test('secondary rigs expose articulated nodes', () {
@@ -53,7 +55,8 @@ void main() {
     expect(ids, contains('necklaceRight'));
     expect(ids, contains('pendant'));
     expect(ids, contains('companionHead'));
-    expect(ids, contains('companionWings'));
+    expect(ids, contains('companionLeftWing'));
+    expect(ids, contains('companionRightWing'));
     expect(ids, contains('capeTipLeft'));
     expect(ids, contains('capeTipRight'));
   });
