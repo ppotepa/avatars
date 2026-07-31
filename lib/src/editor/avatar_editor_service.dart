@@ -69,7 +69,7 @@ final class AvatarEditorService {
     AvatarPresetService? presetService,
     AvatarLockService? lockService,
   }) {
-    final resolvedCatalog = catalog ?? ParameterCatalog.v41;
+    final resolvedCatalog = catalog ?? ParameterCatalog.current;
     final resolvedRegistry =
         registry ?? AvatarPropertyRegistry(catalog: resolvedCatalog);
     return AvatarEditorService._(
@@ -117,11 +117,32 @@ final class AvatarEditorService {
         'catalogVersion': AvatarGenomeVersion.catalog,
       };
 
+  AvatarRequest resolveRequest(
+    AvatarRequest initialRequest, {
+    List<AvatarEditorAction> actions = const <AvatarEditorAction>[],
+  }) =>
+      _applyActions(initialRequest, actions).request;
+
   AvatarEditorResponse generate(
     AvatarRequest initialRequest, {
     List<AvatarEditorAction> actions = const <AvatarEditorAction>[],
     int svgScale = 8,
   }) {
+    final resolved = _applyActions(initialRequest, actions);
+    final result = resolved.current ?? generator.generate(resolved.request);
+    final svg = AvatarSvgCodec(scale: svgScale).encode(result);
+    return AvatarEditorResponse(
+      request: resolved.request,
+      result: result,
+      svg: svg,
+      propertyState: registry.stateToJson(resolved.request, result.genome),
+    );
+  }
+
+  ({AvatarRequest request, AvatarResult? current}) _applyActions(
+    AvatarRequest initialRequest,
+    List<AvatarEditorAction> actions,
+  ) {
     requestValidator.validate(initialRequest);
     var request = initialRequest;
     AvatarResult? current;
@@ -217,14 +238,7 @@ final class AvatarEditorService {
     }
 
     requestValidator.validate(request);
-    final result = current ?? generator.generate(request);
-    final svg = AvatarSvgCodec(scale: svgScale).encode(result);
-    return AvatarEditorResponse(
-      request: request,
-      result: result,
-      svg: svg,
-      propertyState: registry.stateToJson(request, result.genome),
-    );
+    return (request: request, current: current);
   }
 
   T _required<T>(T? value, String name) {
