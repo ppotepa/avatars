@@ -38,6 +38,27 @@ void main() {
     expect(_differentPixels(result64.image, naive64), greaterThan(0));
     expect(_differentPixels(result96.image, naive96), greaterThan(0));
 
+    expect(
+      result48.nativeGeometryDiagnostics['geometryProfile'],
+      'canonical48',
+    );
+    expect(
+      result64.nativeGeometryDiagnostics['nativeGeometryPixelCount'],
+      greaterThan(0),
+    );
+    expect(
+      result96.nativeGeometryDiagnostics['nativeGeometryPixelCount'],
+      greaterThan(0),
+    );
+    expect(
+      result64.nativeGeometryDiagnostics['geometryProfile'],
+      startsWith('native64.'),
+    );
+    expect(
+      result96.nativeGeometryDiagnostics['geometryProfile'],
+      startsWith('native96.'),
+    );
+
     final repeated64 = generator.generate(AvatarRequest(
       seed: seed,
       rendering: const AvatarRenderSettings(
@@ -47,6 +68,10 @@ void main() {
       ),
     ));
     expect(repeated64.imageHash, result64.imageHash);
+    expect(
+      repeated64.nativeGeometryDiagnostics,
+      result64.nativeGeometryDiagnostics,
+    );
   });
 }
 
