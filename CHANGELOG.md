@@ -1,5 +1,29 @@
 ## Unreleased
 
+- Rebuilt the browser animation controls as a compact media deck with fixed SVG
+  transport buttons, first/previous/rewind/play/pause/stop/forward/next/last
+  semantics, a scrubber, frame/time readouts, loop mode and animation tracks.
+- Removed the duplicate animation controller from `app.js`; `player.js` is now the
+  single owner of playback, cancellation, seeking, caching and UI state.
+- Added `POST /api/animation/clip`, allowing the player to prepare an entire SVG
+  clip in one request and perform playback locally without a render request per
+  frame.
+- Fixed missing static routes for `player.js` and `player.css` in the local server.
+- Consolidated render resolution into one visible control and added independent
+  preview zoom modes: fit, 1x, 2x and 4x.
+- Centered and mirrored 64x64, 80x80 and 96x96 raster sampling so non-integer
+  profiles distribute narrow source cells symmetrically instead of deforming one
+  side of the avatar.
+- Replaced wrap-around weather/effect particles with deterministic lifetime-based
+  fields using off-canvas spawning, independent speed, drift, sway, size, shape
+  and front/back depth.
+- Added deterministic procedural construction to face masks, including varied
+  hockey-mask vents, stripes, emblems, panels, seams, filters, asymmetry and wear.
+- Added procedural seams, panels, rivets, organic texture, highlights and damage
+  to armor, headwear, capes, cybernetics, shoulder props, companions and relics.
+- Added player, server route, resolution symmetry, particle continuity, fog shape,
+  mask entropy and wearable-surface entropy tests, plus JavaScript syntax checks
+  in CI.
 - Added the additive V4.2 catalog extension with four metadata-driven categories
   and 51 fields, bringing the server-visible catalog to 30 categories and 274
   fields without a handwritten frontend control list.
