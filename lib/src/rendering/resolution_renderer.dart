@@ -20,6 +20,26 @@ final class ResolutionAwareRenderer {
   final NativeGeometryRenderer nativeGeometry;
   final NativeDetailRenderer nativeDetails;
   static final ResolutionRenderCache _cache = ResolutionRenderCache();
+  static final Map<String, Map<String, Object>> _diagnostics =
+      <String, Map<String, Object>>{};
+  static final List<String> _diagnosticOrder = <String>[];
+
+  static Map<String, Object> diagnosticsFor(
+    IndexedImage image,
+    AvatarPalette palette,
+  ) {
+    final hash = image.hashWithPalette(palette.colors);
+    return Map<String, Object>.unmodifiable(
+      _diagnostics[hash] ??
+          <String, Object>{
+            'nativeGeometryPixelCount': 0,
+            'nativeGeometryPixelRatio': 0.0,
+            'geometryProfile': image.width == 48
+                ? 'canonical48'
+                : 'native${image.width}',
+          },
+    );
+  }
 
   IndexedImage render({
     required IndexedImage source,
@@ -29,6 +49,12 @@ final class ResolutionAwareRenderer {
     required int phase,
   }) {
     if (settings.size == source.width && settings.size == source.height) {
+      _recordDiagnostics(
+        source: source,
+        output: source,
+        palette: palette,
+        profile: ResolutionProfile.forSettings(settings),
+      );
       return source;
     }
 
@@ -58,8 +84,45 @@ final class ResolutionAwareRenderer {
       settings: settings,
       phase: phase,
     );
+    _recordDiagnostics(
+      source: source,
+      output: enhanced,
+      palette: palette,
+      profile: profile,
+    );
     _cache.put(key, enhanced);
     return enhanced;
+  }
+
+  void _recordDiagnostics({
+    required IndexedImage source,
+    required IndexedImage output,
+    required AvatarPalette palette,
+    required ResolutionProfile profile,
+  }) {
+    var changed = 0;
+    for (var y = 0; y < output.height; y++) {
+      final sy = y * source.height ~/ output.height;
+      for (var x = 0; x < output.width; x++) {
+        final sx = x * source.width ~/ output.width;
+        if (output.get(x, y) != source.get(sx, sy)) changed++;
+      }
+    }
+    final total = output.width * output.height;
+    final hash = output.hashWithPalette(palette.colors);
+    _diagnostics[hash] = <String, Object>{
+      'nativeGeometryPixelCount': changed,
+      'nativeGeometryPixelRatio': total == 0 ? 0.0 : changed / total,
+      'geometryProfile': profile.nativeGeometry
+          ? 'native${profile.size}.budget${profile.detailBudget}'
+          : 'canonical48',
+    };
+    _diagnosticOrder
+      ..remove(hash)
+      ..add(hash);
+    while (_diagnosticOrder.length > 64) {
+      _diagnostics.remove(_diagnosticOrder.removeAt(0));
+    }
   }
 
   IndexedImage _applyLighting(
