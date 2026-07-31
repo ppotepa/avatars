@@ -7,6 +7,7 @@ import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import '../pixels/pixel_mask.dart';
+import '../util/math_utils.dart';
 import 'animation_controller.dart';
 import 'canonical_rig.dart';
 import 'clip_camera.dart';
@@ -100,14 +101,7 @@ final class RigClipPipeline {
     required this.validator,
     List<AvatarPartRenderer>? parts,
     ClipCameraCache? cameraCache,
-    this.canvas = const OverscanCanvas(
-      width: 72,
-      height: 72,
-      sourceWidth: 48,
-      sourceHeight: 48,
-      offsetX: 12,
-      offsetY: 12,
-    ),
+    this.canvas = const OverscanCanvas(),
   })  : parts = List.unmodifiable(parts ?? defaultParts),
         cameraCache = cameraCache ?? ClipCameraCache();
 
@@ -118,6 +112,8 @@ final class RigClipPipeline {
   final AvatarValidator validator;
   final List<AvatarPartRenderer> parts;
   final ClipCameraCache cameraCache;
+
+  /// Minimum canvas. Wide content automatically upgrades to 80 or 88 pixels.
   final OverscanCanvas canvas;
 
   static List<AvatarPartRenderer> get defaultParts =>
@@ -170,14 +166,16 @@ final class RigClipPipeline {
       throw ArgumentError.value(frameCount, 'frameCount', 'Must be positive.');
     }
     final prepared = prepare(request);
+    final workingCanvas = _canvasFor(prepared.genome);
     final raw = <_RawRigFrame>[
       for (var phase = 0; phase < frameCount; phase++)
-        _renderRaw(prepared, request.rendering, phase),
+        _renderRaw(prepared, request.rendering, phase, workingCanvas),
     ];
     final camera = ClipCameraFitter.fitFrames(
       raw.map((frame) => ClipCameraFitter.frameBounds(frame.state.layers)),
-      canvasWidth: canvas.width,
-      canvasHeight: canvas.height,
+      canvasWidth: workingCanvas.width,
+      canvasHeight: workingCanvas.height,
+      baseline: workingCanvas.offsetY + 47,
     );
     final key = cameraCache.key(
       genome: prepared.genome,
@@ -196,7 +194,8 @@ final class RigClipPipeline {
       prepared: prepared,
       camera: camera,
       frames: List.unmodifiable(<RigPipelineFrame>[
-        for (final frame in raw) _cropAndValidate(prepared, frame, camera),
+        for (final frame in raw)
+          _cropAndValidate(prepared, frame, camera, workingCanvas),
       ]),
     );
   }
@@ -204,6 +203,7 @@ final class RigClipPipeline {
   RigPipelineClip renderSingle(AvatarRequest request) {
     const cameraSampleCount = 16;
     final prepared = prepare(request);
+    final workingCanvas = _canvasFor(prepared.genome);
     final key = cameraCache.key(
       genome: prepared.genome,
       rendering: request.rendering,
@@ -219,6 +219,7 @@ final class RigClipPipeline {
         prepared,
         request.rendering,
         request.phase % cameraSampleCount,
+        workingCanvas,
       );
       selected.state.metadata['cameraCache'] = <String, Object>{
         'hit': true,
@@ -228,12 +229,13 @@ final class RigClipPipeline {
     } else {
       final raw = <_RawRigFrame>[
         for (var phase = 0; phase < cameraSampleCount; phase++)
-          _renderRaw(prepared, request.rendering, phase),
+          _renderRaw(prepared, request.rendering, phase, workingCanvas),
       ];
       camera = ClipCameraFitter.fitFrames(
         raw.map((frame) => ClipCameraFitter.frameBounds(frame.state.layers)),
-        canvasWidth: canvas.width,
-        canvasHeight: canvas.height,
+        canvasWidth: workingCanvas.width,
+        canvasHeight: workingCanvas.height,
+        baseline: workingCanvas.offsetY + 47,
       );
       cameraCache.put(key, camera);
       selected = raw[request.phase % cameraSampleCount];
@@ -248,7 +250,7 @@ final class RigClipPipeline {
       prepared: prepared,
       camera: camera,
       frames: <RigPipelineFrame>[
-        _cropAndValidate(prepared, selected, camera),
+        _cropAndValidate(prepared, selected, camera, workingCanvas),
       ],
     );
   }
@@ -257,6 +259,7 @@ final class RigClipPipeline {
     RigPreparedAvatar prepared,
     AvatarRenderSettings rendering,
     int phase,
+    OverscanCanvas workingCanvas,
   ) {
     final guard = ConstraintEngine(enabled: prepared.guardEnabled);
     final context = AvatarRenderContext(
@@ -269,7 +272,7 @@ final class RigClipPipeline {
     );
     final state = AvatarRenderState();
     for (final part in parts) part.render(context, state);
-    _bindRig(context, state);
+    _bindRig(context, state, workingCanvas);
     final image = compositor.compose(state.layers);
     return _RawRigFrame(
       phase: phase,
@@ -279,7 +282,11 @@ final class RigClipPipeline {
     );
   }
 
-  void _bindRig(AvatarRenderContext context, AvatarRenderState state) {
+  void _bindRig(
+    AvatarRenderContext context,
+    AvatarRenderState state,
+    OverscanCanvas workingCanvas,
+  ) {
     for (var index = 0; index < state.layers.length; index++) {
       final layer = state.layers[index];
       final binding = RigLayerBinding.resolve(
@@ -287,12 +294,9 @@ final class RigClipPipeline {
         layer.localOrder,
         layer.meta,
       );
-      final preserveRendererNode =
-          layer.meta['rigSegment'] != null ||
-              layer.meta['attachmentKind'] != null;
       state.layers[index] = layer.copyWith(
-        nodeId: preserveRendererNode ? layer.nodeId : binding.nodeId,
-        slot: preserveRendererNode ? layer.slot : binding.slot,
+        nodeId: binding.nodeId,
+        slot: binding.slot,
         localOrder: binding.localOrder,
       );
     }
@@ -302,30 +306,7 @@ final class RigClipPipeline {
         state.parentNode(entry.key, entry.value);
       }
     }
-    _completeRuntimeHierarchy(state);
     const WearableAttachmentPolicy().apply(context, state);
-    _normalizeCriticalLayerOrder(state);
-
-    final backgrounds = <String, PixelMask>{
-      for (final layer in state.layers)
-        if (layer.slot == RenderSlot.background) layer.id: layer.mask,
-    };
-
-    final graph = const RuntimeRigBuilder().build(
-      context.layout,
-      state,
-      offsetX: canvas.offsetX,
-      offsetY: canvas.offsetY,
-    );
-
-    canvas.embedState(state);
-    for (var index = 0; index < state.layers.length; index++) {
-      final layer = state.layers[index];
-      final original = backgrounds[layer.id];
-      if (original != null) {
-        state.layers[index] = layer.copyWith(mask: _embedBackground(original));
-      }
-    }
 
     final controller = const RigAnimationController();
     final expressive = const ExpressiveMotionPolicy().augment(
@@ -333,12 +314,38 @@ final class RigClipPipeline {
       controller.sample(context),
     );
     final sample = const SemanticGesturePolicy().augment(context, expressive);
-    final requestedPose = RigPose(sample.transforms);
+    _applyGestureDepth(state, sample.events);
+
+    final sceneSources = <String, ({PixelMask mask, RenderSlot slot})>{
+      for (final layer in state.layers)
+        if (_isRearSceneSlot(layer.slot))
+          layer.id: (mask: layer.mask, slot: layer.slot),
+    };
+
+    final graph = const RuntimeRigBuilder().build(
+      context.layout,
+      state,
+      offsetX: workingCanvas.offsetX,
+      offsetY: workingCanvas.offsetY,
+    );
+
+    workingCanvas.embedState(state);
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      final source = sceneSources[layer.id];
+      if (source != null) {
+        state.layers[index] = layer.copyWith(
+          mask: _embedSceneMask(source.mask, source.slot, workingCanvas),
+        );
+      }
+    }
+
     final solvedPose = const RigPoseApplier().solveAndApply(
       state,
       graph,
-      requestedPose,
+      RigPose(sample.transforms),
     );
+    _rebuildSemanticMasks(state);
     final constraintQuality =
         const RigQualityEvaluator().evaluate(graph, solvedPose);
 
@@ -347,7 +354,7 @@ final class RigClipPipeline {
     _protectFaceClarity(state);
     const SceneVisualBudgetRenderer().render(context, state);
     _rebuildSemanticMasks(state);
-    _recordPreCameraClipping(state);
+    _recordPreCameraClipping(state, workingCanvas);
 
     state.metadata
       ..['motionSample'] = <String, Object>{
@@ -361,132 +368,233 @@ final class RigClipPipeline {
           .map((constraint) => constraint.toJson())
           .toList(growable: false)
       ..['rigConstraintQuality'] = constraintQuality.toJson()
-      ..['rigGraph'] = graph.toJson();
+      ..['rigGraph'] = graph.toJson()
+      ..['motionEnvelope'] = <String, Object>{
+        'canvasWidth': workingCanvas.width,
+        'canvasHeight': workingCanvas.height,
+        'offsetX': workingCanvas.offsetX,
+        'offsetY': workingCanvas.offsetY,
+        'dynamic': workingCanvas.width != canvas.width ||
+            workingCanvas.height != canvas.height,
+      };
   }
 
-  void _completeRuntimeHierarchy(AvatarRenderState state) {
-    state
-      ..parentNode('leftForearm', 'leftArm')
-      ..parentNode('rightForearm', 'rightArm')
-      ..parentNode('leftWrist', 'leftForearm')
-      ..parentNode('rightWrist', 'rightForearm')
-      ..parentNode('leftHand', 'leftForearm')
-      ..parentNode('rightHand', 'rightForearm');
+  OverscanCanvas _canvasFor(AvatarGenome genome) {
+    String value(String id) => genome.values[id]?.toString() ?? 'none';
+    final animation = value('v4.faceAnimation') != 'none'
+        ? value('v4.faceAnimation')
+        : value('v4.animation');
+    final expressive = <String>{
+      'laugh',
+      'angry',
+      'surprised',
+      'sad',
+      'bashful',
+      'talk',
+    }.contains(animation) ||
+        <String>{'proudPose', 'shyLookAway'}
+            .contains(value('v4.poseMotion'));
+    final wide = value('v4.cape') != 'none' ||
+        value('v4.backAdornment') != 'none' ||
+        value('v4.shoulderProp') != 'none' ||
+        value('v4.extraShoulderProp') != 'none' ||
+        value('v4.horns') != 'none' ||
+        value('v4.halo') != 'none';
+    final size = expressive && wide
+        ? 88
+        : expressive || wide
+            ? 80
+            : canvas.width < 72
+                ? 72
+                : canvas.width;
+    final offset = (size - 48) ~/ 2;
+    return OverscanCanvas(
+      width: size,
+      height: size,
+      sourceWidth: 48,
+      sourceHeight: 48,
+      offsetX: offset,
+      offsetY: offset,
+    );
   }
 
-  void _normalizeCriticalLayerOrder(AvatarRenderState state) {
+  void _applyGestureDepth(AvatarRenderState state, Set<String> events) {
+    final bothFront = events.any(<String>{
+      'gestureCoverMouth',
+      'gestureBellyLaugh',
+      'gestureBoxerGuard',
+      'gestureFistsDown',
+      'gestureHandsToFace',
+      'gestureHandsOnHips',
+      'gestureSelfHug',
+      'gestureHandToCheek',
+    }.contains);
+    final rightFront = bothFront || events.contains('gesturePoint');
+    final leftFront = bothFront;
+
     for (var index = 0; index < state.layers.length; index++) {
       final layer = state.layers[index];
-      var slot = layer.slot;
-      var order = layer.localOrder;
+      final left = <String>{'leftArm', 'leftForearm', 'leftWrist', 'leftHand'}
+          .contains(layer.nodeId);
+      final right = <String>{
+        'rightArm',
+        'rightForearm',
+        'rightWrist',
+        'rightHand',
+      }.contains(layer.nodeId);
+      if (!left && !right) continue;
+      final front = left ? leftFront : rightFront;
+      state.layers[index] = layer.copyWith(
+        slot: front ? RenderSlot.frontArms : RenderSlot.rearArms,
+        localOrder: (front ? 400 : 200) + layer.localOrder.abs() % 80,
+        meta: <String, Object?>{
+          ...layer.meta,
+          'depthPolicy': front ? 'gestureFront' : 'restRear',
+        },
+      );
+    }
+  }
 
-      if (layer.nodeId == 'leftForearm' || layer.nodeId == 'rightForearm') {
-        slot = RenderSlot.frontArms;
-        order = 100 + order.abs() % 20;
-      } else if (layer.nodeId == 'leftEarJewelry' ||
-          layer.nodeId == 'rightEarJewelry') {
-        slot = RenderSlot.hairFront;
-        order = 80 + order.abs() % 10;
-      } else if (layer.nodeId == 'necklaceLeft' ||
-          layer.nodeId == 'necklaceRight' ||
-          layer.nodeId == 'pendant' ||
-          layer.nodeId == 'necklace') {
-        slot = RenderSlot.frontArms;
-        order = 20 + order.abs() % 20;
-      } else if (layer.nodeId == 'rigidBackWearable' ||
-          layer.nodeId == 'backEmitter') {
-        slot = RenderSlot.capeHairBack;
-        order = 50 + order.abs() % 20;
-      }
+  bool _isRearSceneSlot(RenderSlot slot) => <RenderSlot>{
+        RenderSlot.background,
+        RenderSlot.backgroundDetail,
+        RenderSlot.atmosphereBack,
+      }.contains(slot);
 
-      if (slot != layer.slot || order != layer.localOrder) {
-        state.layers[index] = layer.copyWith(slot: slot, localOrder: order);
+  PixelMask _embedSceneMask(
+    PixelMask source,
+    RenderSlot slot,
+    OverscanCanvas workingCanvas,
+  ) {
+    final output = PixelMask(
+      width: workingCanvas.width,
+      height: workingCanvas.height,
+    );
+    for (var y = 0; y < workingCanvas.height; y++) {
+      for (var x = 0; x < workingCanvas.width; x++) {
+        final sourceX = x - workingCanvas.offsetX;
+        final sourceY = y - workingCanvas.offsetY;
+        final sx = slot == RenderSlot.background
+            ? sourceX.clamp(0, source.width - 1).toInt()
+            : positiveMod(sourceX, source.width);
+        final sy = slot == RenderSlot.background
+            ? sourceY.clamp(0, source.height - 1).toInt()
+            : positiveMod(sourceY, source.height);
+        if (source.get(sx, sy) != 0) output.set(x, y);
       }
     }
+    return output;
   }
 
   void _protectFaceClarity(AvatarRenderState state) {
-    PixelMask? face;
-    for (final layer in state.layers) {
-      if (<String>{'head', 'face', 'eyes', 'brows', 'mouth'}
-          .contains(layer.nodeId)) {
-        face = face == null ? layer.mask.clone() : face.union(layer.mask);
-      }
-    }
-    final bounds = face?.bounds;
+    final face = _unionLayers(
+      state.layers.where((layer) => <String>{
+        'head',
+        'face',
+        'eyes',
+        'brows',
+        'mouth',
+      }.contains(layer.nodeId)),
+    );
+    final bounds = face.bounds;
     if (bounds == null) return;
-
-    final left = (bounds.left - 3).clamp(0, face!.width - 1).toInt();
-    final top = (bounds.top - 3).clamp(0, face.height - 1).toInt();
-    final width = (bounds.width + 6).clamp(1, face.width - left).toInt();
-    final height = (bounds.height + 6).clamp(1, face.height - top).toInt();
-    final clearance = PixelMask(width: face.width, height: face.height)
-      ..fillRect(left, top, width, height);
-
+    final clearance = face.dilated().dilated();
     var removedPixels = 0;
+    var affectedLayers = 0;
     for (var index = 0; index < state.layers.length; index++) {
       final layer = state.layers[index];
-      final isBusyBackgroundDetail = layer.slot == RenderSlot.background &&
-          (layer.id.contains('symbol') ||
-              layer.id.contains('light') ||
-              layer.id.contains('accent') ||
-              layer.id.contains('cosmic') ||
-              layer.id.contains('ambient'));
-      if (!isBusyBackgroundDetail) continue;
+      if (!<RenderSlot>{
+        RenderSlot.backgroundDetail,
+        RenderSlot.atmosphereBack,
+      }.contains(layer.slot)) {
+        continue;
+      }
       final overlap = layer.mask.intersect(clearance);
       if (overlap.count == 0) continue;
       removedPixels += overlap.count;
+      affectedLayers++;
       state.layers[index] = layer.copyWith(mask: layer.mask.subtract(clearance));
     }
-
     state.metadata['backgroundClarity'] = <String, Object>{
       'faceClearancePixels': clearance.count,
       'removedBackgroundPixels': removedPixels,
+      'affectedLayerCount': affectedLayers,
       'protectedBounds': bounds.toJson(),
     };
   }
 
   void _rebuildSemanticMasks(AvatarRenderState state) {
-    final rebuilt = <String, PixelMask>{};
+    final byNode = <String, PixelMask>{};
     for (final layer in state.layers) {
-      final existing = rebuilt[layer.nodeId];
-      rebuilt[layer.nodeId] =
+      final existing = byNode[layer.nodeId];
+      byNode[layer.nodeId] =
           existing == null ? layer.mask.clone() : existing.union(layer.mask);
     }
-    for (final entry in rebuilt.entries) {
-      state.putMask(entry.key, entry.value);
-    }
+    for (final entry in byNode.entries) state.putMask(entry.key, entry.value);
+
+    PixelMask layersMatching(bool Function(RenderLayer layer) include) =>
+        _unionLayers(state.layers.where(include));
+    state
+      ..putMask('hair.all', layersMatching((layer) =>
+          layer.nodeId.startsWith('hair') || layer.id.startsWith('hair.')))
+      ..putMask('ears', layersMatching((layer) =>
+          <String>{'ears', 'leftEar', 'rightEar'}.contains(layer.nodeId)))
+      ..putMask('nose', layersMatching((layer) => layer.id.startsWith('nose.')))
+      ..putMask(
+        'faceMask',
+        layersMatching((layer) => layer.nodeId == 'faceMask'),
+      )
+      ..putMask(
+        'mouthProp',
+        layersMatching((layer) => layer.nodeId == 'mouthProp'),
+      );
     state.metadata['semanticMaskOwnership'] = <String, Object>{
-      'nodeCount': rebuilt.length,
+      'nodeCount': byNode.length,
       'source': 'transformedLayers',
-      'legacyAliasesPreserved': true,
+      'legacyAliasesRebuilt': true,
     };
   }
 
-  void _recordPreCameraClipping(AvatarRenderState state) {
+  PixelMask _unionLayers(Iterable<RenderLayer> layers) {
+    PixelMask? output;
+    for (final layer in layers) {
+      output = output == null ? layer.mask.clone() : output.union(layer.mask);
+    }
+    return output ?? PixelMask();
+  }
+
+  void _recordPreCameraClipping(
+    AvatarRenderState state,
+    OverscanCanvas workingCanvas,
+  ) {
     final clippedNodes = <String>{};
     var edgePixels = 0;
     for (final layer in state.layers) {
+      if (_isRearSceneSlot(layer.slot) ||
+          layer.slot == RenderSlot.foreground ||
+          layer.slot == RenderSlot.emotionEffects) {
+        continue;
+      }
       final bounds = layer.mask.bounds;
       if (bounds == null) continue;
       final touchesEdge = bounds.left <= 0 ||
           bounds.top <= 0 ||
-          bounds.right >= canvas.width - 1 ||
-          bounds.bottom >= canvas.height - 1;
-      if (!touchesEdge || layer.slot == RenderSlot.background) continue;
+          bounds.right >= workingCanvas.width - 1 ||
+          bounds.bottom >= workingCanvas.height - 1;
+      if (!touchesEdge) continue;
       clippedNodes.add(layer.nodeId);
-      for (var x = 0; x < canvas.width; x++) {
+      for (var x = 0; x < workingCanvas.width; x++) {
         edgePixels += layer.mask.get(x, 0);
-        edgePixels += layer.mask.get(x, canvas.height - 1);
+        edgePixels += layer.mask.get(x, workingCanvas.height - 1);
       }
-      for (var y = 1; y < canvas.height - 1; y++) {
+      for (var y = 1; y < workingCanvas.height - 1; y++) {
         edgePixels += layer.mask.get(0, y);
-        edgePixels += layer.mask.get(canvas.width - 1, y);
+        edgePixels += layer.mask.get(workingCanvas.width - 1, y);
       }
     }
     state.metadata['preCameraClipping'] = <String, Object>{
-      'canvasWidth': canvas.width,
-      'canvasHeight': canvas.height,
+      'canvasWidth': workingCanvas.width,
+      'canvasHeight': workingCanvas.height,
       'edgePixels': edgePixels,
       'nodes': clippedNodes.toList(growable: false)..sort(),
       'hasPossibleClipping': clippedNodes.isNotEmpty,
@@ -497,6 +605,7 @@ final class RigClipPipeline {
     RigPreparedAvatar prepared,
     _RawRigFrame raw,
     ClipCamera camera,
+    OverscanCanvas workingCanvas,
   ) {
     final state = AvatarRenderState();
     for (final entry in raw.state.masks.entries) {
@@ -507,15 +616,19 @@ final class RigClipPipeline {
       ..addAll(raw.state.metadata)
       ..['clipCamera'] = camera.toJson()
       ..['overscan'] = <String, int>{
-        'width': canvas.width,
-        'height': canvas.height,
+        'width': workingCanvas.width,
+        'height': workingCanvas.height,
+        'offsetX': workingCanvas.offsetX,
+        'offsetY': workingCanvas.offsetY,
       };
     state.nodeParents.addAll(raw.state.nodeParents);
     state.nodeAnchors.addAll(raw.state.nodeAnchors);
     state.nodeTransforms.addAll(raw.state.nodeTransforms);
+
     final image = camera.cropImage(raw.image);
     validator.validate(state, image, raw.guard);
     final runtimeQuality = const RigValidationEntries().evaluate(raw.state, camera);
+    final clarityEntries = _postCropClarity(state);
     return RigPipelineFrame(
       phase: raw.phase,
       state: state,
@@ -525,20 +638,52 @@ final class RigClipPipeline {
         ...prepared.baseValidation,
         ...raw.guard.entries,
         ...runtimeQuality,
+        ...clarityEntries,
       ]),
     );
   }
 
-  PixelMask _embedBackground(PixelMask source) {
-    final output = PixelMask(width: canvas.width, height: canvas.height);
-    for (var y = 0; y < canvas.height; y++) {
-      for (var x = 0; x < canvas.width; x++) {
-        final sx = (x - canvas.offsetX).clamp(0, source.width - 1).toInt();
-        final sy = (y - canvas.offsetY).clamp(0, source.height - 1).toInt();
-        if (source.get(sx, sy) != 0) output.set(x, y);
-      }
-    }
-    return output;
+  List<ValidationEntry> _postCropClarity(AvatarRenderState state) {
+    final face = _unionLayers(state.layers.where((layer) => <String>{
+      'head',
+      'face',
+      'eyes',
+      'brows',
+      'mouth',
+    }.contains(layer.nodeId)));
+    if (face.count == 0) return const <ValidationEntry>[];
+    final clearance = face.dilated();
+    final details = state.layers.where((layer) => <RenderSlot>{
+      RenderSlot.backgroundDetail,
+      RenderSlot.atmosphereBack,
+    }.contains(layer.slot));
+    final detailMask = _unionLayers(details);
+    final edgePixels =
+        detailMask.outline(diagonal: true).intersect(clearance).count;
+    final colors = <int>{
+      for (final layer in details)
+        if (layer.mask.intersect(clearance).count > 0) layer.colorIndex,
+    };
+    final edgeRatio = clearance.count == 0 ? 0.0 : edgePixels / clearance.count;
+    final pressure = clampDouble(edgeRatio + colors.length * .04, 0, 1);
+    state.metadata['backgroundClarityPostCrop'] = <String, Object>{
+      'edgePixelsBehindFace': edgePixels,
+      'faceClearancePixels': clearance.count,
+      'backgroundColorCount': colors.length,
+      'pressure': pressure,
+      'isReadable': pressure <= .28,
+    };
+    if (pressure <= .28) return const <ValidationEntry>[];
+    return <ValidationEntry>[
+      ValidationEntry(
+        id: 'clarity.backgroundFaceRegion',
+        status: ValidationStatus.violation,
+        severity: ValidationSeverity.style,
+        reason: 'Background detail remains too busy directly behind the face.',
+        before: pressure,
+        after: .28,
+      ),
+    ];
   }
 }
 
