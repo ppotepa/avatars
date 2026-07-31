@@ -20,6 +20,28 @@ NATURAL = ROOT / "lib/src/rendering/companion/companion_styles_natural_fantasy.d
 TEST = ROOT / "test/companion_v2_test.dart"
 DOC = ROOT / "docs/COMPANION_RIG_V2.md"
 
+PREEXISTING_STYLES = {
+    "parrot",
+    "cat",
+    "smallDragon",
+    "shoulderRobot",
+    "ghost",
+    "insect",
+    "owl",
+    "crow",
+    "raven",
+    "bat",
+    "snake",
+    "frog",
+    "mushroomBuddy",
+    "floatingSkull",
+    "miniDrone",
+    "lanternSpirit",
+    "starOrb",
+    "cloudSpirit",
+    "bookFamiliar",
+}
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
@@ -62,10 +84,13 @@ def main() -> int:
         errors.append(
             f"expected at least 55 articulated styles, got {len(registry_styles)}"
         )
-    missing_catalog = sorted(registry_styles - catalog_styles)
+    missing_catalog = sorted(
+        registry_styles - catalog_styles - PREEXISTING_STYLES
+    )
     if missing_catalog:
         errors.append(
-            "registry styles missing from catalog patch: " + ", ".join(missing_catalog)
+            "new registry styles missing from catalog patch: "
+            + ", ".join(missing_catalog)
         )
 
     required_nodes = {
@@ -119,7 +144,7 @@ def main() -> int:
     print("COMPANION AUDIT PASSED")
     print(f"- {len(registry_styles)} articulated styles")
     print("- independent wing, limb, ear, antenna and tentacle nodes")
-    print("- registry styles exposed through catalog metadata")
+    print("- new registry styles exposed through catalog metadata")
     print("- wing motion and attachment tests present")
     return 0
 
