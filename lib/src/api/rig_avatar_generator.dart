@@ -1,6 +1,5 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
-import '../genome/budgeted_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../graph/avatar_graph.dart';
@@ -13,10 +12,11 @@ import '../rendering/rig_clip_pipeline.dart';
 import '../util/math_utils.dart';
 import 'avatar_request.dart';
 import 'avatar_result.dart';
+import 'generator_dependencies.dart';
 
 /// Public generator backed exclusively by the hierarchical rig clip pipeline.
 final class AvatarGenerator {
-  AvatarGenerator({
+  factory AvatarGenerator({
     ParameterCatalog? catalog,
     GenomeGenerator? genomeService,
     LayoutResolver? layoutResolver,
@@ -25,26 +25,29 @@ final class AvatarGenerator {
     ResolutionAwareRenderer? resolutionRenderer,
     AvatarValidator? validator,
     RigClipPipeline? pipeline,
-  })  : catalog = catalog ?? ParameterCatalog.v41,
-        genomeService = genomeService ??
-            BudgetedGenomeGenerator(catalog: catalog ?? ParameterCatalog.v41),
-        layoutResolver = layoutResolver ?? const V41LayoutResolver(),
-        paletteFactory = paletteFactory ?? const V41PaletteFactory(),
-        compositor = compositor ?? const IndexedAvatarCompositor(),
-        resolutionRenderer =
-            resolutionRenderer ?? const ResolutionAwareRenderer(),
-        validator = validator ?? const V41AvatarValidator(),
-        pipeline = pipeline ??
-            RigClipPipeline(
-              genomeGenerator: genomeService ??
-                  BudgetedGenomeGenerator(
-                    catalog: catalog ?? ParameterCatalog.v41,
-                  ),
-              layoutResolver: layoutResolver ?? const V41LayoutResolver(),
-              paletteFactory: paletteFactory ?? const V41PaletteFactory(),
-              compositor: compositor ?? const IndexedAvatarCompositor(),
-              validator: validator ?? const V41AvatarValidator(),
-            );
+  }) {
+    final dependencies = GeneratorDependencies.resolve(
+      catalog: catalog,
+      genomeService: genomeService,
+      layoutResolver: layoutResolver,
+      paletteFactory: paletteFactory,
+      compositor: compositor,
+      resolutionRenderer: resolutionRenderer,
+      validator: validator,
+      pipeline: pipeline,
+    );
+    return AvatarGenerator._(dependencies);
+  }
+
+  AvatarGenerator._(GeneratorDependencies dependencies)
+      : catalog = dependencies.catalog,
+        genomeService = dependencies.genomeService,
+        layoutResolver = dependencies.layoutResolver,
+        paletteFactory = dependencies.paletteFactory,
+        compositor = dependencies.compositor,
+        resolutionRenderer = dependencies.resolutionRenderer,
+        validator = dependencies.validator,
+        pipeline = dependencies.pipeline;
 
   final ParameterCatalog catalog;
   final GenomeGenerator genomeService;
