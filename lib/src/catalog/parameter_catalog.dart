@@ -172,6 +172,9 @@ final class ParameterCatalog {
   /// Preserves the historical name while exposing additive extensions.
   static final ParameterCatalog v41 = _decodeV41();
 
+  /// Current merged catalog. New code should prefer this neutral alias.
+  static final ParameterCatalog current = v41;
+
   final List<ParameterCategory> categories;
   final Map<String, WholeAvatarPreset> wholePresets;
   final List<ParameterDefinition> fields;
