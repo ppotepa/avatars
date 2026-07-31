@@ -21,11 +21,32 @@ final class RigValidationEntries {
         before: camera.actorOccupancy,
       ));
     }
-    if (camera.safetyCoverage < .15) {
+    if (camera.safetyCoverage < .55) {
       entries.add(_soft(
         'rig.camera.safetyCoverage',
-        'Less than 15% of the extended wearable bounds are visible.',
+        'Less than 55% of extended wearable bounds are visible.',
         before: camera.safetyCoverage,
+        after: .55,
+      ));
+    }
+    if (camera.criticalCoverage < .9) {
+      entries.add(_soft(
+        'rig.camera.criticalCoverage',
+        'Active hands, face or companion root are partially outside the viewport.',
+        before: camera.criticalCoverage,
+        after: .9,
+      ));
+    }
+
+    final clipping = state.metadata['preCameraClipping'];
+    if (clipping is Map && clipping['hasPossibleClipping'] == true) {
+      entries.add(_soft(
+        'rig.canvas.preCameraClipping',
+        'Actor pixels touch the overscan boundary before camera cropping.',
+        before: <String, Object?>{
+          'edgePixels': clipping['edgePixels'],
+          'nodes': clipping['nodes'],
+        },
       ));
     }
 
@@ -73,10 +94,25 @@ final class RigValidationEntries {
       }
     }
 
+    final wearableDiagnostics = state.metadata['wearableAttachments'];
+    if (wearableDiagnostics is Map) {
+      final fallback =
+          (wearableDiagnostics['fallbackLayerCount'] as num?)?.toInt() ?? 0;
+      if (fallback > 0) {
+        entries.add(_soft(
+          'rig.wearables.fallbackBinding',
+          'Wearable layers still rely on prefix fallback instead of explicit attachment metadata.',
+          before: wearableDiagnostics['fallbackLayers'],
+          after: 0,
+        ));
+      }
+    }
+
     final orphaned = state.layers
         .where((layer) =>
             (layer.meta.containsKey('wearableOwner') ||
-                layer.meta.containsKey('attachmentKind')) &&
+                layer.meta.containsKey('attachmentKind') ||
+                layer.meta.containsKey('attachmentTarget')) &&
             layer.nodeId != 'actor' &&
             layer.nodeId != 'scene' &&
             !state.nodeParents.containsKey(layer.nodeId))
@@ -88,6 +124,33 @@ final class RigValidationEntries {
       entries.add(_soft(
         'rig.wearables.parent',
         'Wearable rig nodes are missing explicit parents: ${orphaned.join(', ')}.',
+      ));
+    }
+
+    final slotConflicts = <String>[];
+    for (final layer in state.layers) {
+      final group = layer.meta['occlusionGroup']?.toString();
+      if (group == null) continue;
+      final expected = switch (group) {
+        'backgroundBase' => RenderSlot.background,
+        'backgroundDetail' => RenderSlot.backgroundDetail,
+        'atmosphereBack' => RenderSlot.atmosphereBack,
+        'bodyBack' => RenderSlot.capeHairBack,
+        'rearArm' => RenderSlot.rearArms,
+        'bodyFront' => RenderSlot.frontArms,
+        'earBack' => RenderSlot.earJewelryBack,
+        'earFront' => RenderSlot.earJewelryFront,
+        'faceFront' => RenderSlot.faceMask,
+        'effectFront' => RenderSlot.foreground,
+        _ => layer.slot,
+      };
+      if (layer.slot != expected) slotConflicts.add(layer.id);
+    }
+    if (slotConflicts.isNotEmpty) {
+      entries.add(_soft(
+        'rig.layers.occlusionSlot',
+        'Layer occlusion groups disagree with their render slots.',
+        before: slotConflicts,
       ));
     }
 
@@ -147,13 +210,16 @@ final class RigValidationEntries {
 
   bool _actorLayer(RenderLayer layer) => !<RenderSlot>{
         RenderSlot.background,
+        RenderSlot.backgroundDetail,
+        RenderSlot.atmosphereBack,
         RenderSlot.auraBack,
         RenderSlot.emotionEffects,
         RenderSlot.foreground,
       }.contains(layer.slot) &&
       layer.nodeId != 'atmosphere' &&
       layer.nodeId != 'foreground' &&
-      layer.nodeId != 'sceneSymbols';
+      layer.nodeId != 'sceneSymbols' &&
+      layer.nodeId != 'background';
 
   bool _faceLayer(RenderLayer layer) => <String>{
         'head',
