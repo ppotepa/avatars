@@ -27,6 +27,7 @@ import 'parts/procedural_mask_renderer.dart';
 import 'parts/procedural_surface_renderer.dart';
 import 'parts/props_renderer.dart';
 import 'parts/rain_field_renderer.dart';
+import 'parts/rig_seam_bridge_renderer.dart';
 import 'parts/segmented_hair_rig_renderer.dart';
 import 'parts/v42_aura_renderer.dart';
 import 'parts/v42_detail_renderer.dart';
@@ -128,6 +129,7 @@ final class RigClipPipeline {
         ConstrainedJewelryRenderer(),
         GatedCompanionRenderer(),
         FlexibleBackRigRenderer(),
+        RigSeamBridgeRenderer(),
         ForegroundEffectsRenderer(),
         NaturalParticleFieldRenderer(),
         RainFieldRenderer(),
@@ -173,18 +175,23 @@ final class RigClipPipeline {
   }
 
   RigPipelineClip renderSingle(AvatarRequest request) {
+    const cameraSampleCount = 16;
     final prepared = prepare(request);
-    final raw = _renderRaw(prepared, request.rendering, request.phase);
+    final raw = <_RawRigFrame>[
+      for (var phase = 0; phase < cameraSampleCount; phase++)
+        _renderRaw(prepared, request.rendering, phase),
+    ];
     final camera = ClipCameraFitter.fit(
-      <PixelRect?>[ClipCameraFitter.actorBounds(raw.state.layers)],
+      raw.map((frame) => ClipCameraFitter.actorBounds(frame.state.layers)),
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
     );
+    final selected = raw[request.phase % cameraSampleCount];
     return RigPipelineClip(
       prepared: prepared,
       camera: camera,
       frames: <RigPipelineFrame>[
-        _cropAndValidate(prepared, raw, camera),
+        _cropAndValidate(prepared, selected, camera),
       ],
     );
   }
