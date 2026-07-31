@@ -4,7 +4,6 @@ import '../constraints/validation.dart';
 import '../genome/avatar_genome_model.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
-import '../geometry/pixel_rect.dart';
 import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import '../pixels/pixel_mask.dart';
@@ -42,6 +41,7 @@ import 'rig_model.dart';
 import 'rig_pose_applier.dart';
 import 'rig_quality_evaluator.dart';
 import 'runtime_rig_builder.dart';
+import 'scene_visual_budget_renderer.dart';
 import 'wearable_attachment_policy.dart';
 
 final class RigPreparedAvatar {
@@ -135,6 +135,7 @@ final class RigClipPipeline {
         ForegroundEffectsRenderer(),
         NaturalParticleFieldRenderer(),
         RainFieldRenderer(),
+        SceneVisualBudgetRenderer(),
       ];
 
   RigPreparedAvatar prepare(AvatarRequest request) {
@@ -162,8 +163,8 @@ final class RigClipPipeline {
       for (var phase = 0; phase < frameCount; phase++)
         _renderRaw(prepared, request.rendering, phase),
     ];
-    final camera = ClipCameraFitter.fit(
-      raw.map((frame) => ClipCameraFitter.actorBounds(frame.state.layers)),
+    final camera = ClipCameraFitter.fitFrames(
+      raw.map((frame) => ClipCameraFitter.frameBounds(frame.state.layers)),
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
     );
@@ -183,8 +184,8 @@ final class RigClipPipeline {
       for (var phase = 0; phase < cameraSampleCount; phase++)
         _renderRaw(prepared, request.rendering, phase),
     ];
-    final camera = ClipCameraFitter.fit(
-      raw.map((frame) => ClipCameraFitter.actorBounds(frame.state.layers)),
+    final camera = ClipCameraFitter.fitFrames(
+      raw.map((frame) => ClipCameraFitter.frameBounds(frame.state.layers)),
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
     );
