@@ -2,65 +2,68 @@ import 'package:avatar_genome/avatar_genome.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('48 64 and 96 preserve identity but produce native output detail', () {
-    final generator = AvatarGenerator();
-    const seed = 'native-resolution-e2e';
-    const base = AvatarRequest(seed: seed);
+  test(
+    '48 64 and 96 preserve identity but produce native output detail',
+    () {
+      final generator = AvatarGenerator();
+      const seed = 'native-resolution-e2e';
+      const base = AvatarRequest(seed: seed);
 
-    final result48 = generator.generate(base);
-    final result64 = generator.generate(AvatarRequest(
-      seed: seed,
-      rendering: const AvatarRenderSettings(
-        size: 64,
-        detailLevel: AvatarDetailLevel.rich,
-        shadingStrength: 2,
-      ),
-    ));
-    final result96 = generator.generate(AvatarRequest(
-      seed: seed,
-      rendering: const AvatarRenderSettings(
-        size: 96,
-        detailLevel: AvatarDetailLevel.rich,
-        shadingStrength: 2,
-      ),
-    ));
+      final result48 = generator.generate(base);
+      final result64 = generator.generate(AvatarRequest(
+        seed: seed,
+        rendering: const AvatarRenderSettings(
+          size: 64,
+          detailLevel: AvatarDetailLevel.rich,
+          shadingStrength: 2,
+        ),
+      ));
+      final result96 = generator.generate(AvatarRequest(
+        seed: seed,
+        rendering: const AvatarRenderSettings(
+          size: 96,
+          detailLevel: AvatarDetailLevel.rich,
+          shadingStrength: 2,
+        ),
+      ));
 
-    expect(result48.genome.values, result64.genome.values);
-    expect(result48.genome.values, result96.genome.values);
-    expect(result48.image.width, 48);
-    expect(result64.image.width, 64);
-    expect(result96.image.width, 96);
-    expect(result64.imageHash, isNot(result48.imageHash));
-    expect(result96.imageHash, isNot(result64.imageHash));
+      expect(result48.genome.values, result64.genome.values);
+      expect(result48.genome.values, result96.genome.values);
+      expect(result48.image.width, 48);
+      expect(result64.image.width, 64);
+      expect(result96.image.width, 96);
+      expect(result64.imageHash, isNot(result48.imageHash));
+      expect(result96.imageHash, isNot(result64.imageHash));
 
-    final naive64 = _nearest(result48.image, 64);
-    final naive96 = _nearest(result48.image, 96);
-    expect(_differentPixels(result64.image, naive64), greaterThan(0));
-    expect(_differentPixels(result96.image, naive96), greaterThan(0));
+      final naive64 = _nearest(result48.image, 64);
+      final naive96 = _nearest(result48.image, 96);
+      expect(_differentPixels(result64.image, naive64), greaterThan(0));
+      expect(_differentPixels(result96.image, naive96), greaterThan(0));
 
-    expect(result48.metrics.geometryProfile, 'canonical48');
-    expect(result64.metrics.nativeGeometryPixelCount, greaterThan(0));
-    expect(result96.metrics.nativeGeometryPixelCount, greaterThan(0));
-    expect(result64.metrics.nativeGeometryPixelRatio, greaterThan(0));
-    expect(result96.metrics.nativeGeometryPixelRatio, greaterThan(0));
-    expect(result64.metrics.geometryProfile, startsWith('native64.'));
-    expect(result96.metrics.geometryProfile, startsWith('native96.'));
-    expect(
-      result64.metrics.nativeGeometryPixelCount,
-      result64.nativeGeometryDiagnostics['nativeGeometryPixelCount'],
-    );
+      expect(result48.metrics.geometryProfile, 'canonical48');
+      expect(result64.metrics.nativeGeometryPixelCount, greaterThan(0));
+      expect(result96.metrics.nativeGeometryPixelCount, greaterThan(0));
+      expect(result64.metrics.nativeGeometryPixelRatio, greaterThan(0));
+      expect(result96.metrics.nativeGeometryPixelRatio, greaterThan(0));
+      expect(result64.metrics.geometryProfile, startsWith('native64.'));
+      expect(result96.metrics.geometryProfile, startsWith('native96.'));
+      expect(
+        result64.metrics.nativeGeometryPixelCount,
+        result64.nativeGeometryDiagnostics['nativeGeometryPixelCount'],
+      );
 
-    final repeated64 = generator.generate(AvatarRequest(
-      seed: seed,
-      rendering: const AvatarRenderSettings(
-        size: 64,
-        detailLevel: AvatarDetailLevel.rich,
-        shadingStrength: 2,
-      ),
-    ));
-    expect(repeated64.imageHash, result64.imageHash);
-    expect(repeated64.metrics.toJson(), result64.metrics.toJson());
-  });
+      final repeated64 = generator.generate(AvatarRequest(
+        seed: seed,
+        rendering: const AvatarRenderSettings(
+          size: 64,
+          detailLevel: AvatarDetailLevel.rich,
+          shadingStrength: 2,
+        ),
+      ));
+      expect(repeated64.imageHash, result64.imageHash);
+      expect(repeated64.metrics.toJson(), result64.metrics.toJson());
+    },
+  );
 }
 
 IndexedImage _nearest(IndexedImage source, int size) {
