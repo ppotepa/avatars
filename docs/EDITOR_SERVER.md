@@ -26,6 +26,22 @@ Linux/macOS:
 
 Open `http://127.0.0.1:8080`.
 
+## Compact media player
+
+The left editor panel contains one media-style animation deck. It provides:
+
+- fixed first, rewind, previous, play/pause, stop, next, forward and last
+  controls;
+- a scrubber, frame/time display and loop switch;
+- current, idle, talk, laugh, storm and fire preview tracks;
+- keyboard control with Space, arrows, Shift+arrows, Home and End;
+- one render-resolution selector and an independent fit/1x/2x/4x preview zoom.
+
+The player requests a complete animation clip once through
+`POST /api/animation/clip`. Playback and seeking then operate entirely on the
+returned SVG frame cache, so normal playback does not issue one avatar request
+per frame.
+
 ## Binding instead of mirrors
 
 `dart:mirrors` is not available in Flutter AOT builds. The editor therefore uses
@@ -64,7 +80,7 @@ exposes storm, inferno, cosmic and dream combinations.
 
 ### `GET /api/health`
 
-Returns generator version `4.2.0-dart.2`, catalog version `4.2` and the merged
+Returns generator version `4.2.0-dart.3`, catalog version `4.2` and the merged
 field count.
 
 ### `GET /api/catalog`
@@ -105,16 +121,31 @@ Supported actions:
 The response contains the normalized request, resolved genome, result metadata,
 SVG preview, validation report and property state for all bindings.
 
+### `POST /api/animation/clip`
+
+Returns a complete SVG animation clip in one JSON response.
+
+```json
+{
+  "request": {},
+  "frameCount": 16,
+  "frameDurationMs": 140,
+  "loop": true,
+  "svgScale": 1
+}
+```
+
+The response contains `width`, `height`, frame timing, loop state and an ordered
+`frames` array. Every frame includes `index`, `phase`, `imageHash` and `svg`.
+
 The result metrics also expose final-composition visibility for semantic parts.
 The browser editor displays these ratios, face readability and visibility
-warnings, and can advance `request.phase` continuously to preview face motion,
-weather, flames, halos and cinematic background events without a separate
-animation API.
+warnings.
 
-The preview exposes native 48, 64, 80 and 96 pixel canvases, basic/enhanced/rich
-detail, directional lighting, shading strength, animated backgrounds and
-reduced motion. These presentation settings live under `request.rendering` and
-do not change the generated genome.
+The preview exposes 48, 64, 80 and 96 pixel render profiles,
+basic/enhanced/rich detail, directional lighting, shading strength, animated
+backgrounds and reduced motion. Render resolution changes the generated buffer;
+preview zoom changes only its CSS display size.
 
 ### `POST /api/export/png`
 
@@ -134,6 +165,19 @@ motion preserves stable frame bounds and does not translate the complete sprite.
 
 Writes `request.json`, `avatar.json`, `avatar.svg` and `avatar.png` under
 `output/avatars/<id>`.
+
+## Procedural quality guarantees
+
+The current generator includes automated contracts for:
+
+- deterministic but varied face-mask construction;
+- seed-level variation of armor, headwear, capes, cybernetics, props,
+  companions and relics;
+- particle lifetime, drift and depth without wrap-around teleportation;
+- fog patches that do not become full-width scan lines;
+- horizontally symmetric source-cell allocation for 64, 80 and 96 pixel
+  rendering;
+- stable avatar framing throughout expressive animation.
 
 ## Validation
 
