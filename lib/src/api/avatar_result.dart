@@ -21,12 +21,33 @@ final class AvatarMetrics {
     this.eyeContrastScore = 0,
     this.silhouetteContrastScore = 0,
     this.visualDensityScore = 100,
+    this.actorOccupiedPixelCount = 0,
+    this.actorIsolatedPixelCount = 0,
+    this.actorConnectedComponentCount = 0,
+    this.actorWidthOccupancy = 0,
+    this.actorHeightOccupancy = 0,
+    this.actorAreaOccupancy = 0,
+    this.faceHeightOccupancy = 0,
+    this.sceneEffectPixelRatio = 0,
   });
 
   final int usedColorCount;
+
+  /// Occupancy of the complete composited scene, retained for compatibility.
   final int occupiedPixelCount;
   final int isolatedPixelCount;
   final int connectedComponentCount;
+
+  /// Actor-only measurements excluding backgrounds, atmosphere and effects.
+  final int actorOccupiedPixelCount;
+  final int actorIsolatedPixelCount;
+  final int actorConnectedComponentCount;
+  final double actorWidthOccupancy;
+  final double actorHeightOccupancy;
+  final double actorAreaOccupancy;
+  final double faceHeightOccupancy;
+  final double sceneEffectPixelRatio;
+
   final int layerCount;
   final RenderVisibility visibility;
   final int faceReadabilityScore;
@@ -42,6 +63,14 @@ final class AvatarMetrics {
         'occupiedPixelCount': occupiedPixelCount,
         'isolatedPixelCount': isolatedPixelCount,
         'connectedComponentCount': connectedComponentCount,
+        'actorOccupiedPixelCount': actorOccupiedPixelCount,
+        'actorIsolatedPixelCount': actorIsolatedPixelCount,
+        'actorConnectedComponentCount': actorConnectedComponentCount,
+        'actorWidthOccupancy': actorWidthOccupancy,
+        'actorHeightOccupancy': actorHeightOccupancy,
+        'actorAreaOccupancy': actorAreaOccupancy,
+        'faceHeightOccupancy': faceHeightOccupancy,
+        'sceneEffectPixelRatio': sceneEffectPixelRatio,
         'layerCount': layerCount,
         'visibility': visibility.toJson(),
         'faceReadabilityScore': faceReadabilityScore,
