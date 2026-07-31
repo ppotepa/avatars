@@ -16,20 +16,15 @@ final class RigLayerBinding {
     int legacyOrder,
     Map<String, Object?> meta,
   ) {
-    final explicitNode = meta['nodeId']?.toString();
-    if (explicitNode != null) {
-      return _binding(explicitNode, legacyOrder);
-    }
-
-    final node = _nodeFor(id, meta);
-    return _binding(node, legacyOrder);
+    final explicitNode =
+        meta['attachmentTarget']?.toString() ?? meta['nodeId']?.toString();
+    final node = explicitNode ?? _nodeFor(id, meta);
+    return RigLayerBinding(
+      nodeId: node,
+      slot: _slotFor(node, id, meta),
+      localOrder: _semanticOrder(node, id, meta, legacyOrder),
+    );
   }
-
-  static RigLayerBinding _binding(String node, int order) => RigLayerBinding(
-        nodeId: node,
-        slot: _slotFor(node),
-        localOrder: order,
-      );
 
   static String _nodeFor(String id, Map<String, Object?> meta) {
     final segment = meta['rigSegment']?.toString();
@@ -113,11 +108,40 @@ final class RigLayerBinding {
     return 'actorEffects';
   }
 
-  static RenderSlot _slotFor(String node) => switch (node) {
-        'background' || 'atmosphere' => RenderSlot.background,
+  static RenderSlot _slotFor(
+    String node,
+    String id,
+    Map<String, Object?> meta,
+  ) {
+    final occlusion = meta['occlusionGroup']?.toString();
+    if (occlusion != null) {
+      return switch (occlusion) {
+        'backgroundBase' => RenderSlot.background,
+        'backgroundDetail' => RenderSlot.backgroundDetail,
+        'atmosphereBack' => RenderSlot.atmosphereBack,
+        'bodyBack' => RenderSlot.capeHairBack,
+        'rearArm' => RenderSlot.rearArms,
+        'bodyFront' => RenderSlot.frontArms,
+        'earBack' => RenderSlot.earJewelryBack,
+        'earFront' => RenderSlot.earJewelryFront,
+        'faceFront' => RenderSlot.faceMask,
+        'effectFront' => RenderSlot.foreground,
+        _ => _defaultSlot(node, id),
+      };
+    }
+    return _defaultSlot(node, id);
+  }
+
+  static RenderSlot _defaultSlot(String node, String id) => switch (node) {
+        'background' => id == 'background.base' || id == 'background.dark'
+            ? RenderSlot.background
+            : RenderSlot.backgroundDetail,
+        'atmosphere' => RenderSlot.atmosphereBack,
         'aura' => RenderSlot.auraBack,
         'cape' ||
         'backAdornment' ||
+        'rigidBackWearable' ||
+        'backEmitter' ||
         'hairBack' ||
         'hairBackRoot' ||
         'hairBackMiddle' ||
@@ -135,32 +159,39 @@ final class RigLayerBinding {
         'rightWingRoot' ||
         'rightWingMid' ||
         'rightWingTip' => RenderSlot.capeHairBack,
+        'leftArm' || 'rightArm' => RenderSlot.rearArms,
+        'leftForearm' ||
+        'rightForearm' ||
+        'leftWrist' ||
+        'rightWrist' ||
+        'leftHand' ||
+        'rightHand' =>
+          RenderSlot.frontArms,
         'torso' || 'chest' || 'clothing' => RenderSlot.torsoClothing,
         'armor' => RenderSlot.armor,
         'neck' => RenderSlot.neck,
+        'necklace' || 'necklaceLeft' || 'necklaceRight' || 'pendant' =>
+          RenderSlot.neckJewelry,
         'head' || 'ears' => RenderSlot.head,
         'face' ||
         'eyes' ||
         'brows' ||
         'mouth' ||
-        'creatureTraits' => RenderSlot.face,
+        'creatureTraits' =>
+          RenderSlot.face,
         'facialHair' => RenderSlot.facialHair,
+        'leftEarJewelry' || 'rightEarJewelry' => RenderSlot.earJewelryFront,
         'hairFront' ||
         'hairSideLeftRoot' ||
         'hairSideLeftTip' ||
         'hairSideRightRoot' ||
         'hairSideRightTip' ||
         'horns' ||
-        'headAdornment' => RenderSlot.hairFront,
+        'headAdornment' =>
+          RenderSlot.hairFront,
         'headwear' || 'halo' => RenderSlot.headwear,
         'eyewear' => RenderSlot.eyewear,
         'faceMask' => RenderSlot.faceMask,
-        'necklace' ||
-        'necklaceLeft' ||
-        'necklaceRight' ||
-        'pendant' ||
-        'leftEarJewelry' ||
-        'rightEarJewelry' => RenderSlot.frontArms,
         'shoulderCompanion' ||
         'companionBody' ||
         'companionHead' ||
@@ -168,9 +199,33 @@ final class RigLayerBinding {
         'companionTail' ||
         'companionEars' ||
         'companionEyes' ||
-        'companionBeak' => RenderSlot.shoulderCompanion,
+        'companionBeak' =>
+          RenderSlot.shoulderCompanion,
         'mouthProp' || 'smokeEmitter' => RenderSlot.mouthProp,
         'foreground' => RenderSlot.foreground,
         _ => RenderSlot.emotionEffects,
       };
+
+  static int _semanticOrder(
+    String node,
+    String id,
+    Map<String, Object?> meta,
+    int legacy,
+  ) {
+    final explicit = meta['localOrder'];
+    if (explicit is num) return explicit.toInt();
+    final stableIdOrder = id.codeUnits.fold<int>(0, (value, unit) =>
+        (value * 31 + unit) & 0x7fffffff);
+    final base = switch (node) {
+      'background' => 0,
+      'atmosphere' => 100,
+      'leftArm' || 'rightArm' => 200,
+      'leftForearm' || 'rightForearm' => 300,
+      'leftHand' || 'rightHand' => 400,
+      'necklace' || 'necklaceLeft' || 'necklaceRight' || 'pendant' => 500,
+      'leftEarJewelry' || 'rightEarJewelry' => 600,
+      _ => 700,
+    };
+    return base + stableIdOrder % 90;
+  }
 }
