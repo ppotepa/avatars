@@ -1,4 +1,3 @@
-import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import '../pixels/pixel_mask.dart';
 import 'render_model.dart';
@@ -13,9 +12,6 @@ final class NativeGeometryRenderer {
 
   IndexedImage rasterize({
     required List<RenderLayer> layers,
-    required AvatarPalette palette,
-    required int sourceWidth,
-    required int sourceHeight,
     required ResolutionProfile profile,
   }) {
     final output = IndexedImage(width: profile.size, height: profile.size);
@@ -48,16 +44,19 @@ final class NativeGeometryRenderer {
     final output = PixelMask(width: width, height: height);
     for (var sy = 0; sy < source.height; sy++) {
       final top = sy * height ~/ source.height;
-      final bottom = ((sy + 1) * height ~/ source.height).clamp(top + 1, height).toInt();
+      final bottom = ((sy + 1) * height ~/ source.height)
+          .clamp(top + 1, height)
+          .toInt();
       for (var sx = 0; sx < source.width; sx++) {
         if (source.get(sx, sy) == 0) continue;
         final left = sx * width ~/ source.width;
-        final right = ((sx + 1) * width ~/ source.width).clamp(left + 1, width).toInt();
+        final right = ((sx + 1) * width ~/ source.width)
+            .clamp(left + 1, width)
+            .toInt();
         output.fillRect(left, top, right - left, bottom - top);
       }
     }
-    if (!refine) return output;
-    return _refineDiagonals(output);
+    return refine ? _refineDiagonals(output) : output;
   }
 
   PixelMask _refineDiagonals(PixelMask source) {
@@ -65,15 +64,19 @@ final class NativeGeometryRenderer {
     for (var y = 1; y < source.height - 1; y++) {
       for (var x = 1; x < source.width - 1; x++) {
         if (source.get(x, y) != 0) continue;
-        final diagonal = source.get(x - 1, y - 1) != 0 &&
-                source.get(x + 1, y + 1) != 0 ||
-            source.get(x + 1, y - 1) != 0 &&
-                source.get(x - 1, y + 1) != 0;
-        final bridge = source.get(x - 1, y) != 0 &&
-                source.get(x, y - 1) != 0 ||
-            source.get(x + 1, y) != 0 && source.get(x, y - 1) != 0 ||
-            source.get(x - 1, y) != 0 && source.get(x, y + 1) != 0 ||
-            source.get(x + 1, y) != 0 && source.get(x, y + 1) != 0;
+        final diagonal =
+            source.get(x - 1, y - 1) != 0 &&
+                    source.get(x + 1, y + 1) != 0 ||
+                source.get(x + 1, y - 1) != 0 &&
+                    source.get(x - 1, y + 1) != 0;
+        final bridge =
+            source.get(x - 1, y) != 0 && source.get(x, y - 1) != 0 ||
+                source.get(x + 1, y) != 0 &&
+                    source.get(x, y - 1) != 0 ||
+                source.get(x - 1, y) != 0 &&
+                    source.get(x, y + 1) != 0 ||
+                source.get(x + 1, y) != 0 &&
+                    source.get(x, y + 1) != 0;
         if (diagonal || bridge) output.set(x, y);
       }
     }
