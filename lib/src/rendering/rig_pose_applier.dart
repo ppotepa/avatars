@@ -62,7 +62,10 @@ final class RigPoseApplier {
       for (final id in ids) pose.transforms.remove(id);
     }
 
-    if (state.metadata.containsKey('hairRig')) {
+    final hairRig = state.metadata['hairRig'];
+    final localHairMotion =
+        hairRig is Map && hairRig['localMotion'] == true;
+    if (localHairMotion) {
       remove(const <String>[
         'hairBackMiddle',
         'hairBackTips',
