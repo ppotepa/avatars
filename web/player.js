@@ -16,6 +16,55 @@ window.addEventListener('DOMContentLoaded', () => {
   const resolutionButtons = [...document.querySelectorAll('[data-resolution]')];
   const zoomSelect = document.getElementById('preview-zoom');
 
+  const trackDefinitions = Object.freeze({
+    idle: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'idle',
+        'v4.faceAnimation': 'none',
+        'v4.mouthMotionStyle': 'none',
+      }),
+    }),
+    talk: Object.freeze({
+      overrides: Object.freeze({
+        'v4.faceAnimation': 'talk',
+        'v4.mouthMotionStyle': 'talkNormal',
+      }),
+    }),
+    laugh: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'laugh',
+        'v4.eyeExpression': 'laughing',
+        'v4.mouthExpression': 'laughOpen',
+        'v4.faceAnimation': 'laugh',
+        'v4.mouthMotionStyle': 'laughLoop',
+      }),
+    }),
+    storm: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.weather': 'heavyRain',
+        'v4.weatherDensity': 6,
+        'v4.weatherDepth': 2,
+        'v4.ambientOverlay': 'stormClouds',
+        'v4.backgroundEvent': 'lightningBranch',
+        'v4.eventFrequency': 2,
+        'v4.eventIntensity': 5,
+      }),
+    }),
+    fire: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.backFlames': 'hellfire',
+        'v4.flameHeight': 7,
+        'v4.flameIntensity': 6,
+        'v4.flameFlicker': 5,
+        'v4.backgroundEvent': 'fireBurst',
+        'v4.eventFrequency': 2,
+        'v4.eventIntensity': 5,
+      }),
+    }),
+  });
+
   const player = {
     status: 'stopped',
     timer: null,
@@ -23,6 +72,7 @@ window.addEventListener('DOMContentLoaded', () => {
     index: 0,
     cacheKey: '',
     loadToken: 0,
+    catalogFields: null,
   };
 
   function frameCount() {
@@ -41,6 +91,14 @@ window.addEventListener('DOMContentLoaded', () => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(hundredths).padStart(2, '0')}`;
   }
 
+  function statusLabel(status) {
+    if (status === 'loading') return 'LOADING';
+    if (status === 'error') return 'ERROR';
+    if (status === 'playing') return 'PLAY';
+    if (status === 'paused') return 'PAUSE';
+    return 'STOP';
+  }
+
   function updateReadout() {
     const count = frameCount();
     player.index = Math.max(0, Math.min(count - 1, player.index));
@@ -49,14 +107,6 @@ window.addEventListener('DOMContentLoaded', () => {
     positionOutput.textContent = `${String(player.index + 1).padStart(2, '0')}/${String(count).padStart(2, '0')}`;
     timeOutput.textContent = formatTime(player.index * frameDuration());
     playerTitle.textContent = statusLabel(player.status);
-  }
-
-  function statusLabel(status) {
-    if (status === 'loading') return 'LOADING';
-    if (status === 'error') return 'ERROR';
-    if (status === 'playing') return 'PLAY';
-    if (status === 'paused') return 'PAUSE';
-    return 'STOP';
   }
 
   function updatePlayButton() {
@@ -109,51 +159,46 @@ window.addEventListener('DOMContentLoaded', () => {
       : JSON.parse(JSON.stringify(state.request));
   }
 
+  function catalogFields() {
+    if (player.catalogFields) return player.catalogFields;
+    const fields = new Map();
+    for (const category of state.schema?.categories || []) {
+      for (const field of category.fields || []) fields.set(field.id, field);
+    }
+    player.catalogFields = fields;
+    return fields;
+  }
+
+  function validateTrackValue(id, value) {
+    const field = catalogFields().get(id);
+    if (!field) throw new Error(`Track używa nieznanego pola ${id}.`);
+    if (field.kind === 'select') {
+      const accepted = (field.options || [])
+        .some(option => option.value === value);
+      if (!accepted) {
+        throw new Error(`Track używa niedozwolonej wartości ${id}=${value}.`);
+      }
+      return;
+    }
+    if (field.kind === 'range') {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric) || numeric < field.min || numeric > field.max) {
+        throw new Error(`Track używa wartości poza zakresem ${id}=${value}.`);
+      }
+    }
+  }
+
   function requestForTrack() {
     const request = cloneRequest();
     request.overrides = { ...(request.overrides || {}) };
     request.rendering = { ...(request.rendering || {}) };
-    const track = trackSelect.value;
-    if (track === 'idle') {
-      Object.assign(request.overrides, {
-        'v4.animation': 'idle',
-        'v4.faceAnimation': 'none',
-      });
-    } else if (track === 'talk') {
-      Object.assign(request.overrides, {
-        'v4.faceAnimation': 'talk',
-        'v4.mouthMotionStyle': 'talkNormal',
-      });
-    } else if (track === 'laugh') {
-      Object.assign(request.overrides, {
-        'v4.expression': 'laugh',
-        'v4.eyeExpression': 'laughing',
-        'v4.mouthExpression': 'laughOpen',
-        'v4.faceAnimation': 'laughing',
-      });
-    } else if (track === 'storm') {
-      Object.assign(request.overrides, {
-        'v4.weather': 'heavyRain',
-        'v4.weatherDensity': 6,
-        'v4.weatherDepth': 2,
-        'v4.ambientOverlay': 'stormClouds',
-        'v4.backgroundEvent': 'lightningBranch',
-        'v4.eventFrequency': 2,
-        'v4.eventIntensity': 5,
-      });
-      request.rendering.animateBackground = true;
-    } else if (track === 'fire') {
-      Object.assign(request.overrides, {
-        'v4.backFlames': 'hellfire',
-        'v4.flameHeight': 7,
-        'v4.flameIntensity': 6,
-        'v4.flameFlicker': 5,
-        'v4.backgroundEvent': 'fireBurst',
-        'v4.eventFrequency': 2,
-        'v4.eventIntensity': 5,
-      });
-      request.rendering.animateBackground = true;
+    const definition = trackDefinitions[trackSelect.value];
+    if (!definition) throw new Error(`Nieznana ścieżka ${trackSelect.value}.`);
+    for (const [id, value] of Object.entries(definition.overrides)) {
+      validateTrackValue(id, value);
+      request.overrides[id] = value;
     }
+    if (definition.animateBackground) request.rendering.animateBackground = true;
     return request;
   }
 
@@ -166,8 +211,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function ensureClip() {
-    if (!state.request) return false;
-    const baseRequest = requestForTrack();
+    if (!state.request || !state.schema) return false;
+    let baseRequest;
+    try {
+      baseRequest = requestForTrack();
+    } catch (error) {
+      setStatus('error');
+      showToast(`Błędna konfiguracja tracku: ${error.message}`, true);
+      return false;
+    }
     const key = clipKey(baseRequest);
     if (player.frames.length === frameCount() && player.cacheKey === key) {
       return true;
@@ -380,7 +432,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function waitForInitialRequest() {
-    if (state.request) {
+    if (state.request && state.schema) {
       syncResolution();
       updateReadout();
       updatePlayButton();
