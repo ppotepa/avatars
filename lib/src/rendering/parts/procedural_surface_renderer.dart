@@ -77,6 +77,18 @@ final class ProceduralSurfaceVariationRenderer implements AvatarPartRenderer {
     );
   }
 
+  PixelMask _resolvedMask(AvatarRenderState state, String maskId) {
+    var mask = state.mask(maskId);
+    if (mask.count > 0) return mask;
+    for (final layer in state.layers) {
+      final part = layer.meta['part'];
+      if (part == maskId || layer.id.startsWith('$maskId.')) {
+        mask = mask.union(layer.mask);
+      }
+    }
+    return mask;
+  }
+
   void _decorate(
     AvatarRenderContext context,
     AvatarRenderState state, {
@@ -87,7 +99,7 @@ final class ProceduralSurfaceVariationRenderer implements AvatarPartRenderer {
     required int damage,
     bool mechanical = false,
   }) {
-    final mask = state.mask(maskId);
+    final mask = _resolvedMask(state, maskId);
     final bounds = mask.bounds;
     if (mask.count < 6 || bounds == null || namespace == 'none') return;
 
@@ -157,8 +169,15 @@ final class ProceduralSurfaceVariationRenderer implements AvatarPartRenderer {
     }
 
     if (_organic(namespace)) {
-      _organicTexture(random, accent, light, bounds.left, bounds.right,
-          bounds.top, bounds.bottom);
+      _organicTexture(
+        random,
+        accent,
+        light,
+        bounds.left,
+        bounds.right,
+        bounds.top,
+        bounds.bottom,
+      );
     }
 
     state
