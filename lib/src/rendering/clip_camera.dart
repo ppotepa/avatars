@@ -161,7 +161,7 @@ abstract final class ClipCameraFitter {
     final scale = clampDouble(
       widthScale < heightScale ? widthScale : heightScale,
       .9,
-      1.25,
+      1.32,
     );
     final sourceWidth = viewportWidth / scale;
     final sourceHeight = viewportHeight / scale;
@@ -190,9 +190,9 @@ abstract final class ClipCameraFitter {
 
   /// Bounds used for framing the readable avatar core.
   ///
-  /// Large halos, wings, capes, companions and screen-space effects are soft
-  /// bounds: they may approach an edge but never force the face and torso to
-  /// shrink inside the preview.
+  /// Large halos, horns, head ornaments, wings, capes, companions and
+  /// screen-space effects are soft bounds: they may approach an edge but never
+  /// force the face and torso to shrink inside the preview.
   static PixelRect? actorBounds(List<RenderLayer> layers) {
     PixelRect? result;
     for (final layer in layers) {
@@ -215,12 +215,19 @@ abstract final class ClipCameraFitter {
     }
     if (<String>{
       'halo',
+      'horns',
+      'headAdornment',
       'aura',
       'cape',
       'backAdornment',
+      'rigidBackWearable',
+      'backEmitter',
       'shoulderCompanion',
+      'shoulderObject',
       'foreground',
       'atmosphere',
+      'sceneSymbols',
+      'actorSymbols',
     }.contains(layer.nodeId)) {
       return false;
     }
