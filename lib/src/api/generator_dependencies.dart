@@ -1,6 +1,7 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
 import '../genome/budgeted_genome_generator.dart';
+import '../genome/design_intent_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
@@ -55,8 +56,10 @@ final class GeneratorDependencies {
       );
     }
 
-    final resolvedGenome =
-        genomeService ?? BudgetedGenomeGenerator(catalog: resolvedCatalog);
+    final resolvedGenome = genomeService ??
+        DesignIntentGenomeGenerator(
+          BudgetedGenomeGenerator(catalog: resolvedCatalog),
+        );
     final resolvedLayout = layoutResolver ?? const V41LayoutResolver();
     final resolvedPalette = paletteFactory ?? const V41PaletteFactory();
     final resolvedCompositor = compositor ?? const IndexedAvatarCompositor();
