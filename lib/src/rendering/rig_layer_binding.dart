@@ -13,7 +13,7 @@ final class RigLayerBinding {
 
   static RigLayerBinding resolve(
     String id,
-    int legacyOrder,
+    int _legacyOrder,
     Map<String, Object?> meta,
   ) {
     final explicitNode =
@@ -22,7 +22,7 @@ final class RigLayerBinding {
     return RigLayerBinding(
       nodeId: node,
       slot: _slotFor(node, id, meta),
-      localOrder: _semanticOrder(node, id, meta, legacyOrder),
+      localOrder: _semanticOrder(node, id, meta),
     );
   }
 
@@ -37,7 +37,9 @@ final class RigLayerBinding {
     if (id.startsWith('cosmic.') ||
         id.startsWith('ambient.') ||
         id.startsWith('weather.v42.back') ||
-        id.startsWith('flames.')) return 'atmosphere';
+        id.startsWith('flames.')) {
+      return 'atmosphere';
+    }
     if (id.startsWith('particle.') || id.startsWith('effect.front')) {
       return 'foreground';
     }
@@ -48,7 +50,9 @@ final class RigLayerBinding {
     if (id.startsWith('hair.back')) return 'hairBack';
     if (id.startsWith('hair.front') ||
         id.startsWith('hair.gray') ||
-        id.startsWith('hair.part')) return 'hairFront';
+        id.startsWith('hair.part')) {
+      return 'hairFront';
+    }
     if (id.startsWith('torso.')) return 'torso';
     if (id.startsWith('chest.')) return 'chest';
     if (id.startsWith('clothing.')) return 'clothing';
@@ -58,16 +62,22 @@ final class RigLayerBinding {
     if (id.startsWith('ears.')) return 'ears';
     if (id.startsWith('eyes.') ||
         id.startsWith('expression.eyes') ||
-        id.startsWith('motion.v42.eye')) return 'eyes';
+        id.startsWith('motion.v42.eye')) {
+      return 'eyes';
+    }
     if (id == 'brows' ||
         id.startsWith('expression.brows') ||
-        id.startsWith('motion.v42.brows')) return 'brows';
+        id.startsWith('motion.v42.brows')) {
+      return 'brows';
+    }
     if (id.startsWith('mouth.') || id.startsWith('expression.mouth')) {
       return 'mouth';
     }
     if (id.startsWith('nose.') ||
         id.startsWith('cheeks.') ||
-        id.startsWith('skin.details')) return 'face';
+        id.startsWith('skin.details')) {
+      return 'face';
+    }
     if (id.startsWith('expression.mark') || id.startsWith('emote.v42')) {
       return 'expressionMarks';
     }
@@ -161,7 +171,8 @@ final class RigLayerBinding {
         'leftWingTip' ||
         'rightWingRoot' ||
         'rightWingMid' ||
-        'rightWingTip' => RenderSlot.capeHairBack,
+        'rightWingTip' =>
+          RenderSlot.capeHairBack,
         'leftArm' || 'rightArm' => RenderSlot.rearArms,
         'leftForearm' ||
         'rightForearm' ||
@@ -183,7 +194,8 @@ final class RigLayerBinding {
         'creatureTraits' =>
           RenderSlot.face,
         'facialHair' => RenderSlot.facialHair,
-        'leftEarJewelry' || 'rightEarJewelry' => RenderSlot.earJewelryFront,
+        'leftEarJewelry' || 'rightEarJewelry' =>
+          RenderSlot.earJewelryFront,
         'hairFront' ||
         'hairSideLeftRoot' ||
         'hairSideLeftTip' ||
@@ -213,7 +225,6 @@ final class RigLayerBinding {
     String node,
     String id,
     Map<String, Object?> meta,
-    int legacy,
   ) {
     final explicit = meta['localOrder'];
     if (explicit is num) return explicit.toInt();
