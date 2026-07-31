@@ -61,7 +61,7 @@ final class AvatarGenerator {
   AvatarResult generate(AvatarRequest request) {
     _validate(request);
     final clip = pipeline.renderSingle(request);
-    return _result(clip.prepared, clip.frames.single, request.rendering);
+    return _result(clip.prepared, clip.frames.single, request.rendering, request);
   }
 
   AvatarAnimation generateAnimation(
@@ -75,7 +75,7 @@ final class AvatarGenerator {
     return AvatarAnimation(
       frames: List.unmodifiable(<AvatarResult>[
         for (final frame in clip.frames)
-          _result(clip.prepared, frame, request.rendering),
+          _result(clip.prepared, frame, request.rendering, request),
       ]),
       frameDuration: frameDuration,
       loop: loop,
@@ -86,6 +86,7 @@ final class AvatarGenerator {
     RigPreparedAvatar prepared,
     RigPipelineFrame frame,
     AvatarRenderSettings rendering,
+    AvatarRequest request,
   ) {
     final image = resolutionRenderer.render(
       source: frame.image,
@@ -104,7 +105,33 @@ final class AvatarGenerator {
       validation: frame.validation,
       metrics: _metrics(image, frame.state, prepared.palette, rendering),
       imageHash: image.hashWithPalette(prepared.palette.colors),
+      effectiveAdjustments: _effectiveAdjustments(request, prepared),
     );
+  }
+
+  List<EffectiveAdjustment> _effectiveAdjustments(
+    AvatarRequest request,
+    RigPreparedAvatar prepared,
+  ) {
+    final requested = <String, Object>{...request.overrides};
+    for (final values in request.lockedCategories.values) {
+      requested.addAll(values);
+    }
+    requested.addAll(request.lockedParameters);
+
+    final output = <EffectiveAdjustment>[];
+    for (final entry in requested.entries) {
+      final effective = prepared.genome.values[entry.key];
+      if (effective == null || effective == entry.value) continue;
+      output.add(EffectiveAdjustment(
+        field: entry.key,
+        requested: entry.value,
+        effective: effective,
+        reason: prepared.genome.sources[entry.key]?.source ?? 'effectiveGenome',
+      ));
+    }
+    output.sort((a, b) => a.field.compareTo(b.field));
+    return List.unmodifiable(output);
   }
 
   AvatarLayout _layoutWithRig(AvatarLayout source, RigPipelineFrame frame) {
@@ -220,6 +247,11 @@ final class AvatarGenerator {
         'rig.worldSmoke',
         'worldEmitter',
         frame.state.metadata['worldSmokeEmitter'],
+      )
+      ..addValue(
+        'rig.cameraCache',
+        'cacheDiagnostic',
+        frame.state.metadata['cameraCache'],
       )
       ..addValue(
         'rig.quality',
