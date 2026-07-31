@@ -23,6 +23,7 @@ export 'src/random/random_stream.dart';
 export 'src/rendering/animation_controller.dart';
 export 'src/rendering/canonical_rig.dart';
 export 'src/rendering/clip_camera.dart';
+export 'src/rendering/native_geometry_renderer.dart';
 export 'src/rendering/render_model.dart';
 export 'src/rendering/resolution_profile.dart';
 export 'src/rendering/resolution_renderer.dart';
