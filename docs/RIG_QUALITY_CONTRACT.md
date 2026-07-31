@@ -1,18 +1,43 @@
 # Rig quality contract
 
-This document defines the runtime guarantees introduced in package 1.3.1 and
-generator 4.3.0-dart.2.
+This document defines the runtime guarantees maintained by package 1.4.1 and
+generator 4.4.0-dart.2.
 
 ## Framing
 
-- The readable actor core is head, neck, torso, clothing, armor and face.
-- Halos, horns, head adornments, auras, capes, wings, companions and
-  screen-space effects are soft bounds and may not shrink the actor core.
-- The target actor height is approximately 40-44 pixels inside the public
-  48x48 viewport.
-- Camera scale is clamped to 0.90-1.32.
+- The readable core is face, head, neck, torso, clothing, armor, facial hair and
+  front hair.
+- Arms, hands, rear hair, halos, horns, head adornments, capes, wings,
+  companions and screen-space effects are safety bounds and may not shrink the
+  readable core.
+- The target core size is approximately 47x45 pixels inside the public 48x48
+  viewport.
+- Camera scale is clamped to `0.88..1.65`.
+- Safety bounds may nudge the camera by at most three source pixels.
+- `actorOccupancy` measures core height; `safetyCoverage` reports how much of the
+  complete soft silhouette remains visible.
 - A static preview samples the same first sixteen animation phases used by the
   default player clip, so autoplay does not change framing.
+
+## Scene visual noise
+
+Exactly one dominant full-scene channel may remain active:
+
+- weather;
+- cosmic layer;
+- ambient overlay;
+- rear flames;
+- general particle effect;
+- background event.
+
+The probabilistic target score is between 24 and 40. The hard limit is 42.
+Background complexity, channel density/depth/intensity, symbols, aura and halo
+all contribute to the score. Density is reduced first; low-priority overlays or
+the dominant effect are removed if required to respect the hard limit.
+
+The final render pipeline contains a second layer gate, so custom or manually
+constructed genomes cannot render two dominant channels simultaneously.
+Diagnostics are exported under `rig.visualNoise`.
 
 ## Transform ownership
 
@@ -87,8 +112,7 @@ Rain uses a dedicated field instead of the generic particle renderer.
 - Drops respawn continuously using deterministic cycle seeds.
 - Foreground drops can create short splashes at actor surfaces and the lower
   viewport edge.
-- The final rain field is evaluated after the actor pose on the active overscan
-  dimensions, so collisions follow the visible head, shoulders, arms and hands.
+- The final rain field is evaluated on the active overscan dimensions.
 - Rain, fog, snow, embers and lightning use semantic weather palette roles.
 
 ## Other particles and emitters
@@ -107,7 +131,9 @@ The test suite must cover:
 
 - affine parent/child transforms, including rotated parents;
 - attachment and fixed-distance constraints;
-- frame occupancy and stable clip camera;
+- core occupancy, safety coverage and stable clip camera;
+- one dominant scene channel and score `<= 42`;
+- semantic conflict resolution for named tracks;
 - dynamic left/right attachment parents;
 - articulated arms and independently owned hand pixels;
 - wearable ownership and rigid/cloth/wing back strategies;
