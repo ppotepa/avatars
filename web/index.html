@@ -20,45 +20,60 @@
   <main class="workspace">
     <aside class="preview-panel panel">
       <section class="preview-card">
-        <div id="avatar-preview" class="avatar-preview" aria-label="Podgląd awatara"></div>
+        <div id="avatar-preview" class="avatar-preview" data-preview-zoom="fit" aria-label="Podgląd awatara"></div>
         <div id="avatar-status" class="avatar-status"></div>
       </section>
 
-      <section class="resolution-panel" aria-labelledby="resolution-title">
-        <div class="player-section-heading">
-          <span id="resolution-title">Rozdzielczość podglądu</span>
-          <output id="resolution-value">48 × 48</output>
+      <section class="media-deck" aria-labelledby="animation-player-title">
+        <div class="deck-display">
+          <div class="deck-track">
+            <span class="deck-label">TRACK</span>
+            <select id="animation-track" aria-label="Ścieżka animacji">
+              <option value="current">Bieżąca animacja</option>
+              <option value="idle">Idle</option>
+              <option value="talk">Talk</option>
+              <option value="laugh">Laugh</option>
+              <option value="storm">Storm</option>
+              <option value="fire">Fire</option>
+            </select>
+          </div>
+          <div class="deck-readout">
+            <span id="animation-player-title">PLAYER</span>
+            <output id="animation-time" aria-live="polite">00:00.00</output>
+            <output id="animation-position" aria-live="polite">01/16</output>
+          </div>
         </div>
-        <div class="resolution-picker" role="group" aria-label="Wybierz rozdzielczość renderowania">
-          <button type="button" data-resolution="48" aria-pressed="true">48</button>
-          <button type="button" data-resolution="64" aria-pressed="false">64</button>
-          <button type="button" data-resolution="80" aria-pressed="false">80</button>
-          <button type="button" data-resolution="96" aria-pressed="false">96</button>
-        </div>
-      </section>
 
-      <section class="animation-player" aria-labelledby="animation-player-title">
-        <div class="player-section-heading">
-          <span id="animation-player-title">Odtwarzacz animacji</span>
-          <output id="animation-position" aria-live="polite">1 / 16</output>
-        </div>
+        <input id="animation-scrubber" class="animation-scrubber" type="range" min="0" max="15" value="0" step="1" aria-label="Pozycja animacji">
+
         <div class="player-transport" role="group" aria-label="Sterowanie animacją">
           <button id="frame-start-button" class="player-button" type="button" aria-label="Pierwsza klatka" title="Pierwsza klatka">
-            <span aria-hidden="true">|◀</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M19 6l-9 6 9 6z"/></svg>
+          </button>
+          <button id="frame-rewind-button" class="player-button" type="button" aria-label="Cofnij o cztery klatki" title="Cofnij o cztery klatki">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6l-7 6 7 6zM20 6l-7 6 7 6z"/></svg>
           </button>
           <button id="frame-previous-button" class="player-button" type="button" aria-label="Poprzednia klatka" title="Poprzednia klatka">
-            <span aria-hidden="true">◀</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6l-8 6 8 6z"/></svg>
           </button>
-          <button id="animate-button" class="player-button player-button-primary" type="button" aria-label="Odtwórz animację" title="Odtwórz animację">
-            <span aria-hidden="true">▶</span>
+          <button id="animate-button" class="player-button player-button-primary" type="button" aria-label="Odtwórz" title="Odtwórz">
+            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM14 5h4v14h-4z"/></svg>
+          </button>
+          <button id="animation-stop-button" class="player-button" type="button" aria-label="Zatrzymaj i wróć do początku" title="Zatrzymaj i wróć do początku">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>
           </button>
           <button id="frame-next-button" class="player-button" type="button" aria-label="Następna klatka" title="Następna klatka">
-            <span aria-hidden="true">▶</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6l8 6-8 6z"/></svg>
+          </button>
+          <button id="frame-forward-button" class="player-button" type="button" aria-label="Przewiń o cztery klatki" title="Przewiń o cztery klatki">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l7 6-7 6zM13 6l7 6-7 6z"/></svg>
           </button>
           <button id="frame-end-button" class="player-button" type="button" aria-label="Ostatnia klatka" title="Ostatnia klatka">
-            <span aria-hidden="true">▶|</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v14M5 6l9 6-9 6z"/></svg>
           </button>
         </div>
+
         <div class="player-options">
           <label>
             <span>Klatki</span>
@@ -77,27 +92,34 @@
               <option value="90">2×</option>
             </select>
           </label>
+          <label class="loop-control">
+            <input id="animation-loop" type="checkbox" checked>
+            <span>Loop</span>
+          </label>
         </div>
       </section>
 
-      <section class="toolbar" aria-label="Akcje awatara">
-        <button id="generate-button" type="button" class="primary">Generuj</button>
-        <button id="new-seed-button" type="button">Nowy seed</button>
-        <button id="reset-overrides-button" type="button">Reset nadpisań</button>
-        <button id="reset-locks-button" type="button">Reset blokad</button>
-      </section>
-
-      <section class="render-controls" aria-label="Jakość renderowania">
-        <label class="legacy-resolution-control">
-          <span>Rozdzielczość</span>
-          <select id="quick-resolution">
-            <option value="48">48 × 48</option>
-            <option value="64">64 × 64</option>
-            <option value="80">80 × 80</option>
-            <option value="96">96 × 96</option>
+      <section class="preview-controls" aria-label="Podgląd i jakość">
+        <div class="compact-control">
+          <span>Render</span>
+          <div class="resolution-picker" role="group" aria-label="Rozdzielczość renderowania">
+            <button type="button" data-resolution="48" aria-pressed="true">48</button>
+            <button type="button" data-resolution="64" aria-pressed="false">64</button>
+            <button type="button" data-resolution="80" aria-pressed="false">80</button>
+            <button type="button" data-resolution="96" aria-pressed="false">96</button>
+          </div>
+          <output id="resolution-value">48 × 48</output>
+        </div>
+        <label class="compact-control">
+          <span>Zoom</span>
+          <select id="preview-zoom">
+            <option value="fit" selected>Dopasuj</option>
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+            <option value="4">4×</option>
           </select>
         </label>
-        <label>
+        <label class="compact-control">
           <span>Detal</span>
           <select id="quick-detail">
             <option value="basic">Podstawowy</option>
@@ -106,36 +128,56 @@
           </select>
         </label>
       </section>
+      <select id="quick-resolution" hidden aria-hidden="true" tabindex="-1">
+        <option value="48">48 × 48</option>
+        <option value="64">64 × 64</option>
+        <option value="80">80 × 80</option>
+        <option value="96">96 × 96</option>
+      </select>
 
-      <section class="export-grid" aria-label="Eksport">
-        <button id="export-request-button" type="button">Request JSON</button>
-        <button id="export-result-button" type="button">Result JSON</button>
-        <button id="download-svg-button" type="button">Pobierz SVG</button>
-        <button id="download-png-button" type="button">Pobierz PNG</button>
-        <button id="download-sheet-button" type="button">Pobierz sprite sheet</button>
-        <button id="save-server-button" type="button">Zapisz na serwerze</button>
-        <button id="import-request-button" type="button">Importuj request</button>
-        <input id="import-request-file" type="file" accept="application/json,.json" hidden>
+      <section class="toolbar compact-toolbar" aria-label="Akcje awatara">
+        <button id="generate-button" type="button" class="primary">Generuj</button>
+        <button id="new-seed-button" type="button">Nowy seed</button>
       </section>
 
-      <section class="readability-card" aria-labelledby="readability-title">
-        <div class="readability-heading">
-          <span id="readability-title">Czytelność renderu</span>
-          <strong id="readability-score">—</strong>
+      <details class="utility-section">
+        <summary>Edycja i eksport</summary>
+        <div class="toolbar">
+          <button id="reset-overrides-button" type="button">Reset nadpisań</button>
+          <button id="reset-locks-button" type="button">Reset blokad</button>
         </div>
-        <div id="readability-metrics" class="readability-metrics"></div>
-        <div id="readability-warnings" class="readability-warnings"></div>
-      </section>
-
-      <section class="preset-card">
-        <label for="whole-preset">Preset całej postaci</label>
-        <div class="inline-action">
-          <select id="whole-preset"></select>
-          <button id="apply-whole-preset-button" type="button">Zastosuj</button>
+        <div class="export-grid" aria-label="Eksport">
+          <button id="download-png-button" type="button">PNG</button>
+          <button id="download-svg-button" type="button">SVG</button>
+          <button id="download-sheet-button" type="button">Sprite sheet</button>
+          <button id="save-server-button" type="button">Zapisz</button>
+          <button id="export-request-button" type="button">Request JSON</button>
+          <button id="export-result-button" type="button">Result JSON</button>
+          <button id="import-request-button" type="button">Importuj</button>
+          <input id="import-request-file" type="file" accept="application/json,.json" hidden>
         </div>
-      </section>
+      </details>
 
-      <details class="json-inspector">
+      <details class="utility-section">
+        <summary>Diagnostyka i preset</summary>
+        <section class="readability-card" aria-labelledby="readability-title">
+          <div class="readability-heading">
+            <span id="readability-title">Czytelność renderu</span>
+            <strong id="readability-score">—</strong>
+          </div>
+          <div id="readability-metrics" class="readability-metrics"></div>
+          <div id="readability-warnings" class="readability-warnings"></div>
+        </section>
+        <section class="preset-card">
+          <label for="whole-preset">Preset całej postaci</label>
+          <div class="inline-action">
+            <select id="whole-preset"></select>
+            <button id="apply-whole-preset-button" type="button">Zastosuj</button>
+          </div>
+        </section>
+      </details>
+
+      <details class="json-inspector utility-section">
         <summary>Aktualny AvatarRequest</summary>
         <pre id="request-json"></pre>
       </details>
