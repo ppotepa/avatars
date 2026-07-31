@@ -65,9 +65,6 @@ final class ResolutionAwareRenderer {
     final profile = ResolutionProfile.forSettings(settings);
     final geometry = nativeGeometry.rasterize(
       layers: layers,
-      palette: palette,
-      sourceWidth: source.width,
-      sourceHeight: source.height,
       profile: profile,
     );
     final lit = _applyLighting(
@@ -180,8 +177,16 @@ final class ResolutionAwareRenderer {
     int phase,
   ) {
     final layerSignature = layers
-        .map((layer) =>
-            '${layer.id}:${layer.nodeId}:${layer.slot.index}:${layer.localOrder}:${layer.mask.count}:${layer.mask.bounds}')
+        .map(
+          (layer) => <Object>[
+            layer.id,
+            layer.nodeId,
+            layer.slot.index,
+            layer.localOrder,
+            layer.mask.count,
+            layer.mask.bounds,
+          ].join(':'),
+        )
         .join('|');
     return '${source.hashWithPalette(palette.colors)}:'
         '${settings.size}:${settings.detailLevel.name}:'
