@@ -9,6 +9,7 @@ import '../pixels/pixel_mask.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
+import '../rendering/rig_model.dart';
 import '../util/math_utils.dart';
 import 'avatar_request.dart';
 import 'avatar_result.dart';
