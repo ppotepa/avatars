@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'catalog_v42_extension.dart';
+import 'companion_catalog_extension.dart';
 import 'generated_catalog_json.dart';
 
 enum ParameterKind { range, select }
@@ -45,9 +46,11 @@ final class ParameterDefinition {
     final type = json['type']! as String;
     final auto = (json['auto'] as List<Object?>?)?.cast<num>();
     final options = (json['options'] as List<Object?>? ?? const <Object?>[])
-        .map((option) => ParameterOption.fromJson(
-              Map<String, Object?>.from(option! as Map),
-            ))
+        .map(
+          (option) => ParameterOption.fromJson(
+            Map<String, Object?>.from(option! as Map),
+          ),
+        )
         .toList(growable: false);
     return ParameterDefinition(
       id: json['id']! as String,
@@ -88,7 +91,9 @@ final class ParameterDefinition {
         if (autoMin != null) 'autoMin': autoMin,
         if (autoMax != null) 'autoMax': autoMax,
         if (options.isNotEmpty)
-          'options': options.map((option) => option.toJson()).toList(growable: false),
+          'options': options
+              .map((option) => option.toJson())
+              .toList(growable: false),
       };
 
   bool accepts(Object value) {
@@ -121,7 +126,9 @@ final class ParameterCategory {
         'id': id,
         'label': label,
         'group': group,
-        'fields': fields.map((field) => field.toJson()).toList(growable: false),
+        'fields': fields
+            .map((field) => field.toJson())
+            .toList(growable: false),
         'presets': presets,
       };
 }
@@ -162,7 +169,7 @@ final class ParameterCatalog {
     };
   }
 
-  /// Preserves the historical name while exposing the additive V4.2 extension.
+  /// Preserves the historical name while exposing additive extensions.
   static final ParameterCatalog v41 = _decodeV41();
 
   final List<ParameterCategory> categories;
@@ -192,9 +199,13 @@ final class ParameterCatalog {
     final rawCategories = (root['categories']! as List<Object?>)
         .map((raw) => Map<String, Object?>.from(raw! as Map))
         .toList(growable: true);
-    final optionPatches = Map<String, Object?>.from(
-      extension['fieldOptions'] as Map? ?? const <String, Object?>{},
-    );
+    final optionPatches = <String, Object?>{
+      ...Map<String, Object?>.from(
+        extension['fieldOptions'] as Map? ?? const <String, Object?>{},
+      ),
+      for (final entry in kCompanionOptionPatches.entries)
+        entry.key: entry.value,
+    };
 
     for (final category in rawCategories) {
       final rawFields = (category['fields']! as List<Object?>)
@@ -203,9 +214,10 @@ final class ParameterCatalog {
       for (final field in rawFields) {
         final patch = optionPatches[field['id']];
         if (patch is! List) continue;
-        final options = (field['options'] as List<Object?>? ?? const <Object?>[])
-            .map((raw) => Map<String, Object?>.from(raw! as Map))
-            .toList(growable: true);
+        final options =
+            (field['options'] as List<Object?>? ?? const <Object?>[])
+                .map((raw) => Map<String, Object?>.from(raw! as Map))
+                .toList(growable: true);
         final existing = options.map((option) => option['value']).toSet();
         for (final raw in patch) {
           final option = Map<String, Object?>.from(raw! as Map);
@@ -216,8 +228,8 @@ final class ParameterCatalog {
       category['fields'] = rawFields;
     }
 
-    for (final raw in (extension['categories'] as List<Object?>? ??
-        const <Object?>[])) {
+    for (final raw in extension['categories'] as List<Object?>? ??
+        const <Object?>[]) {
       rawCategories.add(Map<String, Object?>.from(raw! as Map));
     }
 
@@ -249,20 +261,20 @@ final class ParameterCatalog {
     final id = json['id']! as String;
     final group = json['group']! as String;
     final fields = (json['fields']! as List<Object?>)
-        .map((field) => ParameterDefinition.fromJson(
-              Map<String, Object?>.from(field! as Map),
-              category: id,
-              group: group,
-            ))
+        .map(
+          (field) => ParameterDefinition.fromJson(
+            Map<String, Object?>.from(field! as Map),
+            category: id,
+            group: group,
+          ),
+        )
         .toList(growable: false);
     final presets = <String, Map<String, Object>>{};
     final rawPresets = Map<String, Object?>.from(
       json['presets'] as Map? ?? const <String, Object?>{},
     );
     for (final entry in rawPresets.entries) {
-      presets[entry.key] = Map<String, Object>.from(
-        entry.value! as Map,
-      );
+      presets[entry.key] = Map<String, Object>.from(entry.value! as Map);
     }
     return ParameterCategory(
       id: id,
