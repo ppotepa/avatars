@@ -44,6 +44,7 @@ import 'rig_quality_evaluator.dart';
 import 'rig_validation_entries.dart';
 import 'runtime_rig_builder.dart';
 import 'scene_visual_budget_renderer.dart';
+import 'semantic_gesture_policy.dart';
 import 'wearable_attachment_policy.dart';
 
 final class RigPreparedAvatar {
@@ -318,10 +319,11 @@ final class RigClipPipeline {
     }
 
     final controller = const RigAnimationController();
-    final sample = const ExpressiveMotionPolicy().augment(
+    final expressive = const ExpressiveMotionPolicy().augment(
       context,
       controller.sample(context),
     );
+    final sample = const SemanticGesturePolicy().augment(context, expressive);
     final requestedPose = RigPose(sample.transforms);
     final solvedPose = const RigPoseApplier().solveAndApply(
       state,
