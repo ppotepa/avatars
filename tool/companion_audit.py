@@ -17,6 +17,7 @@ REGISTRY = ROOT / "lib/src/rendering/companion/companion_style_registry.dart"
 CATALOG = ROOT / "lib/src/catalog/companion_catalog_extension.dart"
 RENDERER = ROOT / "lib/src/rendering/companion/articulated_companion_v2_renderer.dart"
 NATURAL = ROOT / "lib/src/rendering/companion/companion_styles_natural_fantasy.dart"
+RESOLVER = ROOT / "lib/src/rendering/rig_anchor_resolver.dart"
 TEST = ROOT / "test/companion_v2_test.dart"
 DOC = ROOT / "docs/COMPANION_RIG_V2.md"
 
@@ -64,7 +65,7 @@ def style_set_from_catalog(source: str) -> set[str]:
 
 def main() -> int:
     errors: list[str] = []
-    required = [MODEL, REGISTRY, CATALOG, RENDERER, NATURAL, TEST, DOC]
+    required = [MODEL, REGISTRY, CATALOG, RENDERER, NATURAL, RESOLVER, TEST, DOC]
     for path in required:
         if not path.is_file():
             errors.append(f"missing required companion file: {path.relative_to(ROOT)}")
@@ -76,6 +77,7 @@ def main() -> int:
     catalog = read(CATALOG)
     renderer = read(RENDERER)
     natural = read(NATURAL)
+    resolver = read(RESOLVER)
     test = read(TEST)
 
     registry_styles = style_set_from_registry(registry)
@@ -130,11 +132,16 @@ def main() -> int:
         if expression not in renderer:
             errors.append(f"V2 renderer contract missing: {expression}")
 
+    if "state.anchorNode(nodeId, id)" not in resolver:
+        errors.append("runtime companion anchors are not bound to rig nodes")
+
     for expression in (
         "body.dilated().intersect(leftWing)",
         "body.dilated().intersect(rightWing)",
         "leftSignatures.length",
         "rightSignatures.length",
+        "leftNode['anchorId']",
+        "rightNode['anchorId']",
     ):
         if expression not in test:
             errors.append(f"wing continuity test missing: {expression}")
@@ -145,6 +152,7 @@ def main() -> int:
     print(f"- {len(registry_styles)} articulated styles")
     print("- independent wing, limb, ear, antenna and tentacle nodes")
     print("- new registry styles exposed through catalog metadata")
+    print("- runtime anchors bound directly to rig nodes")
     print("- wing motion and attachment tests present")
     return 0
 
