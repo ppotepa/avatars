@@ -88,8 +88,10 @@ final class CompanionStyleSpec {
 }
 
 final class CompanionRigParts {
-  CompanionRigParts({this.width = 48, this.height = 48})
-      : masks = <String, PixelMask>{
+  CompanionRigParts({int width = 48, int height = 48})
+      : width = width,
+        height = height,
+        masks = <String, PixelMask>{
           for (final node in CompanionNode.all)
             node: PixelMask(width: width, height: height),
         },
