@@ -68,6 +68,13 @@ final class OverscanCanvas {
   }
 }
 
+final class ClipFrameBounds {
+  const ClipFrameBounds({required this.core, required this.safety});
+
+  final PixelRect? core;
+  final PixelRect? safety;
+}
+
 final class ClipCamera {
   const ClipCamera({
     required this.x,
@@ -77,6 +84,7 @@ final class ClipCamera {
     this.baseline = 53,
     this.scale = 1,
     this.actorOccupancy = 0,
+    this.safetyCoverage = 1,
   });
 
   final double x;
@@ -86,6 +94,7 @@ final class ClipCamera {
   final int baseline;
   final double scale;
   final double actorOccupancy;
+  final double safetyCoverage;
 
   PixelMask cropMask(PixelMask source) {
     final output = PixelMask(width: width, height: height);
@@ -128,6 +137,7 @@ final class ClipCamera {
         'baseline': baseline,
         'scale': scale,
         'actorOccupancy': actorOccupancy,
+        'safetyCoverage': safetyCoverage,
       };
 }
 
@@ -139,44 +149,93 @@ abstract final class ClipCameraFitter {
     int viewportWidth = 48,
     int viewportHeight = 48,
     int baseline = 53,
-    int targetWidth = 44,
-    int targetHeight = 44,
-  }) {
-    PixelRect? union;
-    for (final bounds in actorBounds) {
-      if (bounds == null) continue;
-      union = union == null ? bounds : _union(union, bounds);
-    }
-    if (union == null) {
-      return const ClipCamera(
-        x: 4,
-        y: 6,
-        baseline: 53,
-        scale: 1,
+    int targetWidth = 47,
+    int targetHeight = 45,
+  }) =>
+      fitFrames(
+        actorBounds.map((bounds) => ClipFrameBounds(core: bounds, safety: bounds)),
+        canvasWidth: canvasWidth,
+        canvasHeight: canvasHeight,
+        viewportWidth: viewportWidth,
+        viewportHeight: viewportHeight,
+        baseline: baseline,
+        targetWidth: targetWidth,
+        targetHeight: targetHeight,
       );
+
+  static ClipCamera fitFrames(
+    Iterable<ClipFrameBounds> frames, {
+    required int canvasWidth,
+    required int canvasHeight,
+    int viewportWidth = 48,
+    int viewportHeight = 48,
+    int baseline = 53,
+    int targetWidth = 47,
+    int targetHeight = 45,
+  }) {
+    PixelRect? core;
+    PixelRect? safety;
+    for (final frame in frames) {
+      if (frame.core != null) {
+        core = core == null ? frame.core : _union(core, frame.core!);
+      }
+      if (frame.safety != null) {
+        safety = safety == null ? frame.safety : _union(safety, frame.safety!);
+      }
+    }
+    core ??= safety;
+    safety ??= core;
+    if (core == null) {
+      return const ClipCamera(x: 4, y: 6, baseline: 53, scale: 1);
     }
 
-    final widthScale = targetWidth / union.width;
-    final heightScale = targetHeight / union.height;
+    final widthScale = targetWidth / core.width;
+    final heightScale = targetHeight / core.height;
     final scale = clampDouble(
       widthScale < heightScale ? widthScale : heightScale,
-      .9,
-      1.32,
+      .88,
+      1.65,
     );
     final sourceWidth = viewportWidth / scale;
     final sourceHeight = viewportHeight / scale;
-    final centeredX = union.center.x - sourceWidth / 2;
-    final bottomAlignedY = union.bottom - sourceHeight + 2;
+    final centeredX = core.center.x - sourceWidth / 2;
+    final bottomAlignedY = core.bottom - sourceHeight + 2;
     final maximumX = (canvasWidth - sourceWidth).clamp(0, canvasWidth).toDouble();
     final maximumY = (canvasHeight - sourceHeight).clamp(0, canvasHeight).toDouble();
-    final x = clampDouble(centeredX, 0, maximumX);
-    final y = clampDouble(bottomAlignedY, 0, maximumY);
-    final occupancy = clampDouble(
-      union.height * scale / viewportHeight,
-      0,
-      1,
-    );
 
+    var x = clampDouble(centeredX, 0, maximumX);
+    var y = clampDouble(bottomAlignedY, 0, maximumY);
+    if (safety != null) {
+      x = _nudgeAxis(
+        position: x,
+        size: sourceWidth,
+        minimum: safety.left.toDouble(),
+        maximum: safety.right.toDouble(),
+        lowerBound: 0,
+        upperBound: maximumX,
+        maximumNudge: 3,
+      );
+      y = _nudgeAxis(
+        position: y,
+        size: sourceHeight,
+        minimum: safety.top.toDouble(),
+        maximum: safety.bottom.toDouble(),
+        lowerBound: 0,
+        upperBound: maximumY,
+        maximumNudge: 3,
+      );
+    }
+
+    final occupancy = clampDouble(core.height * scale / viewportHeight, 0, 1);
+    final coverage = safety == null
+        ? 1.0
+        : _coverage(
+            safety,
+            x: x,
+            y: y,
+            width: sourceWidth,
+            height: sourceHeight,
+          );
     return ClipCamera(
       x: x,
       y: y,
@@ -185,53 +244,101 @@ abstract final class ClipCameraFitter {
       baseline: baseline,
       scale: scale,
       actorOccupancy: occupancy,
+      safetyCoverage: coverage,
     );
   }
 
-  /// Bounds used for framing the readable avatar core.
-  ///
-  /// Large halos, horns, head ornaments, wings, capes, companions and
-  /// screen-space effects are soft bounds: they may approach an edge but never
-  /// force the face and torso to shrink inside the preview.
-  static PixelRect? actorBounds(List<RenderLayer> layers) {
-    PixelRect? result;
+  static ClipFrameBounds frameBounds(List<RenderLayer> layers) {
+    PixelRect? core;
+    PixelRect? safety;
     for (final layer in layers) {
-      if (!_isCameraCore(layer)) continue;
       final bounds = layer.mask.bounds;
       if (bounds == null) continue;
-      result = result == null ? bounds : _union(result, bounds);
+      if (_isSafetyActor(layer)) {
+        safety = safety == null ? bounds : _union(safety, bounds);
+      }
+      if (_isCameraCore(layer)) {
+        core = core == null ? bounds : _union(core, bounds);
+      }
     }
-    return result;
+    return ClipFrameBounds(core: core ?? safety, safety: safety ?? core);
   }
 
-  static bool _isCameraCore(RenderLayer layer) {
+  /// Compatibility helper returning only the readable core bounds.
+  static PixelRect? actorBounds(List<RenderLayer> layers) =>
+      frameBounds(layers).core;
+
+  static bool _isCameraCore(RenderLayer layer) => <String>{
+        'torso',
+        'chest',
+        'clothing',
+        'armor',
+        'neck',
+        'head',
+        'face',
+        'eyes',
+        'brows',
+        'mouth',
+        'facialHair',
+        'hairFront',
+        'ears',
+        'leftEar',
+        'rightEar',
+      }.contains(layer.nodeId);
+
+  static bool _isSafetyActor(RenderLayer layer) {
     if (layer.slot == RenderSlot.background ||
         layer.slot == RenderSlot.foreground ||
         layer.slot == RenderSlot.auraBack ||
-        layer.slot == RenderSlot.emotionEffects ||
-        layer.slot == RenderSlot.shoulderCompanion ||
-        layer.slot == RenderSlot.capeHairBack) {
+        layer.slot == RenderSlot.emotionEffects) {
       return false;
     }
-    if (<String>{
-      'halo',
-      'horns',
-      'headAdornment',
-      'aura',
-      'cape',
-      'backAdornment',
-      'rigidBackWearable',
-      'backEmitter',
-      'shoulderCompanion',
-      'shoulderObject',
+    return !<String>{
+      'scene',
+      'background',
       'foreground',
       'atmosphere',
       'sceneSymbols',
       'actorSymbols',
-    }.contains(layer.nodeId)) {
-      return false;
+    }.contains(layer.nodeId);
+  }
+
+  static double _nudgeAxis({
+    required double position,
+    required double size,
+    required double minimum,
+    required double maximum,
+    required double lowerBound,
+    required double upperBound,
+    required double maximumNudge,
+  }) {
+    var output = position;
+    if (minimum < output) {
+      output -= clampDouble(output - minimum, 0, maximumNudge);
     }
-    return true;
+    if (maximum > output + size - 1) {
+      output += clampDouble(maximum - (output + size - 1), 0, maximumNudge);
+    }
+    return clampDouble(output, lowerBound, upperBound);
+  }
+
+  static double _coverage(
+    PixelRect bounds, {
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+  }) {
+    final left = bounds.left > x ? bounds.left.toDouble() : x;
+    final top = bounds.top > y ? bounds.top.toDouble() : y;
+    final rightLimit = x + width - 1;
+    final bottomLimit = y + height - 1;
+    final right = bounds.right < rightLimit ? bounds.right.toDouble() : rightLimit;
+    final bottom = bounds.bottom < bottomLimit ? bounds.bottom.toDouble() : bottomLimit;
+    if (right < left || bottom < top) return 0;
+    final visibleArea = (right - left + 1) * (bottom - top + 1);
+    final totalArea = bounds.width * bounds.height;
+    return clampDouble(visibleArea / totalArea, 0, 1);
   }
 }
 
