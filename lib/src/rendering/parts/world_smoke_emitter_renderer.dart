@@ -4,17 +4,23 @@ import '../../util/math_utils.dart';
 import '../render_helpers.dart';
 import '../render_model.dart';
 import '../rig_model.dart';
+import 'rain_field_renderer.dart';
 
-/// Rebuilds smoke after the actor pose has been applied.
+/// Rebuilds world-space weather emitters after the actor pose has been applied.
 ///
-/// The emitter follows the transformed mouth prop, but emitted particles belong
-/// to scene space and therefore do not continue rotating or translating with
-/// the head on later frames.
+/// Rain collision uses the transformed actor masks. The mouth emitter follows
+/// the transformed prop, but emitted smoke belongs to scene space and therefore
+/// does not continue rotating or translating with the head.
 final class WorldSmokeEmitterRenderer implements AvatarPartRenderer {
   const WorldSmokeEmitterRenderer();
 
   @override
   void render(AvatarRenderContext context, AvatarRenderState state) {
+    // Replace the pre-pose rain field with one evaluated against the visible
+    // actor geometry, so shoulder and head splashes stay aligned.
+    state.layers.removeWhere((layer) => layer.id.startsWith('rain.field.'));
+    const RainFieldRenderer().render(context, state);
+
     final style = context.string('v4.mouthProp');
     final amount = context.integer('v4.smokeAmount');
     if (!<String>{'cigarette', 'cigar', 'pipe', 'matchstick'}.contains(style) ||
