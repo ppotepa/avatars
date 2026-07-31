@@ -199,6 +199,11 @@ final class ParameterCatalog {
     final rawCategories = (root['categories']! as List<Object?>)
         .map((raw) => Map<String, Object?>.from(raw! as Map))
         .toList(growable: true);
+    for (final raw in extension['categories'] as List<Object?>? ??
+        const <Object?>[]) {
+      rawCategories.add(Map<String, Object?>.from(raw! as Map));
+    }
+
     final optionPatches = <String, Object?>{
       ...Map<String, Object?>.from(
         extension['fieldOptions'] as Map? ?? const <String, Object?>{},
@@ -226,11 +231,6 @@ final class ParameterCatalog {
         field['options'] = options;
       }
       category['fields'] = rawFields;
-    }
-
-    for (final raw in extension['categories'] as List<Object?>? ??
-        const <Object?>[]) {
-      rawCategories.add(Map<String, Object?>.from(raw! as Map));
     }
 
     final categories = rawCategories
