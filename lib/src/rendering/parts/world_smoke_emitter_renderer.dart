@@ -1,3 +1,4 @@
+import '../../geometry/pixel_rect.dart';
 import '../../pixels/pixel_mask.dart';
 import '../../util/math_utils.dart';
 import '../render_helpers.dart';
@@ -96,8 +97,8 @@ final class WorldSmokeEmitterRenderer implements AvatarPartRenderer {
     };
   }
 
-  dynamic _bounds(List<RenderLayer> layers) {
-    dynamic result;
+  PixelRect? _bounds(List<RenderLayer> layers) {
+    PixelRect? result;
     for (final layer in layers) {
       final current = layer.mask.bounds;
       if (current == null) continue;
@@ -110,7 +111,12 @@ final class WorldSmokeEmitterRenderer implements AvatarPartRenderer {
         final bottom = result.bottom > current.bottom
             ? result.bottom
             : current.bottom;
-        result = result.runtimeType(left, top, right - left + 1, bottom - top + 1);
+        result = PixelRect(
+          left,
+          top,
+          right - left + 1,
+          bottom - top + 1,
+        );
       }
     }
     return result;
