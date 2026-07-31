@@ -32,13 +32,9 @@ final class AvatarMetrics {
   });
 
   final int usedColorCount;
-
-  /// Occupancy of the complete composited scene, retained for compatibility.
   final int occupiedPixelCount;
   final int isolatedPixelCount;
   final int connectedComponentCount;
-
-  /// Actor-only measurements excluding backgrounds, atmosphere and effects.
   final int actorOccupiedPixelCount;
   final int actorIsolatedPixelCount;
   final int actorConnectedComponentCount;
@@ -47,7 +43,6 @@ final class AvatarMetrics {
   final double actorAreaOccupancy;
   final double faceHeightOccupancy;
   final double sceneEffectPixelRatio;
-
   final int layerCount;
   final RenderVisibility visibility;
   final int faceReadabilityScore;
@@ -83,6 +78,27 @@ final class AvatarMetrics {
       };
 }
 
+final class EffectiveAdjustment {
+  const EffectiveAdjustment({
+    required this.field,
+    required this.requested,
+    required this.effective,
+    required this.reason,
+  });
+
+  final String field;
+  final Object requested;
+  final Object effective;
+  final String reason;
+
+  Map<String, Object> toJson() => <String, Object>{
+        'field': field,
+        'requested': requested,
+        'effective': effective,
+        'reason': reason,
+      };
+}
+
 final class AvatarResult {
   const AvatarResult({
     required this.genome,
@@ -93,6 +109,7 @@ final class AvatarResult {
     required this.validation,
     required this.metrics,
     required this.imageHash,
+    this.effectiveAdjustments = const <EffectiveAdjustment>[],
   });
 
   final AvatarGenome genome;
@@ -103,6 +120,7 @@ final class AvatarResult {
   final ValidationReport validation;
   final AvatarMetrics metrics;
   final String imageHash;
+  final List<EffectiveAdjustment> effectiveAdjustments;
 
   Map<String, Object?> toJson({bool includePixels = true}) => <String, Object?>{
         'schemaVersion': AvatarGenomeVersion.resultSchema,
@@ -110,6 +128,9 @@ final class AvatarResult {
         'seed': genome.seed,
         'imageHash': imageHash,
         'genome': genome.toJson(),
+        'effectiveAdjustments': effectiveAdjustments
+            .map((adjustment) => adjustment.toJson())
+            .toList(growable: false),
         'landmarks': <String, Object?>{
           for (final entry in layout.landmarks.entries)
             entry.key: entry.value.toJson(),
