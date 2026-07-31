@@ -30,7 +30,10 @@ final class RigLayerBinding {
     final segment = meta['rigSegment']?.toString();
     if (segment != null) return segment;
 
-    if (id.startsWith('background')) return 'background';
+    if (id == 'background.base' || id == 'background.dark') {
+      return 'background';
+    }
+    if (id.startsWith('background')) return 'atmosphere';
     if (id.startsWith('cosmic.') ||
         id.startsWith('ambient.') ||
         id.startsWith('weather.v42.back') ||
@@ -133,10 +136,10 @@ final class RigLayerBinding {
   }
 
   static RenderSlot _defaultSlot(String node, String id) => switch (node) {
-        'background' => id == 'background.base' || id == 'background.dark'
-            ? RenderSlot.background
-            : RenderSlot.backgroundDetail,
-        'atmosphere' => RenderSlot.atmosphereBack,
+        'background' => RenderSlot.background,
+        'atmosphere' => id.startsWith('background.')
+            ? RenderSlot.backgroundDetail
+            : RenderSlot.atmosphereBack,
         'aura' => RenderSlot.auraBack,
         'cape' ||
         'backAdornment' ||
@@ -214,8 +217,10 @@ final class RigLayerBinding {
   ) {
     final explicit = meta['localOrder'];
     if (explicit is num) return explicit.toInt();
-    final stableIdOrder = id.codeUnits.fold<int>(0, (value, unit) =>
-        (value * 31 + unit) & 0x7fffffff);
+    final stableIdOrder = id.codeUnits.fold<int>(
+      0,
+      (value, unit) => (value * 31 + unit) & 0x7fffffff,
+    );
     final base = switch (node) {
       'background' => 0,
       'atmosphere' => 100,
