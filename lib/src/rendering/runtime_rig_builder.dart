@@ -52,6 +52,22 @@ final class RuntimeRigBuilder {
       }
     }
 
+    void ensureAnchor(String id, String nodeId, PixelPoint point) {
+      if (byAnchor.containsKey(id) || !nodeIds.contains(nodeId)) return;
+      final anchor = RigAnchor(id: id, nodeId: nodeId, localPosition: point);
+      anchors.add(anchor);
+      byAnchor[id] = anchor;
+    }
+
+    _addLimbAnchors(
+      state,
+      nodeIds,
+      byAnchor,
+      ensureAnchor,
+      offsetX: offsetX,
+      offsetY: offsetY,
+    );
+
     RenderSlot slotFor(String id) {
       final own = state.layers
           .where((layer) => layer.nodeId == id)
@@ -71,7 +87,7 @@ final class RuntimeRigBuilder {
               ? state.nodeParents[id]
               : CanonicalRig.parents[id],
           slot: slotFor(id),
-          anchorId: state.nodeAnchors[id],
+          anchorId: state.nodeAnchors[id] ?? _defaultAnchor(id, byAnchor),
           restTransform: RigTransform.identity,
           bounds: _boundsFor(state, id),
         ),
@@ -104,6 +120,34 @@ final class RuntimeRigBuilder {
       'head',
       'neck.top',
       'head.neckJoint',
+    );
+    attach(
+      'left-shoulder-to-arm',
+      'leftShoulder',
+      'leftArm',
+      'leftShoulder.joint',
+      'leftArm.root',
+    );
+    attach(
+      'right-shoulder-to-arm',
+      'rightShoulder',
+      'rightArm',
+      'rightShoulder.joint',
+      'rightArm.root',
+    );
+    attach(
+      'left-arm-to-hand',
+      'leftArm',
+      'leftHand',
+      'leftArm.hand',
+      'leftHand.root',
+    );
+    attach(
+      'right-arm-to-hand',
+      'rightArm',
+      'rightHand',
+      'rightArm.hand',
+      'rightHand.root',
     );
 
     // Every explicit renderer attachment receives a child-side root at the
@@ -138,6 +182,65 @@ final class RuntimeRigBuilder {
       anchors: anchors,
       constraints: constraints,
     );
+  }
+
+  void _addLimbAnchors(
+    AvatarRenderState state,
+    Set<String> nodeIds,
+    Map<String, RigAnchor> byAnchor,
+    void Function(String id, String nodeId, PixelPoint point) ensureAnchor, {
+    required int offsetX,
+    required int offsetY,
+  }) {
+    final leftShoulder = byAnchor['leftShoulder.joint']?.localPosition;
+    final rightShoulder = byAnchor['rightShoulder.joint']?.localPosition;
+    if (leftShoulder != null) {
+      ensureAnchor('leftArm.root', 'leftArm', leftShoulder);
+    }
+    if (rightShoulder != null) {
+      ensureAnchor('rightArm.root', 'rightArm', rightShoulder);
+    }
+
+    void handAnchors(String side) {
+      final arm = state.mask('${side}Arm');
+      final bounds = arm.bounds;
+      if (bounds == null) return;
+      final point = PixelPoint(
+        bounds.center.x + offsetX,
+        bounds.bottom + offsetY,
+      );
+      ensureAnchor('${side}Arm.hand', '${side}Arm', point);
+      ensureAnchor('${side}Hand.root', '${side}Hand', point);
+    }
+
+    handAnchors('left');
+    handAnchors('right');
+  }
+
+  String? _defaultAnchor(String id, Map<String, RigAnchor> anchors) {
+    final preferred = switch (id) {
+      'torso' => 'torso.center',
+      'neck' => 'neck.base',
+      'head' => 'head.neckJoint',
+      'face' => 'head.center',
+      'eyes' => 'leftEye.center',
+      'mouth' || 'mouthProp' || 'smokeEmitter' => 'mouth.center',
+      'leftShoulder' || 'leftArm' => 'leftShoulder.joint',
+      'rightShoulder' || 'rightArm' => 'rightShoulder.joint',
+      'leftHand' => 'leftHand.root',
+      'rightHand' => 'rightHand.root',
+      'leftEar' || 'leftEarJewelry' || 'leftEarWearable' => 'leftEar.center',
+      'rightEar' || 'rightEarJewelry' || 'rightEarWearable' => 'rightEar.center',
+      'hairBack' || 'hairBackRoot' || 'hairFront' => 'hair.rootCenter',
+      'capeLeftRoot' => 'cape.leftRoot',
+      'capeRightRoot' => 'cape.rightRoot',
+      'capeCenter' || 'backAdornment' || 'rigidBackWearable' || 'backEmitter' =>
+        'cape.center',
+      _ => null,
+    };
+    return preferred != null && anchors.containsKey(preferred)
+        ? preferred
+        : null;
   }
 
   void _addChainConstraints(
