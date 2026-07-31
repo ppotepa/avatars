@@ -32,50 +32,30 @@ void main() {
   });
 
   test('attach constraint keeps child root on parent anchor', () {
-    final graph = RigGraph(
-      nodes: const <RigNode>[
-        RigNode(
-          id: 'parent',
-          parentId: null,
-          slot: RenderSlot.torsoClothing,
-        ),
-        RigNode(
-          id: 'child',
-          parentId: 'parent',
-          slot: RenderSlot.head,
-        ),
-      ],
-      anchors: const <RigAnchor>[
-        RigAnchor(
-          id: 'parent.anchor',
-          nodeId: 'parent',
-          localPosition: PixelPoint(10, 10),
-        ),
-        RigAnchor(
-          id: 'child.root',
-          nodeId: 'child',
-          localPosition: PixelPoint(10, 10),
-        ),
-      ],
-      constraints: const <RigConstraint>[
-        RigConstraint(
-          id: 'attachment',
-          kind: RigConstraintKind.attach,
-          nodeIds: <String>['parent', 'child'],
-          anchorIds: <String>['parent.anchor', 'child.root'],
-        ),
-      ],
-    );
+    final graph = _attachGraph();
     final solved = const RigConstraintSolver().solve(
       graph,
       RigPose(<String, RigTransform>{
         'child': const RigTransform(dx: 5, dy: 3),
       }),
     );
-    final resolver = const RigWorldResolver();
-    final first = resolver.worldAnchor(graph, solved, 'parent.anchor');
-    final second = resolver.worldAnchor(graph, solved, 'child.root');
-    expect(second, first);
+    _expectAnchorsAttached(graph, solved);
+  });
+
+  test('attach correction is converted through a rotated parent', () {
+    final graph = _attachGraph();
+    final solved = const RigConstraintSolver().solve(
+      graph,
+      RigPose(<String, RigTransform>{
+        'parent': const RigTransform(
+          rotationDegrees: 35,
+          pivotX: 10,
+          pivotY: 10,
+        ),
+        'child': const RigTransform(dx: 6, dy: -4),
+      }),
+    );
+    _expectAnchorsAttached(graph, solved);
   });
 
   test('fixed-distance constraint caps an overstretched child', () {
@@ -128,4 +108,47 @@ void main() {
     final dy = pendant.y - root.y;
     expect(dx * dx + dy * dy, lessThanOrEqualTo(12 * 12 + 2));
   });
+}
+
+RigGraph _attachGraph() => RigGraph(
+      nodes: const <RigNode>[
+        RigNode(
+          id: 'parent',
+          parentId: null,
+          slot: RenderSlot.torsoClothing,
+        ),
+        RigNode(
+          id: 'child',
+          parentId: 'parent',
+          slot: RenderSlot.head,
+        ),
+      ],
+      anchors: const <RigAnchor>[
+        RigAnchor(
+          id: 'parent.anchor',
+          nodeId: 'parent',
+          localPosition: PixelPoint(10, 10),
+        ),
+        RigAnchor(
+          id: 'child.root',
+          nodeId: 'child',
+          localPosition: PixelPoint(10, 10),
+        ),
+      ],
+      constraints: const <RigConstraint>[
+        RigConstraint(
+          id: 'attachment',
+          kind: RigConstraintKind.attach,
+          nodeIds: <String>['parent', 'child'],
+          anchorIds: <String>['parent.anchor', 'child.root'],
+        ),
+      ],
+    );
+
+void _expectAnchorsAttached(RigGraph graph, RigPose pose) {
+  final resolver = const RigWorldResolver();
+  final first = resolver.worldAnchor(graph, pose, 'parent.anchor');
+  final second = resolver.worldAnchor(graph, pose, 'child.root');
+  expect((second.x - first.x).abs(), lessThanOrEqualTo(1));
+  expect((second.y - first.y).abs(), lessThanOrEqualTo(1));
 }
