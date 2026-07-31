@@ -267,14 +267,26 @@ final class AvatarGenerator {
     AvatarPalette palette,
     AvatarRenderSettings rendering,
   ) {
-    final occupied = PixelMask(width: image.width, height: image.height);
+    final scene = PixelMask(width: image.width, height: image.height);
     for (var y = 0; y < image.height; y++) {
       for (var x = 0; x < image.width; x++) {
-        if (image.get(x, y) != image.transparentIndex) occupied.set(x, y);
+        if (image.get(x, y) != image.transparentIndex) scene.set(x, y);
       }
     }
-    final components = occupied.connectedComponents();
-    final isolated = components.where((component) => component.length == 1).length;
+    final sceneComponents = scene.connectedComponents();
+    final sceneIsolated =
+        sceneComponents.where((component) => component.length == 1).length;
+
+    final actor = _unionLayers(state.layers.where(_isActorLayer));
+    final effects = _unionLayers(state.layers.where(_isSceneEffectLayer));
+    final face = _unionLayers(state.layers.where(_isFaceLayer));
+    final actorComponents = actor.connectedComponents();
+    final actorIsolated =
+        actorComponents.where((component) => component.length == 1).length;
+    final actorBounds = actor.bounds;
+    final faceBounds = face.bounds;
+    final actorCanvasArea = actor.width * actor.height;
+
     final visibility = analyzeRenderVisibility(state.layers);
     final eyeRatio = visibility.visibleRatio('eyes');
     final mouthRatio = visibility.visibleRatio('mouth');
@@ -294,7 +306,9 @@ final class AvatarGenerator {
       palette.colors[palette.role('bg')],
     );
     final densityScore = clampInt(
-      100 - isolated * 800 ~/ (occupied.count == 0 ? 1 : occupied.count),
+      100 -
+          actorIsolated * 800 ~/
+              (actor.count == 0 ? 1 : actor.count),
       0,
       100,
     );
@@ -307,9 +321,22 @@ final class AvatarGenerator {
     );
     return AvatarMetrics(
       usedColorCount: image.usedColorCount,
-      occupiedPixelCount: occupied.count,
-      isolatedPixelCount: isolated,
-      connectedComponentCount: components.length,
+      occupiedPixelCount: scene.count,
+      isolatedPixelCount: sceneIsolated,
+      connectedComponentCount: sceneComponents.length,
+      actorOccupiedPixelCount: actor.count,
+      actorIsolatedPixelCount: actorIsolated,
+      actorConnectedComponentCount: actorComponents.length,
+      actorWidthOccupancy:
+          actorBounds == null ? 0 : actorBounds.width / actor.width,
+      actorHeightOccupancy:
+          actorBounds == null ? 0 : actorBounds.height / actor.height,
+      actorAreaOccupancy:
+          actorCanvasArea == 0 ? 0 : actor.count / actorCanvasArea,
+      faceHeightOccupancy:
+          faceBounds == null ? 0 : faceBounds.height / face.height,
+      sceneEffectPixelRatio:
+          actorCanvasArea == 0 ? 0 : effects.count / actorCanvasArea,
       layerCount: state.layers.length,
       visibility: visibility,
       faceReadabilityScore: faceScore,
@@ -321,6 +348,47 @@ final class AvatarGenerator {
       visualDensityScore: densityScore,
     );
   }
+
+  PixelMask _unionLayers(Iterable<RenderLayer> layers) {
+    PixelMask? result;
+    for (final layer in layers) {
+      result = result == null ? layer.mask.clone() : result.union(layer.mask);
+    }
+    return result ?? PixelMask();
+  }
+
+  bool _isActorLayer(RenderLayer layer) => !<RenderSlot>{
+        RenderSlot.background,
+        RenderSlot.auraBack,
+        RenderSlot.emotionEffects,
+        RenderSlot.foreground,
+      }.contains(layer.slot) &&
+      layer.nodeId != 'atmosphere' &&
+      layer.nodeId != 'foreground' &&
+      layer.nodeId != 'sceneSymbols';
+
+  bool _isSceneEffectLayer(RenderLayer layer) => <RenderSlot>{
+        RenderSlot.auraBack,
+        RenderSlot.emotionEffects,
+        RenderSlot.foreground,
+      }.contains(layer.slot) ||
+      layer.nodeId == 'atmosphere' ||
+      layer.nodeId == 'foreground' ||
+      layer.nodeId == 'sceneSymbols';
+
+  bool _isFaceLayer(RenderLayer layer) => <String>{
+        'head',
+        'face',
+        'eyes',
+        'brows',
+        'mouth',
+        'leftEar',
+        'rightEar',
+        'facialHair',
+        'hairFront',
+        'eyewear',
+        'faceMask',
+      }.contains(layer.nodeId);
 
   int _contrastScore(int first, int second) {
     double luma(int rgba) {
