@@ -74,8 +74,7 @@ final class WearableAttachmentPolicy {
   String _symbolNode(String style) => switch (style) {
         'crosshair' ||
         'targetLock' ||
-        'warningTriangles' ||
-        'screenScan' =>
+        'warningTriangles' =>
           'sceneSymbols',
         'runes' ||
         'glyphs' ||
@@ -87,12 +86,15 @@ final class WearableAttachmentPolicy {
       };
 
   String _backNode(String style) => switch (style) {
-        'jetpack' || 'energyPack' || 'crystalArray' => 'backEmitter',
+        'energyBackpack' ||
+        'jetpackSmall' ||
+        'jetpackLarge' ||
+        'crystalClusterBack' =>
+          'backEmitter',
         'bannerBack' ||
         'prayerScrollBack' ||
         'totemPoleBack' ||
-        'boneSpineBack' ||
-        'backpack' =>
+        'boneSpineBack' =>
           'rigidBackWearable',
         _ => 'backAdornment',
       };
