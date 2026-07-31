@@ -75,19 +75,25 @@ final class ClipCamera {
     this.width = 48,
     this.height = 48,
     this.baseline = 53,
+    this.scale = 1,
+    this.actorOccupancy = 0,
   });
 
-  final int x;
-  final int y;
+  final double x;
+  final double y;
   final int width;
   final int height;
   final int baseline;
+  final double scale;
+  final double actorOccupancy;
 
   PixelMask cropMask(PixelMask source) {
     final output = PixelMask(width: width, height: height);
     for (var yy = 0; yy < height; yy++) {
       for (var xx = 0; xx < width; xx++) {
-        if (source.get(x + xx, y + yy) != 0) output.set(xx, yy);
+        final sx = x + xx / scale;
+        final sy = y + yy / scale;
+        if (source.get(sx.round(), sy.round()) != 0) output.set(xx, yy);
       }
     }
     return output;
@@ -101,7 +107,9 @@ final class ClipCamera {
     );
     for (var yy = 0; yy < height; yy++) {
       for (var xx = 0; xx < width; xx++) {
-        final value = source.get(x + xx, y + yy);
+        final sx = x + xx / scale;
+        final sy = y + yy / scale;
+        final value = source.get(sx.round(), sy.round());
         if (value != source.transparentIndex) output.setPixel(xx, yy, value);
       }
     }
@@ -118,6 +126,8 @@ final class ClipCamera {
         'width': width,
         'height': height,
         'baseline': baseline,
+        'scale': scale,
+        'actorOccupancy': actorOccupancy,
       };
 }
 
@@ -128,9 +138,9 @@ abstract final class ClipCameraFitter {
     required int canvasHeight,
     int viewportWidth = 48,
     int viewportHeight = 48,
-    int preferredX = 4,
-    int preferredY = 6,
     int baseline = 53,
+    int targetWidth = 44,
+    int targetHeight = 44,
   }) {
     PixelRect? union;
     for (final bounds in actorBounds) {
@@ -138,36 +148,90 @@ abstract final class ClipCameraFitter {
       union = union == null ? bounds : _union(union, bounds);
     }
     if (union == null) {
-      return ClipCamera(
-        x: preferredX,
-        y: preferredY,
-        width: viewportWidth,
-        height: viewportHeight,
-        baseline: baseline,
+      return const ClipCamera(
+        x: 4,
+        y: 6,
+        baseline: 53,
+        scale: 1,
       );
     }
 
-    final minimumX = clampInt(
-      union.right - viewportWidth + 1,
+    final widthScale = targetWidth / union.width;
+    final heightScale = targetHeight / union.height;
+    final scale = clampDouble(
+      widthScale < heightScale ? widthScale : heightScale,
+      .9,
+      1.25,
+    );
+    final sourceWidth = viewportWidth / scale;
+    final sourceHeight = viewportHeight / scale;
+    final centeredX = union.center.x - sourceWidth / 2;
+    final bottomAlignedY = union.bottom - sourceHeight + 2;
+    final maximumX = (canvasWidth - sourceWidth).clamp(0, canvasWidth).toDouble();
+    final maximumY = (canvasHeight - sourceHeight).clamp(0, canvasHeight).toDouble();
+    final x = clampDouble(centeredX, 0, maximumX);
+    final y = clampDouble(bottomAlignedY, 0, maximumY);
+    final occupancy = clampDouble(
+      union.height * scale / viewportHeight,
       0,
-      clampInt(canvasWidth - viewportWidth, 0, canvasWidth),
-    );
-    final maximumX = clampInt(
-      union.left,
-      minimumX,
-      clampInt(canvasWidth - viewportWidth, 0, canvasWidth),
-    );
-    final minimumY = clampInt(
-      union.bottom - viewportHeight + 1,
-      0,
-      clampInt(canvasHeight - viewportHeight, 0, canvasHeight),
-    );
-    final maximumY = clampInt(
-      union.top,
-      minimumY,
-      clampInt(canvasHeight - viewportHeight, 0, canvasHeight),
+      1,
     );
 
     return ClipCamera(
-      x: clampInt(preferredX, minimumX, maximumX),
-      y: clampInt(preferredY, minimum„°µ…á¥µÕµd¤°(€€€€€Ý¥‘Ñ èÙ¥•ÝÁ½ÉÑ]¥‘Ñ °(€€€€€¡•¥¡ÐèÙ¥•ÝÁ½ÉÑ!•¥¡Ð°(€€€€€‰…Í•±¥¹”è‰…Í•±¥¹”°(€€€€¤ì(€ô((€ÍÑ…Ñ¥ŒA¥á•±I•Ðü…Ñ½É	½Õ¹‘Ì¡1¥ÍÐñI•¹‘•É1…å•Èø±…å•ÉÌ¤ì(€€€A¥á•±I•ÐüÉ•ÍÕ±Ðì(€€€™½È€¡™¥¹…°±…å•È¥¸±…å•ÉÌ¤ì(€€€€€¥˜€¡}¥ÍM•¹•1…å•È¡±…å•È¤¤½¹Ñ¥¹Õ”ì(€€€€€™¥¹…°‰½Õ¹‘Ì€ô±…å•È¹µ…Í¬¹‰½Õ¹‘Ìì(€€€€€¥˜€¡‰½Õ¹‘Ì€ôô¹Õ±°¤½¹Ñ¥¹Õ”ì(€€€€€É•ÍÕ±Ð€ôÉ•ÍÕ±Ð€ôô¹Õ±°€ü‰½Õ¹‘Ì€è}Õ¹¥½¸¡É•ÍÕ±Ð°‰½Õ¹‘Ì¤ì(€€€ô(€€€É•ÑÕÉ¸É•ÍÕ±Ðì(€ô((€ÍÑ…Ñ¥Œ‰½½°}¥ÍM•¹•1…å•È¡I•¹‘•É1…å•È±…å•È¤€ôø(€€€€€±…å•È¹¹½‘•%€ôô€‰…­É½Õ¹œñð(€€€€€±…å•È¹¹½‘•%€ôô€™½É•É½Õ¹œñð(€€€€€±…å•È¹Í±½Ð€ôôI•¹‘•ÉM±½Ð¹‰…­É½Õ¹ñð(€€€€€±…å•È¹µ•Ñ…lÁ…ÉÐt€ôô€Ý•…Ñ¡•Èœñð(€€€€€±…å•È¹µ•Ñ…lÁ…ÉÐt€ôô€…µ‰¥•¹Ðœñð(€€€€€±…å•È¹µ•Ñ…lÁ…ÉÐt€ôô€½Íµ¥Œœì)ô()A¥á•±I•Ð}Õ¹¥½¸¡A¥á•±I•Ð™¥ÉÍÐ°A¥á•±I•ÐÍ•½¹¤ì(€™¥¹…°±•™Ð€ô™¥ÉÍÐ¹±•™Ð€ðÍ•½¹¹±•™Ð€ü™¥ÉÍÐ¹±•™Ð€èÍ•½¹¹±•™Ðì(€™¥¹…°Ñ½À€ô™¥ÉÍÐ¹Ñ½À€ðÍ•½¹¹Ñ½À€ü™¥ÉÍÐ¹Ñ½À€èÍ•½¹¹Ñ½Àì(€™¥¹…°É¥¡Ð€ô™¥ÉÍÐ¹É¥¡Ð€øÍ•½¹¹É¥¡Ð€ü™¥ÉÍÐ¹É¥¡Ð€èÍ•½¹¹É¥¡Ðì(€™¥¹…°‰½ÑÑ½´€ô™¥ÉÍÐ¹‰½ÑÑ½´€øÍ•½¹¹‰½ÑÑ½´€ü™¥ÉÍÐ¹‰½ÑÑ½´€èÍ•½¹¹‰½ÑÑ½´ì(€É•ÑÕÉ¸A¥á•±I•Ð¡±•™Ð°Ñ½À°É¥¡Ð€´±•™Ð€¬€Ä°‰½ÑÑ½´€´Ñ½À€¬€Ä¤ì)ô(
+      x: x,
+      y: y,
+      width: viewportWidth,
+      height: viewportHeight,
+      baseline: baseline,
+      scale: scale,
+      actorOccupancy: occupancy,
+    );
+  }
+
+  /// Bounds used for framing the readable avatar core.
+  ///
+  /// Large halos, wings, capes, companions and screen-space effects are soft
+  /// bounds: they may approach an edge but never force the face and torso to
+  /// shrink inside the preview.
+  static PixelRect? actorBounds(List<RenderLayer> layers) {
+    PixelRect? result;
+    for (final layer in layers) {
+      if (!_isCameraCore(layer)) continue;
+      final bounds = layer.mask.bounds;
+      if (bounds == null) continue;
+      result = result == null ? bounds : _union(result, bounds);
+    }
+    return result;
+  }
+
+  static bool _isCameraCore(RenderLayer layer) {
+    if (layer.slot == RenderSlot.background ||
+        layer.slot == RenderSlot.foreground ||
+        layer.slot == RenderSlot.auraBack ||
+        layer.slot == RenderSlot.emotionEffects ||
+        layer.slot == RenderSlot.shoulderCompanion ||
+        layer.slot == RenderSlot.capeHairBack) {
+      return false;
+    }
+    if (<String>{
+      'halo',
+      'aura',
+      'cape',
+      'backAdornment',
+      'shoulderCompanion',
+      'foreground',
+      'atmosphere',
+    }.contains(layer.nodeId)) {
+      return false;
+    }
+    return true;
+  }
+}
+
+PixelRect _union(PixelRect first, PixelRect second) {
+  final left = first.left < second.left ? first.left : second.left;
+  final top = first.top < second.top ? first.top : second.top;
+  final right = first.right > second.right ? first.right : second.right;
+  final bottom = first.bottom > second.bottom ? first.bottom : second.bottom;
+  return PixelRect(left, top, right - left + 1, bottom - top + 1);
+}
