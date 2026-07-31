@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import '../../geometry/point.dart';
 import '../../pixels/pixel_mask.dart';
 import '../../util/math_utils.dart';
@@ -82,6 +80,9 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
       if (blink && node == CompanionNode.eyes) {
         source = PixelMask(width: source.width, height: source.height);
       }
+      if (!_partVisible(context, style, node)) {
+        source = PixelMask(width: source.width, height: source.height);
+      }
       if (source.count == 0) continue;
       final matrix = matrices[node] ?? RigMatrix.identity;
       final mask = _transformMask(source, matrix);
@@ -126,8 +127,13 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
       },
       ...parts.metadata,
     };
-    state.metadata['runtimeAnchors'] = <Object>[
-      ...((state.metadata['runtimeAnchors'] as List<Object>?) ?? const <Object>[]),
+
+    final runtimeAnchors = <Object>[];
+    final existingRuntimeAnchors = state.metadata['runtimeAnchors'];
+    if (existingRuntimeAnchors is List) {
+      runtimeAnchors.addAll(existingRuntimeAnchors.cast<Object>());
+    }
+    runtimeAnchors.addAll(<Object>[
       for (final entry in animatedJoints.entries)
         <String, Object>{
           'id': 'companion.${_suffix(entry.key)}.anchor',
@@ -135,7 +141,8 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
           'x': entry.value.x,
           'y': entry.value.y,
         },
-    ];
+    ]);
+    state.metadata['runtimeAnchors'] = runtimeAnchors;
   }
 
   Map<String, RigMatrix> _sampleLocalPose(
@@ -163,11 +170,12 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
     void rotate(String node, int degrees) {
       final pivot = parts.joints[node];
       if (pivot == null || degrees == 0) return;
-      output[node] = RigMatrix.rotationAround(
+      final next = RigMatrix.rotationAround(
         degrees,
         pivotX: pivot.x,
         pivotY: pivot.y,
       );
+      output[node] = (output[node] ?? RigMatrix.identity).followedBy(next);
     }
 
     void translate(String node, int dx, int dy) {
@@ -184,7 +192,9 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.tail, delayed * 5);
         rotate(CompanionNode.leftEar, -medium * 3);
         rotate(CompanionNode.rightEar, medium * 3);
-        if (speaking) translate(CompanionNode.beak, 0, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.beak, 0, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.quadruped:
         rotate(CompanionNode.head, slow * 4);
@@ -193,7 +203,9 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.tail, delayed * 7);
         rotate(CompanionNode.leftLeg, medium * 4);
         rotate(CompanionNode.rightLeg, -medium * 4);
-        if (speaking) translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.humanoid:
         rotate(CompanionNode.head, slow * 3);
@@ -204,7 +216,9 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.heldItem, delayed * 3);
         rotate(CompanionNode.leftAntenna, -delayed * 3);
         rotate(CompanionNode.rightAntenna, delayed * 3);
-        if (speaking) translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.floating:
         translate(CompanionNode.body, 0, medium > 0 ? -1 : 0);
@@ -214,7 +228,9 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.leftTentacle, -delayed * 5);
         rotate(CompanionNode.rightTentacle, delayed * 5);
         rotate(CompanionNode.trail, slow * 3);
-        if (speaking) translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.mechanical:
         rotate(CompanionNode.head, slow * 2);
@@ -225,7 +241,9 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.leftAntenna, -delayed * 5);
         rotate(CompanionNode.rightAntenna, delayed * 5);
         rotate(CompanionNode.heldItem, medium * 5);
-        if (speaking) translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.tentacled:
         rotate(CompanionNode.head, slow * 3);
@@ -234,14 +252,18 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.leftArm, -medium * 5);
         rotate(CompanionNode.rightArm, medium * 5);
         rotate(CompanionNode.tail, delayed * 5);
-        if (speaking) translate(CompanionNode.mouth, side, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.mouth, side, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.slime:
         translate(CompanionNode.body, medium, medium.abs());
         rotate(CompanionNode.leftTentacle, -delayed * 6);
         rotate(CompanionNode.rightTentacle, delayed * 6);
         translate(CompanionNode.eyes, slow, 0);
-        if (speaking) translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        if (speaking) {
+          translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        }
         break;
       case CompanionMotionProfile.arcade:
         rotate(CompanionNode.body, medium * 3);
@@ -250,10 +272,91 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
         rotate(CompanionNode.leftLeg, medium * 5);
         rotate(CompanionNode.rightLeg, -medium * 5);
         translate(CompanionNode.trail, -side * positiveMod(phase, 2), 0);
-        if (speaking) translate(CompanionNode.mouth, side * positiveMod(phase, 2), 0);
+        if (speaking) {
+          translate(
+            CompanionNode.mouth,
+            side * positiveMod(phase, 2),
+            0,
+          );
+        }
+        break;
+    }
+
+    switch (spec.id) {
+      case 'parrot':
+      case 'crow':
+      case 'raven':
+        translate(CompanionNode.beak, 0, positiveMod(phase, 4) == 0 ? 1 : 0);
+        break;
+      case 'miniSkeleton':
+      case 'skullHands':
+        translate(CompanionNode.mouth, 0, positiveMod(phase, 2));
+        rotate(CompanionNode.leftArm, -slow * 10);
+        rotate(CompanionNode.rightArm, slow * 10);
+        break;
+      case 'miniReaper':
+        rotate(CompanionNode.heldItem, 6 + delayed * 6);
+        break;
+      case 'miniUfo':
+      case 'scoutDrone':
+      case 'miniDrone':
+        translate(CompanionNode.body, slow, medium > 0 ? -1 : 0);
+        rotate(CompanionNode.leftWing, -fast * 24);
+        rotate(CompanionNode.rightWing, fast * 24);
+        break;
+      case 'robotSpider':
+        rotate(CompanionNode.leftArm, -12 - fast * 8);
+        rotate(CompanionNode.rightArm, 12 + fast * 8);
+        rotate(CompanionNode.leftLeg, 10 + medium * 7);
+        rotate(CompanionNode.rightLeg, -10 - medium * 7);
+        break;
+      case 'bookFamiliar':
+        rotate(CompanionNode.leftWing, -12 - fast * 10);
+        rotate(CompanionNode.rightWing, 12 + fast * 10);
+        break;
+      case 'arcadeChomper':
+        translate(CompanionNode.trail, -side * positiveMod(phase, 3), 0);
+        break;
+      case 'stormCloud':
+        rotate(CompanionNode.leftTentacle, -medium * 4);
+        rotate(CompanionNode.rightTentacle, medium * 4);
+        break;
+      case 'blackHole':
+        rotate(CompanionNode.trail, 8 + phase * 9);
+        rotate(CompanionNode.leftTentacle, -delayed * 8);
+        rotate(CompanionNode.rightTentacle, delayed * 8);
+        break;
+      case 'coffeeBuddy':
+        translate(CompanionNode.trail, slow, -positiveMod(phase, 3));
+        break;
+      case 'donutBuddy':
+      case 'diceBuddy':
+        rotate(CompanionNode.body, phase * 5);
+        break;
+      case 'alienBlob':
+      case 'slime':
+        translate(CompanionNode.body, medium, medium.abs());
         break;
     }
     return output;
+  }
+
+  bool _partVisible(
+    AvatarRenderContext context,
+    String style,
+    String node,
+  ) {
+    final phase = context.phase;
+    if (style == 'arcadeChomper' && node == CompanionNode.mouth) {
+      return positiveMod(phase, 4) < 2;
+    }
+    if (style == 'stormCloud' && node == CompanionNode.trail) {
+      return positiveMod(phase, 7) <= 1;
+    }
+    if (style == 'hologramAssistant' && node != CompanionNode.body) {
+      return positiveMod(phase + node.length, 9) != 0;
+    }
+    return true;
   }
 
   bool _isBlinkFrame(AvatarRenderContext context) {
@@ -297,7 +400,10 @@ final class ArticulatedCompanionV2Renderer implements AvatarPartRenderer {
   String _suffix(String nodeId) => nodeId
       .replaceFirst('companion', '')
       .replaceFirst('shoulder', '')
-      .replaceFirstMapped(RegExp(r'^.'), (match) => match.group(0)!.toLowerCase());
+      .replaceFirstMapped(
+        RegExp(r'^.'),
+        (match) => match.group(0)!.toLowerCase(),
+      );
 
   Map<String, double> _matrixJson(RigMatrix matrix) => <String, double>{
         'a': matrix.a,
