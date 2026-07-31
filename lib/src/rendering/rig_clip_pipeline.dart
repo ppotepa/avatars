@@ -134,8 +134,6 @@ final class RigClipPipeline {
         RigSeamBridgeRenderer(),
         ForegroundEffectsRenderer(),
         NaturalParticleFieldRenderer(),
-        RainFieldRenderer(),
-        SceneVisualBudgetRenderer(),
       ];
 
   RigPreparedAvatar prepare(AvatarRequest request) {
@@ -285,9 +283,13 @@ final class RigClipPipeline {
     final constraintQuality =
         const RigQualityEvaluator().evaluate(graph, solvedPose);
 
-    // Emitters are evaluated only after the actor pose. Their origin follows
-    // the transformed wearable, while emitted particles remain in scene space.
+    // World-space emitters and weather collisions must use the final actor pose.
     const WorldSmokeEmitterRenderer().render(context, state);
+    const RainFieldRenderer().render(context, state);
+
+    // This gate must remain the final scene mutation before composition so its
+    // diagnostics describe the actual image, including post-pose emitters.
+    const SceneVisualBudgetRenderer().render(context, state);
 
     state.metadata
       ..['motionSample'] = <String, Object>{
