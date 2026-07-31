@@ -20,8 +20,12 @@ abstract final class CanonicalRig {
     'rightShoulder': 'torso',
     'leftArm': 'leftShoulder',
     'rightArm': 'rightShoulder',
-    'leftHand': 'leftArm',
-    'rightHand': 'rightArm',
+    'leftForearm': 'leftArm',
+    'rightForearm': 'rightArm',
+    'leftWrist': 'leftForearm',
+    'rightWrist': 'rightForearm',
+    'leftHand': 'leftWrist',
+    'rightHand': 'rightWrist',
     'leftShoulderAttachment': 'leftShoulder',
     'rightShoulderAttachment': 'rightShoulder',
     'shoulderCompanion': 'leftShoulderAttachment',
@@ -117,13 +121,19 @@ abstract final class CanonicalRig {
         'hairSideRightRoot' ||
         'hairSideRightTip' ||
         'horns' ||
-        'headAdornment' =>
+        'headAdornment' ||
+        'leftEarJewelry' ||
+        'rightEarJewelry' =>
           RenderSlot.hairFront,
         'headwear' || 'halo' => RenderSlot.headwear,
         'eyewear' => RenderSlot.eyewear,
         'faceMask' => RenderSlot.faceMask,
         'leftShoulder' ||
         'rightShoulder' ||
+        'leftForearm' ||
+        'rightForearm' ||
+        'leftWrist' ||
+        'rightWrist' ||
         'leftHand' ||
         'rightHand' ||
         'leftShoulderAttachment' ||
@@ -179,6 +189,26 @@ abstract final class CanonicalRig {
         nodeIds: <String>['torso', 'armor'],
       ),
       const RigConstraint(
+        id: 'left-forearm-to-arm',
+        kind: RigConstraintKind.attach,
+        nodeIds: <String>['leftArm', 'leftForearm'],
+      ),
+      const RigConstraint(
+        id: 'right-forearm-to-arm',
+        kind: RigConstraintKind.attach,
+        nodeIds: <String>['rightArm', 'rightForearm'],
+      ),
+      const RigConstraint(
+        id: 'left-hand-to-wrist',
+        kind: RigConstraintKind.attach,
+        nodeIds: <String>['leftWrist', 'leftHand'],
+      ),
+      const RigConstraint(
+        id: 'right-hand-to-wrist',
+        kind: RigConstraintKind.attach,
+        nodeIds: <String>['rightWrist', 'rightHand'],
+      ),
+      const RigConstraint(
         id: 'mouth-prop-to-mouth',
         kind: RigConstraintKind.attach,
         nodeIds: <String>['mouth', 'mouthProp'],
@@ -199,6 +229,12 @@ abstract final class CanonicalRig {
     if (id.startsWith('head.')) return 'head';
     if (id.startsWith('body.neck')) return 'neck';
     if (id.contains('Shoulder') || id.contains('shoulder')) return 'torso';
+    if (id.contains('Elbow') || id.contains('elbow')) {
+      return id.toLowerCase().contains('left') ? 'leftForearm' : 'rightForearm';
+    }
+    if (id.contains('Wrist') || id.contains('wrist')) {
+      return id.toLowerCase().contains('left') ? 'leftWrist' : 'rightWrist';
+    }
     if (id.startsWith('v4.back')) return 'torso';
     return 'actor';
   }
@@ -224,6 +260,10 @@ abstract final class CanonicalRig {
       'hairBack' || 'hairFront' || 'headwear' => 'hair.top',
       'leftShoulder' || 'leftShoulderAttachment' => 'v4.shoulderLeft',
       'rightShoulder' || 'rightShoulderAttachment' => 'v4.shoulderRight',
+      'leftForearm' => 'v4.leftElbow',
+      'rightForearm' => 'v4.rightElbow',
+      'leftWrist' || 'leftHand' => 'v4.leftWrist',
+      'rightWrist' || 'rightHand' => 'v4.rightWrist',
       'backAdornment' || 'cape' => 'v4.back',
       'headAdornment' || 'halo' || 'horns' => 'v4.forehead',
       _ => null,
