@@ -64,6 +64,17 @@ void main() {
       expect(frame.state.layers.any((layer) => layer.id.startsWith('particle.v2')),
           isFalse);
 
+      final quality =
+          frame.state.metadata['rigConstraintQuality']! as Map<String, Object>;
+      expect(
+        (quality['maxAttachError']! as num).toDouble(),
+        lessThanOrEqualTo(2),
+      );
+      expect(
+        (quality['maxDistanceViolation']! as num).toDouble(),
+        lessThanOrEqualTo(2),
+      );
+
       final rain = frame.state.metadata['rainField']! as Map<String, Object>;
       final trajectories = rain['trajectories']! as List<Object>;
       for (final item in trajectories.cast<Map<String, Object>>()) {
@@ -98,5 +109,30 @@ void main() {
     expect(ids, contains('shoulderObject'));
     expect(ids, isNot(contains('companionHead')));
     expect(ids, isNot(contains('companionWings')));
+  });
+
+  test('mouth smoke is emitted in world space after actor posing', () {
+    final generator = AvatarGenerator();
+    final frame = generator.generate(const AvatarRequest(
+      seed: 'world-smoke-emitter',
+      overrides: <String, Object>{
+        'v4.animation': 'smoke',
+        'v4.faceMask': 'none',
+        'v4.mouthProp': 'cigarette',
+        'v4.smokeAmount': 5,
+        'v4.propSide': 1,
+      },
+    ));
+    expect(
+      frame.layers.any((layer) => layer.id.startsWith('mouthProp.smoke')),
+      isFalse,
+    );
+    expect(
+      frame.layers.any((layer) =>
+          layer.id.startsWith('smoke.world') &&
+          <String>{'atmosphere', 'foreground'}.contains(layer.nodeId)),
+      isTrue,
+    );
+    expect(frame.layout.graph.nodes['rig.worldSmoke'], isNotNull);
   });
 }
