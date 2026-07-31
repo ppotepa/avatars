@@ -38,25 +38,16 @@ void main() {
     expect(_differentPixels(result64.image, naive64), greaterThan(0));
     expect(_differentPixels(result96.image, naive96), greaterThan(0));
 
+    expect(result48.metrics.geometryProfile, 'canonical48');
+    expect(result64.metrics.nativeGeometryPixelCount, greaterThan(0));
+    expect(result96.metrics.nativeGeometryPixelCount, greaterThan(0));
+    expect(result64.metrics.nativeGeometryPixelRatio, greaterThan(0));
+    expect(result96.metrics.nativeGeometryPixelRatio, greaterThan(0));
+    expect(result64.metrics.geometryProfile, startsWith('native64.'));
+    expect(result96.metrics.geometryProfile, startsWith('native96.'));
     expect(
-      result48.nativeGeometryDiagnostics['geometryProfile'],
-      'canonical48',
-    );
-    expect(
+      result64.metrics.nativeGeometryPixelCount,
       result64.nativeGeometryDiagnostics['nativeGeometryPixelCount'],
-      greaterThan(0),
-    );
-    expect(
-      result96.nativeGeometryDiagnostics['nativeGeometryPixelCount'],
-      greaterThan(0),
-    );
-    expect(
-      result64.nativeGeometryDiagnostics['geometryProfile'],
-      startsWith('native64.'),
-    );
-    expect(
-      result96.nativeGeometryDiagnostics['geometryProfile'],
-      startsWith('native96.'),
     );
 
     final repeated64 = generator.generate(AvatarRequest(
@@ -68,10 +59,7 @@ void main() {
       ),
     ));
     expect(repeated64.imageHash, result64.imageHash);
-    expect(
-      repeated64.nativeGeometryDiagnostics,
-      result64.nativeGeometryDiagnostics,
-    );
+    expect(repeated64.metrics.toJson(), result64.metrics.toJson());
   });
 }
 
