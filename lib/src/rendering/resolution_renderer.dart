@@ -178,7 +178,7 @@ final class ResolutionAwareRenderer {
   ) {
     final layerSignature = layers
         .map(
-          (layer) => <Object>[
+          (layer) => <Object?>[
             layer.id,
             layer.nodeId,
             layer.slot.index,
