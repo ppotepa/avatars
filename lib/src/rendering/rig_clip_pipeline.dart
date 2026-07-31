@@ -100,7 +100,14 @@ final class RigClipPipeline {
     required this.validator,
     List<AvatarPartRenderer>? parts,
     ClipCameraCache? cameraCache,
-    this.canvas = const OverscanCanvas(),
+    this.canvas = const OverscanCanvas(
+      width: 72,
+      height: 72,
+      sourceWidth: 48,
+      sourceHeight: 48,
+      offsetX: 12,
+      offsetY: 12,
+    ),
   })  : parts = List.unmodifiable(parts ?? defaultParts),
         cameraCache = cameraCache ?? ClipCameraCache();
 
@@ -295,7 +302,9 @@ final class RigClipPipeline {
         state.parentNode(entry.key, entry.value);
       }
     }
+    _completeRuntimeHierarchy(state);
     const WearableAttachmentPolicy().apply(context, state);
+    _normalizeCriticalLayerOrder(state);
 
     final backgrounds = <String, PixelMask>{
       for (final layer in state.layers)
@@ -335,7 +344,10 @@ final class RigClipPipeline {
 
     const WorldSmokeEmitterRenderer().render(context, state);
     const RainFieldRenderer().render(context, state);
+    _protectFaceClarity(state);
     const SceneVisualBudgetRenderer().render(context, state);
+    _rebuildSemanticMasks(state);
+    _recordPreCameraClipping(state);
 
     state.metadata
       ..['motionSample'] = <String, Object>{
@@ -350,6 +362,135 @@ final class RigClipPipeline {
           .toList(growable: false)
       ..['rigConstraintQuality'] = constraintQuality.toJson()
       ..['rigGraph'] = graph.toJson();
+  }
+
+  void _completeRuntimeHierarchy(AvatarRenderState state) {
+    state
+      ..parentNode('leftForearm', 'leftArm')
+      ..parentNode('rightForearm', 'rightArm')
+      ..parentNode('leftWrist', 'leftForearm')
+      ..parentNode('rightWrist', 'rightForearm')
+      ..parentNode('leftHand', 'leftForearm')
+      ..parentNode('rightHand', 'rightForearm');
+  }
+
+  void _normalizeCriticalLayerOrder(AvatarRenderState state) {
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      var slot = layer.slot;
+      var order = layer.localOrder;
+
+      if (layer.nodeId == 'leftForearm' || layer.nodeId == 'rightForearm') {
+        slot = RenderSlot.frontArms;
+        order = 100 + order.abs() % 20;
+      } else if (layer.nodeId == 'leftEarJewelry' ||
+          layer.nodeId == 'rightEarJewelry') {
+        slot = RenderSlot.hairFront;
+        order = 80 + order.abs() % 10;
+      } else if (layer.nodeId == 'necklaceLeft' ||
+          layer.nodeId == 'necklaceRight' ||
+          layer.nodeId == 'pendant' ||
+          layer.nodeId == 'necklace') {
+        slot = RenderSlot.frontArms;
+        order = 20 + order.abs() % 20;
+      } else if (layer.nodeId == 'rigidBackWearable' ||
+          layer.nodeId == 'backEmitter') {
+        slot = RenderSlot.capeHairBack;
+        order = 50 + order.abs() % 20;
+      }
+
+      if (slot != layer.slot || order != layer.localOrder) {
+        state.layers[index] = layer.copyWith(slot: slot, localOrder: order);
+      }
+    }
+  }
+
+  void _protectFaceClarity(AvatarRenderState state) {
+    PixelMask? face;
+    for (final layer in state.layers) {
+      if (<String>{'head', 'face', 'eyes', 'brows', 'mouth'}
+          .contains(layer.nodeId)) {
+        face = face == null ? layer.mask.clone() : face.union(layer.mask);
+      }
+    }
+    final bounds = face?.bounds;
+    if (bounds == null) return;
+
+    final clearance = PixelMask(width: face!.width, height: face.height)
+      ..fillRect(
+        (bounds.left - 3).clamp(0, face.width - 1),
+        (bounds.top - 3).clamp(0, face.height - 1),
+        (bounds.width + 6).clamp(1, face.width),
+        (bounds.height + 6).clamp(1, face.height),
+      );
+
+    var removedPixels = 0;
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      final isBusyBackgroundDetail = layer.slot == RenderSlot.background &&
+          (layer.id.contains('symbol') ||
+              layer.id.contains('light') ||
+              layer.id.contains('accent') ||
+              layer.id.contains('cosmic') ||
+              layer.id.contains('ambient'));
+      if (!isBusyBackgroundDetail) continue;
+      final overlap = layer.mask.intersect(clearance);
+      if (overlap.count == 0) continue;
+      removedPixels += overlap.count;
+      state.layers[index] = layer.copyWith(mask: layer.mask.subtract(clearance));
+    }
+
+    state.metadata['backgroundClarity'] = <String, Object>{
+      'faceClearancePixels': clearance.count,
+      'removedBackgroundPixels': removedPixels,
+      'protectedBounds': bounds.toJson(),
+    };
+  }
+
+  void _rebuildSemanticMasks(AvatarRenderState state) {
+    final rebuilt = <String, PixelMask>{};
+    for (final layer in state.layers) {
+      final existing = rebuilt[layer.nodeId];
+      rebuilt[layer.nodeId] =
+          existing == null ? layer.mask.clone() : existing.union(layer.mask);
+    }
+    state.masks
+      ..clear()
+      ..addAll(rebuilt);
+    state.metadata['semanticMaskOwnership'] = <String, Object>{
+      'nodeCount': rebuilt.length,
+      'source': 'transformedLayers',
+    };
+  }
+
+  void _recordPreCameraClipping(AvatarRenderState state) {
+    final clippedNodes = <String>{};
+    var edgePixels = 0;
+    for (final layer in state.layers) {
+      final bounds = layer.mask.bounds;
+      if (bounds == null) continue;
+      final touchesEdge = bounds.left <= 0 ||
+          bounds.top <= 0 ||
+          bounds.right >= canvas.width - 1 ||
+          bounds.bottom >= canvas.height - 1;
+      if (!touchesEdge || layer.slot == RenderSlot.background) continue;
+      clippedNodes.add(layer.nodeId);
+      for (var x = 0; x < canvas.width; x++) {
+        edgePixels += layer.mask.get(x, 0);
+        edgePixels += layer.mask.get(x, canvas.height - 1);
+      }
+      for (var y = 1; y < canvas.height - 1; y++) {
+        edgePixels += layer.mask.get(0, y);
+        edgePixels += layer.mask.get(canvas.width - 1, y);
+      }
+    }
+    state.metadata['preCameraClipping'] = <String, Object>{
+      'canvasWidth': canvas.width,
+      'canvasHeight': canvas.height,
+      'edgePixels': edgePixels,
+      'nodes': clippedNodes.toList(growable: false)..sort(),
+      'hasPossibleClipping': clippedNodes.isNotEmpty,
+    };
   }
 
   RigPipelineFrame _cropAndValidate(
