@@ -1,19 +1,26 @@
+import 'dart:math' as math;
+
 import '../geometry/pixel_rect.dart';
 import '../geometry/point.dart';
 
 /// Semantic paint order for the actor and scene.
 enum RenderSlot {
   background,
+  backgroundDetail,
+  atmosphereBack,
   auraBack,
   capeHairBack,
   rearArms,
   torsoClothing,
   armor,
   neck,
+  neckJewelry,
   head,
   face,
   facialHair,
+  earJewelryBack,
   hairFront,
+  earJewelryFront,
   headwear,
   eyewear,
   faceMask,
@@ -240,7 +247,10 @@ final class RigGraph {
         if (!seen.add(parent)) {
           throw StateError('Cycle in rig graph at "${node.id}".');
         }
-        parent = nodes.where((candidate) => candidate.id == parent).firstOrNull?.parentId;
+        parent = nodes
+            .where((candidate) => candidate.id == parent)
+            .firstOrNull
+            ?.parentId;
       }
     }
     final anchorIds = <String>{};
@@ -292,30 +302,69 @@ final class RigGraph {
     return result;
   }
 
+  /// Compatibility summary. Matrix-based animation code should use
+  /// [worldAnchor], which applies every parent rotation around its pivot.
   RigTransform worldTransform(String nodeId, RigPose pose) {
     final node = byId[nodeId];
     if (node == null) throw StateError('Unknown rig node "$nodeId".');
+    final chain = _chain(node);
+    var dx = 0;
+    var dy = 0;
+    var rotation = 0;
+    for (final item in chain) {
+      final transforms = <RigTransform>[
+        item.restTransform,
+        pose.transformFor(item.id),
+      ];
+      for (final transform in transforms) {
+        dx += transform.dx;
+        dy += transform.dy;
+        rotation += transform.rotationDegrees;
+      }
+    }
+    return RigTransform(
+      dx: dx,
+      dy: dy,
+      rotationDegrees: rotation,
+      pivotX: node.restTransform.pivotX,
+      pivotY: node.restTransform.pivotY,
+    );
+  }
+
+  PixelPoint worldAnchor(String anchorId, RigPose pose) {
+    final anchor = anchorById[anchorId];
+    if (anchor == null) throw StateError('Unknown rig anchor "$anchorId".');
+    var x = anchor.localPosition.x.toDouble();
+    var y = anchor.localPosition.y.toDouble();
+    for (final node in _chain(byId[anchor.nodeId]!)) {
+      for (final transform in <RigTransform>[
+        node.restTransform,
+        pose.transformFor(node.id),
+      ]) {
+        final pivotX = (transform.pivotX ?? 0).toDouble();
+        final pivotY = (transform.pivotY ?? 0).toDouble();
+        final radians = transform.rotationDegrees * math.pi / 180;
+        final relativeX = x - pivotX;
+        final relativeY = y - pivotY;
+        final rotatedX =
+            relativeX * math.cos(radians) - relativeY * math.sin(radians);
+        final rotatedY =
+            relativeX * math.sin(radians) + relativeY * math.cos(radians);
+        x = pivotX + rotatedX + transform.dx;
+        y = pivotY + rotatedY + transform.dy;
+      }
+    }
+    return PixelPoint(x.round(), y.round());
+  }
+
+  List<RigNode> _chain(RigNode node) {
     final chain = <RigNode>[];
     RigNode? current = node;
     while (current != null) {
       chain.add(current);
       current = current.parentId == null ? null : byId[current.parentId!];
     }
-    var result = RigTransform.identity;
-    for (final item in chain.reversed) {
-      result = result.compose(item.restTransform).compose(pose.transformFor(item.id));
-    }
-    return result;
-  }
-
-  PixelPoint worldAnchor(String anchorId, RigPose pose) {
-    final anchor = anchorById[anchorId];
-    if (anchor == null) throw StateError('Unknown rig anchor "$anchorId".');
-    final transform = worldTransform(anchor.nodeId, pose);
-    return PixelPoint(
-      anchor.localPosition.x + transform.dx,
-      anchor.localPosition.y + transform.dy,
-    );
+    return chain.reversed.toList(growable: false);
   }
 
   Map<String, Object> toJson() => <String, Object>{
