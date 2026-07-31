@@ -15,16 +15,18 @@ import 'expressive_motion_policy.dart';
 import 'parts/accessories_renderer.dart';
 import 'parts/anatomy_renderer.dart';
 import 'parts/armor_renderer.dart';
-import 'parts/articulated_companion_renderer.dart';
+import 'parts/articulated_arm_renderer.dart';
 import 'parts/background_renderer.dart';
 import 'parts/constrained_jewelry_renderer.dart';
 import 'parts/face_renderer.dart';
 import 'parts/flexible_back_rig_renderer.dart';
+import 'parts/gated_companion_renderer.dart';
 import 'parts/hair_renderer.dart';
 import 'parts/natural_particle_renderer.dart';
 import 'parts/procedural_mask_renderer.dart';
 import 'parts/procedural_surface_renderer.dart';
 import 'parts/props_renderer.dart';
+import 'parts/rain_field_renderer.dart';
 import 'parts/segmented_hair_rig_renderer.dart';
 import 'parts/v42_aura_renderer.dart';
 import 'parts/v42_detail_renderer.dart';
@@ -37,6 +39,7 @@ import 'rig_layer_binding.dart';
 import 'rig_model.dart';
 import 'rig_pose_applier.dart';
 import 'runtime_rig_builder.dart';
+import 'wearable_attachment_policy.dart';
 
 final class RigPreparedAvatar {
   const RigPreparedAvatar({
@@ -120,12 +123,14 @@ final class RigClipPipeline {
         ProceduralFaceMaskRenderer(),
         PropsRenderer(),
         ProceduralSurfaceVariationRenderer(),
+        ArticulatedArmRenderer(),
         SegmentedHairRigRenderer(),
         ConstrainedJewelryRenderer(),
-        ArticulatedCompanionRenderer(),
+        GatedCompanionRenderer(),
         FlexibleBackRigRenderer(),
         ForegroundEffectsRenderer(),
         NaturalParticleFieldRenderer(),
+        RainFieldRenderer(),
       ];
 
   RigPreparedAvatar prepare(AvatarRequest request) {
@@ -218,20 +223,22 @@ final class RigClipPipeline {
         layer.localOrder,
         layer.meta,
       );
+      final preserveRendererNode =
+          layer.meta['rigSegment'] != null ||
+              layer.meta['attachmentKind'] != null;
       state.layers[index] = layer.copyWith(
-        nodeId: layer.meta['rigSegment']?.toString() ?? binding.nodeId,
-        slot: binding.slot,
+        nodeId: preserveRendererNode ? layer.nodeId : binding.nodeId,
+        slot: preserveRendererNode ? layer.slot : binding.slot,
         localOrder: binding.localOrder,
       );
     }
 
-    // Canonical parents are defaults. Renderer-defined asymmetric attachments
-    // such as a right-shoulder companion must never be overwritten here.
     for (final entry in CanonicalRig.parents.entries) {
       if (!state.nodeParents.containsKey(entry.key)) {
         state.parentNode(entry.key, entry.value);
       }
     }
+    const WearableAttachmentPolicy().apply(context, state);
 
     final backgrounds = <String, PixelMask>{
       for (final layer in state.layers)
