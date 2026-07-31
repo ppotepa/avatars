@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:avatar_genome/avatar_genome.dart';
 import 'package:test/test.dart';
 
@@ -38,7 +40,12 @@ void main() {
         greaterThanOrEqualTo(.72));
 
     final clip = generator.pipeline.renderClip(request, frameCount: 16);
-    expect(clip.frames.map((frame) => frame.camera.toJson()).toSet(), hasLength(1));
+    expect(
+      clip.frames
+          .map((frame) => jsonEncode(frame.camera.toJson()))
+          .toSet(),
+      hasLength(1),
+    );
 
     for (final frame in clip.frames) {
       expect(
