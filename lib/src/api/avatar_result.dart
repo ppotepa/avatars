@@ -141,7 +141,7 @@ final class EffectiveAdjustment {
 }
 
 final class AvatarResult {
-  const AvatarResult({
+  AvatarResult({
     required this.genome,
     required this.layout,
     required this.palette,
@@ -151,7 +151,9 @@ final class AvatarResult {
     required AvatarMetrics metrics,
     required this.imageHash,
     this.effectiveAdjustments = const <EffectiveAdjustment>[],
-  }) : _metrics = metrics;
+  })  : _metrics = metrics,
+        _nativeGeometryDiagnostics =
+            ResolutionAwareRenderer.diagnosticsFor(image, palette);
 
   final AvatarGenome genome;
   final AvatarLayout layout;
@@ -160,14 +162,15 @@ final class AvatarResult {
   final List<RenderLayer> layers;
   final ValidationReport validation;
   final AvatarMetrics _metrics;
+  final Map<String, Object> _nativeGeometryDiagnostics;
   final String imageHash;
   final List<EffectiveAdjustment> effectiveAdjustments;
 
   Map<String, Object> get nativeGeometryDiagnostics =>
-      ResolutionAwareRenderer.diagnosticsFor(image, palette);
+      _nativeGeometryDiagnostics;
 
   AvatarMetrics get metrics =>
-      _metrics.withNativeGeometry(nativeGeometryDiagnostics);
+      _metrics.withNativeGeometry(_nativeGeometryDiagnostics);
 
   Map<String, Object?> toJson({bool includePixels = true}) => <String, Object?>{
         'schemaVersion': AvatarGenomeVersion.resultSchema,
