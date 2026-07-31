@@ -16,7 +16,6 @@ const state = {
 const fieldViews = new Map();
 const globalViews = new Map();
 const categoryViews = new Map();
-
 const elements = {};
 
 window.addEventListener('DOMContentLoaded', bootstrap);
@@ -46,7 +45,7 @@ async function bootstrap() {
 function bindElements() {
   const ids = [
     'connection-status', 'avatar-preview', 'avatar-status', 'request-json',
-    'generate-button', 'animate-button', 'new-seed-button', 'reset-overrides-button',
+    'generate-button', 'new-seed-button', 'reset-overrides-button',
     'reset-locks-button', 'export-request-button', 'export-result-button',
     'download-svg-button', 'download-png-button', 'save-server-button',
     'import-request-button', 'import-request-file', 'whole-preset',
@@ -61,7 +60,6 @@ function bindElements() {
 
 function bindStaticActions() {
   elements['generate-button'].addEventListener('click', () => queueRender([], true));
-  elements['animate-button'].addEventListener('click', toggleAnimation);
   elements['new-seed-button'].addEventListener('click', () => {
     queueRender([{ op: 'set', id: 'request.seed', value: randomSeed() }], true);
   });
@@ -85,31 +83,40 @@ function bindStaticActions() {
   });
   elements['export-request-button'].addEventListener('click', async () => {
     await ensureIdle();
-    downloadText('request.json', JSON.stringify(state.request, null, 2), 'application/json');
+    downloadText(
+      'request.json',
+      JSON.stringify(state.request, null, 2),
+      'application/json',
+    );
   });
   elements['export-result-button'].addEventListener('click', async () => {
     await ensureIdle();
     if (!state.response) return;
-    downloadText('avatar.json', JSON.stringify(state.response.result, null, 2), 'application/json');
+    downloadText(
+      'avatar.json',
+      JSON.stringify(state.response.result, null, 2),
+      'application/json',
+    );
   });
-  elements['download-svg-button'].addEventListener('click', () => downloadExport('/api/export/svg', 'svg'));
-  elements['download-png-button'].addEventListener('click', () => downloadExport('/api/export/png', 'png'));
+  elements['download-svg-button'].addEventListener(
+    'click',
+    () => downloadExport('/api/export/svg', 'svg'),
+  );
+  elements['download-png-button'].addEventListener(
+    'click',
+    () => downloadExport('/api/export/png', 'png'),
+  );
   elements['download-sheet-button'].addEventListener('click', downloadSpriteSheet);
   elements['save-server-button'].addEventListener('click', saveOnServer);
-  elements['import-request-button'].addEventListener('click', () => elements['import-request-file'].click());
+  elements['import-request-button'].addEventListener(
+    'click',
+    () => elements['import-request-file'].click(),
+  );
   elements['import-request-file'].addEventListener('change', importRequest);
-  elements['quick-resolution'].addEventListener('change', event => {
-    queueRender([{ op: 'set', id: 'rendering.size', value: Number(event.target.value) }], true);
-  });
   elements['quick-detail'].addEventListener('change', event => {
-    queueRender([{ op: 'set', id: 'rendering.detailLevel', value: event.target.value }], true);
-  });
-  elements['playback-speed'].addEventListener('change', () => {
-    if (state.animationTimer) {
-      clearInterval(state.animationTimer);
-      state.animationTimer = null;
-      startAnimation();
-    }
+    queueRender([
+      { op: 'set', id: 'rendering.detailLevel', value: event.target.value },
+    ], true);
   });
 }
 
@@ -145,7 +152,10 @@ function renderGlobalFields() {
 function renderGroupTabs() {
   const tabs = elements['group-tabs'];
   tabs.replaceChildren();
-  const groups = [{ id: 'all', label: 'Wszystkie' }, ...(state.schema.groups || []).filter(group => group.id !== 'global')];
+  const groups = [
+    { id: 'all', label: 'Wszystkie' },
+    ...(state.schema.groups || []).filter(group => group.id !== 'global'),
+  ];
   for (const group of groups) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -196,7 +206,9 @@ function renderParameterCategories() {
     }
     const applyPreset = smallButton('Zastosuj', () => {
       if (!presetSelect.value) return;
-      queueRender([{ op: 'categoryPreset', category: category.id, preset: presetSelect.value }], true);
+      queueRender([
+        { op: 'categoryPreset', category: category.id, preset: presetSelect.value },
+      ], true);
     });
     const reroll = smallButton('Reroll', () => {
       queueRender([{ op: 'rerollCategory', category: category.id }], true);
@@ -206,7 +218,9 @@ function renderParameterCategories() {
     });
     const lock = smallButton('Zablokuj kategorię', () => {
       const locked = Boolean(state.request?.lockedCategories?.[category.id]);
-      queueRender([{ op: locked ? 'unlockCategory' : 'lockCategory', category: category.id }], true);
+      queueRender([
+        { op: locked ? 'unlockCategory' : 'lockCategory', category: category.id },
+      ], true);
     });
     actions.append(presetSelect, applyPreset, reroll, reset, lock);
     details.append(actions);
@@ -217,7 +231,8 @@ function renderParameterCategories() {
       const row = document.createElement('div');
       row.className = 'property-row';
       row.dataset.fieldId = binding.id;
-      row.dataset.search = `${binding.id} ${binding.label} ${category.id} ${category.label}`.toLocaleLowerCase('pl');
+      row.dataset.search = `${binding.id} ${binding.label} ${category.id} ${category.label}`
+        .toLocaleLowerCase('pl');
 
       const meta = document.createElement('div');
       meta.className = 'property-meta';
@@ -233,7 +248,10 @@ function renderParameterCategories() {
 
       const buttons = document.createElement('div');
       buttons.className = 'property-buttons';
-      const resetButton = smallButton('Auto', () => queueRender([{ op: 'reset', id: binding.id }]));
+      const resetButton = smallButton(
+        'Auto',
+        () => queueRender([{ op: 'reset', id: binding.id }]),
+      );
       const lockButton = smallButton('Zablokuj', () => {
         const property = state.response?.properties?.[binding.id];
         const op = property?.isLocked ? 'unlock' : 'lock';
@@ -283,7 +301,9 @@ function createControl(binding, onAction) {
   } else if (binding.kind === 'boolean') {
     primary = document.createElement('input');
     primary.type = 'checkbox';
-    primary.addEventListener('change', () => onAction({ op: 'set', id: binding.id, value: primary.checked }));
+    primary.addEventListener('change', () => {
+      onAction({ op: 'set', id: binding.id, value: primary.checked });
+    });
     root.append(primary);
   } else if (binding.kind === 'range') {
     root.className = 'control-pair';
@@ -355,7 +375,11 @@ function syncUi() {
     view.row.classList.toggle('locked', property.isLocked);
     view.resetButton.disabled = !property.isOverridden;
     view.lockButton.textContent = property.isLocked ? 'Odblokuj' : 'Zablokuj';
-    const sourceClass = property.isLocked ? 'locked-label' : property.isOverridden ? 'manual' : 'auto';
+    const sourceClass = property.isLocked
+      ? 'locked-label'
+      : property.isOverridden
+        ? 'manual'
+        : 'auto';
     const sourceText = property.isLocked
       ? `blokada: ${property.lockSource}`
       : property.isOverridden
@@ -368,14 +392,15 @@ function syncUi() {
     const locked = Boolean(state.request.lockedCategories?.[id]);
     view.lock.textContent = locked ? 'Odblokuj kategorię' : 'Zablokuj kategorię';
   }
+  window.avatarPlayer?.invalidate();
+  window.avatarPlayer?.syncResolution();
   applyFilters();
 }
 
 function renderReadability(metrics, validation) {
   const score = Number(metrics.faceReadabilityScore ?? 0);
   elements['readability-score'].textContent = `${score}/100`;
-  const visibility = metrics.visibility || {};
-  const ratios = visibility.visibleRatios || {};
+  const ratios = metrics.visibility?.visibleRatios || {};
   const labels = {
     eyes: 'Oczy',
     mouth: 'Usta',
@@ -387,15 +412,7 @@ function renderReadability(metrics, validation) {
   elements['readability-metrics'].replaceChildren();
   for (const [part, label] of Object.entries(labels)) {
     if (ratios[part] === undefined) continue;
-    const value = Math.max(0, Math.min(100, Math.round(Number(ratios[part]) * 100)));
-    const row = document.createElement('div');
-    row.className = 'readability-row';
-    const fillClass = value < 35 ? 'low' : value < 65 ? 'medium' : '';
-    row.innerHTML = `
-      <span>${escapeHtml(label)}</span>
-      <span class="readability-track"><span class="readability-fill ${fillClass}" style="width:${value}%"></span></span>
-      <span>${value}%</span>`;
-    elements['readability-metrics'].append(row);
+    appendMetric(label, Math.round(Number(ratios[part]) * 100));
   }
   const qualityScores = {
     'Kontrast oczu': metrics.eyeContrastScore,
@@ -403,15 +420,7 @@ function renderReadability(metrics, validation) {
     'Spójność detalu': metrics.visualDensityScore,
   };
   for (const [label, rawValue] of Object.entries(qualityScores)) {
-    const value = Math.max(0, Math.min(100, Math.round(Number(rawValue ?? 0))));
-    const row = document.createElement('div');
-    row.className = 'readability-row';
-    const fillClass = value < 35 ? 'low' : value < 65 ? 'medium' : '';
-    row.innerHTML = `
-      <span>${escapeHtml(label)}</span>
-      <span class="readability-track"><span class="readability-fill ${fillClass}" style="width:${value}%"></span></span>
-      <span>${value}%</span>`;
-    elements['readability-metrics'].append(row);
+    appendMetric(label, Number(rawValue ?? 0));
   }
   const warnings = (validation.entries || [])
     .filter(entry => entry.id?.startsWith('visibility.') && entry.status === 'violation')
@@ -421,25 +430,16 @@ function renderReadability(metrics, validation) {
     : 'Najważniejsze elementy twarzy pozostają czytelne.';
 }
 
-function toggleAnimation() {
-  if (state.animationTimer) {
-    clearInterval(state.animationTimer);
-    state.animationTimer = null;
-    elements['animate-button'].textContent = 'Odtwórz animację';
-    return;
-  }
-  startAnimation();
-}
-
-function startAnimation() {
-  elements['animate-button'].textContent = 'Zatrzymaj animację';
-  const interval = Number(elements['playback-speed'].value || 140);
-  state.animationTimer = setInterval(() => {
-    if (!state.request || state.rendering || state.pendingActions.length) return;
-    const frameCount = Number(elements['animation-frames'].value || 16);
-    const phase = (Number(state.request.phase || 0) + 1) % frameCount;
-    queueRender([{ op: 'set', id: 'request.phase', value: phase }], true);
-  }, interval);
+function appendMetric(label, rawValue) {
+  const value = Math.max(0, Math.min(100, Math.round(rawValue)));
+  const row = document.createElement('div');
+  row.className = 'readability-row';
+  const fillClass = value < 35 ? 'low' : value < 65 ? 'medium' : '';
+  row.innerHTML = `
+    <span>${escapeHtml(label)}</span>
+    <span class="readability-track"><span class="readability-fill ${fillClass}" style="width:${value}%"></span></span>
+    <span>${value}%</span>`;
+  elements['readability-metrics'].append(row);
 }
 
 function syncControl(view, value) {
@@ -450,33 +450,43 @@ function syncControl(view, value) {
     return;
   }
   if (active !== view.primary) view.primary.value = String(value);
-  if (view.secondary && active !== view.secondary) view.secondary.value = String(value);
+  if (view.secondary && active !== view.secondary) {
+    view.secondary.value = String(value);
+  }
 }
 
 function applyFilters() {
   if (!state.schema) return;
   for (const [categoryId, categoryView] of categoryViews) {
-    const groupMatches = state.activeGroup === 'all' || categoryView.category.group === state.activeGroup;
+    const groupMatches = state.activeGroup === 'all' ||
+      categoryView.category.group === state.activeGroup;
     let visibleCount = 0;
     for (const field of categoryView.category.fields) {
       const view = fieldViews.get(field.id);
       const property = state.response?.properties?.[field.id];
-      const searchMatches = !state.search || view.row.dataset.search.includes(state.search);
-      const changedMatches = !state.changedOnly || property?.isOverridden || property?.isLocked;
+      const searchMatches = !state.search ||
+        view.row.dataset.search.includes(state.search);
+      const changedMatches = !state.changedOnly ||
+        property?.isOverridden || property?.isLocked;
       const visible = groupMatches && searchMatches && changedMatches;
       view.row.hidden = !visible;
       if (visible) visibleCount++;
     }
-    const categoryTextMatches = !state.search || `${categoryId} ${categoryView.category.label}`.toLocaleLowerCase('pl').includes(state.search);
-    const showCategory = groupMatches && (visibleCount > 0 || (categoryTextMatches && !state.changedOnly));
+    const categoryTextMatches = !state.search ||
+      `${categoryId} ${categoryView.category.label}`
+        .toLocaleLowerCase('pl')
+        .includes(state.search);
+    const showCategory = groupMatches &&
+      (visibleCount > 0 || (categoryTextMatches && !state.changedOnly));
     categoryView.details.hidden = !showCategory;
-    const count = categoryView.details.querySelector('.category-count');
-    count.textContent = `${visibleCount}/${categoryView.category.fields.length} pól`;
+    categoryView.details.querySelector('.category-count').textContent =
+      `${visibleCount}/${categoryView.category.fields.length} pól`;
     if (state.search && showCategory) categoryView.details.open = true;
   }
 }
 
 function queueRender(actions, immediate = false) {
+  window.avatarPlayer?.pause();
   for (const action of actions) enqueueAction(action);
   clearTimeout(state.renderTimer);
   if (immediate) {
@@ -489,7 +499,8 @@ function queueRender(actions, immediate = false) {
 function enqueueAction(action) {
   if ((action.op === 'set' || action.op === 'reset') && action.id) {
     state.pendingActions = state.pendingActions.filter(existing => !(
-      (existing.op === 'set' || existing.op === 'reset') && existing.id === action.id
+      (existing.op === 'set' || existing.op === 'reset') &&
+      existing.id === action.id
     ));
   }
   state.pendingActions.push(action);
@@ -497,7 +508,9 @@ function enqueueAction(action) {
 
 async function flushRender() {
   if (!state.request || state.rendering) {
-    if (state.rendering) state.renderTimer = setTimeout(() => void flushRender(), 60);
+    if (state.rendering) {
+      state.renderTimer = setTimeout(() => void flushRender(), 60);
+    }
     return;
   }
   const actions = state.pendingActions.splice(0);
@@ -524,12 +537,14 @@ async function flushRender() {
   } finally {
     state.rendering = false;
     setButtonsDisabled(false);
-    if (state.pendingActions.length) state.renderTimer = setTimeout(() => void flushRender(), 20);
+    if (state.pendingActions.length) {
+      state.renderTimer = setTimeout(() => void flushRender(), 20);
+    }
   }
 }
 
-
 async function ensureIdle() {
+  window.avatarPlayer?.pause();
   clearTimeout(state.renderTimer);
   if (state.pendingActions.length && !state.rendering) await flushRender();
   while (state.rendering || state.pendingActions.length) {
@@ -548,8 +563,10 @@ async function downloadExport(path, extension) {
       body: JSON.stringify({ request: state.request, scale: 1 }),
     });
     if (!response.ok) throw new Error(await responseError(response));
-    const blob = await response.blob();
-    downloadBlob(`avatar-${state.response?.imageHash || 'genome'}.${extension}`, blob);
+    downloadBlob(
+      `avatar-${state.response?.imageHash || 'genome'}.${extension}`,
+      await response.blob(),
+    );
   } catch (error) {
     showToast(error.message, true);
   }
@@ -603,6 +620,7 @@ async function importRequest(event) {
     const parsed = JSON.parse(await file.text());
     state.request = parsed.request || parsed;
     state.pendingActions = [];
+    window.avatarPlayer?.invalidate();
     queueRender([], true);
   } catch (error) {
     showToast(`Nie udało się zaimportować JSON: ${error.message}`, true);
@@ -666,7 +684,8 @@ function downloadBlob(name, blob) {
 
 function setConnection(text, className) {
   elements['connection-status'].textContent = text;
-  elements['connection-status'].className = `connection-status ${className}`.trim();
+  elements['connection-status'].className =
+    `connection-status ${className}`.trim();
 }
 
 function setButtonsDisabled(disabled) {
@@ -678,7 +697,9 @@ function showToast(message, error = false) {
   clearTimeout(toastTimer);
   elements.toast.textContent = message;
   elements.toast.className = `toast visible${error ? ' error' : ''}`;
-  toastTimer = setTimeout(() => { elements.toast.className = 'toast'; }, 4200);
+  toastTimer = setTimeout(() => {
+    elements.toast.className = 'toast';
+  }, 4200);
 }
 
 function escapeHtml(value) {
