@@ -29,12 +29,45 @@
           <div class="deck-track">
             <span class="deck-label">TRACK</span>
             <select id="animation-track" aria-label="Ścieżka animacji">
-              <option value="current">Bieżąca animacja</option>
-              <option value="idle">Idle</option>
-              <option value="talk">Talk</option>
-              <option value="laugh">Laugh</option>
-              <option value="storm">Storm</option>
-              <option value="fire">Fire</option>
+              <optgroup label="Stan generatora">
+                <option value="current">Bieżąca konfiguracja</option>
+                <option value="none">Brak animacji</option>
+              </optgroup>
+              <optgroup label="Klasyczne kanały">
+                <option value="idle" selected>Idle</option>
+                <option value="blink">Blink</option>
+                <option value="lookAround">Look around</option>
+                <option value="smoke">Smoke</option>
+                <option value="hairWind">Hair wind</option>
+                <option value="jewelrySwing">Jewelry swing</option>
+                <option value="glowPulse">Glow pulse</option>
+                <option value="auraPulse">Aura pulse</option>
+                <option value="particles">Particles</option>
+              </optgroup>
+              <optgroup label="Ekspresje twarzy">
+                <option value="talk">Talk</option>
+                <option value="laugh">Laugh</option>
+                <option value="smirk">Smirk</option>
+                <option value="angry">Angry</option>
+                <option value="sleepy">Sleepy</option>
+                <option value="curious">Curious</option>
+                <option value="proud">Proud</option>
+                <option value="sad">Sad</option>
+                <option value="surprised">Surprised</option>
+                <option value="evil">Evil</option>
+                <option value="happy">Happy</option>
+                <option value="bashful">Bashful</option>
+                <option value="confused">Confused</option>
+              </optgroup>
+              <optgroup label="Atmosfera">
+                <option value="storm">Storm</option>
+                <option value="fire">Fire</option>
+                <option value="cosmic">Cosmic</option>
+                <option value="rain">Rain</option>
+                <option value="snow">Snow</option>
+                <option value="embers">Embers</option>
+                <option value="fog">Fog</option>
+              </optgroup>
             </select>
           </div>
           <div class="deck-readout">
