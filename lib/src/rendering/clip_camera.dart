@@ -100,8 +100,8 @@ final class ClipCamera {
     final output = PixelMask(width: width, height: height);
     for (var yy = 0; yy < height; yy++) {
       for (var xx = 0; xx < width; xx++) {
-        final sx = x + xx / scale;
-        final sy = y + yy / scale;
+        final sx = _sourceCoordinate(x, xx);
+        final sy = _sourceCoordinate(y, yy);
         if (source.get(sx.round(), sy.round()) != 0) output.set(xx, yy);
       }
     }
@@ -116,14 +116,17 @@ final class ClipCamera {
     );
     for (var yy = 0; yy < height; yy++) {
       for (var xx = 0; xx < width; xx++) {
-        final sx = x + xx / scale;
-        final sy = y + yy / scale;
+        final sx = _sourceCoordinate(x, xx);
+        final sy = _sourceCoordinate(y, yy);
         final value = source.get(sx.round(), sy.round());
         if (value != source.transparentIndex) output.setPixel(xx, yy, value);
       }
     }
     return output;
   }
+
+  double _sourceCoordinate(double origin, int destination) =>
+      origin + (destination + .5) / scale - .5;
 
   List<RenderLayer> cropLayers(List<RenderLayer> layers) => <RenderLayer>[
         for (final layer in layers) layer.copyWith(mask: cropMask(layer.mask)),
@@ -264,7 +267,6 @@ abstract final class ClipCameraFitter {
     return ClipFrameBounds(core: core ?? safety, safety: safety ?? core);
   }
 
-  /// Compatibility helper returning only the readable core bounds.
   static PixelRect? actorBounds(List<RenderLayer> layers) =>
       frameBounds(layers).core;
 
