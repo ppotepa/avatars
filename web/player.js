@@ -48,7 +48,15 @@ window.addEventListener('DOMContentLoaded', () => {
     scrubber.value = String(player.index);
     positionOutput.textContent = `${String(player.index + 1).padStart(2, '0')}/${String(count).padStart(2, '0')}`;
     timeOutput.textContent = formatTime(player.index * frameDuration());
-    playerTitle.textContent = player.status === 'loading' ? 'LOADING' : 'PLAYER';
+    playerTitle.textContent = switchStatusLabel(player.status);
+  }
+
+  function switchStatusLabel(status) {
+    if (status === 'loading') return 'LOADING';
+    if (status === 'error') return 'ERROR';
+    if (status === 'playing') return 'PLAY';
+    if (status === 'paused') return 'PAUSE';
+    return 'STOP';
   }
 
   function updatePlayButton() {
@@ -72,17 +80,27 @@ window.addEventListener('DOMContentLoaded', () => {
     state.animationTimer = null;
   }
 
+  function cancelLoading() {
+    if (player.status === 'loading') player.loadToken++;
+  }
+
   function pause() {
     clearTimer();
-    if (player.status !== 'loading') setStatus('paused');
+    if (player.status === 'loading') {
+      cancelLoading();
+      setStatus('stopped');
+    } else if (player.status === 'playing') {
+      setStatus('paused');
+    }
   }
 
   function invalidate() {
     clearTimer();
+    player.loadToken++;
     player.frames = [];
     player.cacheKey = '';
-    player.loadToken++;
-    if (player.status !== 'loading') setStatus('stopped');
+    player.index = 0;
+    setStatus('stopped');
   }
 
   function cloneRequest() {
@@ -164,7 +182,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!state.request) return false;
     const baseRequest = requestForTrack();
     const key = clipKey(baseRequest);
-    if (player.frames.length === frameCount() && player.cacheKey === key) return true;
+    if (player.frames.length === frameCount() && player.cacheKey === key) {
+      return true;
+    }
 
     const token = ++player.loadToken;
     clearTimer();
@@ -235,6 +255,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function stop() {
+    cancelLoading();
     clearTimer();
     player.index = 0;
     setStatus('stopped');
@@ -243,39 +264,62 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function syncResolution() {
-    const resolution = Number(state.request?.rendering?.size || resolutionSelect.value || 48);
+    const resolution = Number(
+      state.request?.rendering?.size || resolutionSelect.value || 48,
+    );
     resolutionSelect.value = String(resolution);
     resolutionOutput.textContent = `${resolution} × ${resolution}`;
     for (const button of resolutionButtons) {
-      button.setAttribute('aria-pressed', String(Number(button.dataset.resolution) === resolution));
+      button.setAttribute(
+        'aria-pressed',
+        String(Number(button.dataset.resolution) === resolution),
+      );
     }
     applyZoom();
   }
 
   function applyZoom() {
     const zoom = zoomSelect.value;
-    const resolution = Number(state.request?.rendering?.size || resolutionSelect.value || 48);
+    const resolution = Number(
+      state.request?.rendering?.size || resolutionSelect.value || 48,
+    );
     preview.dataset.previewZoom = zoom;
     if (zoom === 'fit') {
       preview.style.removeProperty('--preview-native-size');
     } else {
-      preview.style.setProperty('--preview-native-size', `${resolution * Number(zoom)}px`);
+      preview.style.setProperty(
+        '--preview-native-size',
+        `${resolution * Number(zoom)}px`,
+      );
     }
   }
 
-  playButton.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    void play();
-  }, { capture: true });
-
+  playButton.addEventListener('click', () => void play());
   document.getElementById('animation-stop-button').addEventListener('click', stop);
-  document.getElementById('frame-start-button').addEventListener('click', () => void seek(0));
-  document.getElementById('frame-rewind-button').addEventListener('click', () => void seek(player.index - 4));
-  document.getElementById('frame-previous-button').addEventListener('click', () => void seek(player.index - 1));
-  document.getElementById('frame-next-button').addEventListener('click', () => void seek(player.index + 1));
-  document.getElementById('frame-forward-button').addEventListener('click', () => void seek(player.index + 4));
-  document.getElementById('frame-end-button').addEventListener('click', () => void seek(frameCount() - 1));
+  document.getElementById('frame-start-button').addEventListener(
+    'click',
+    () => void seek(0),
+  );
+  document.getElementById('frame-rewind-button').addEventListener(
+    'click',
+    () => void seek(player.index - 4),
+  );
+  document.getElementById('frame-previous-button').addEventListener(
+    'click',
+    () => void seek(player.index - 1),
+  );
+  document.getElementById('frame-next-button').addEventListener(
+    'click',
+    () => void seek(player.index + 1),
+  );
+  document.getElementById('frame-forward-button').addEventListener(
+    'click',
+    () => void seek(player.index + 4),
+  );
+  document.getElementById('frame-end-button').addEventListener(
+    'click',
+    () => void seek(frameCount() - 1),
+  );
 
   scrubber.addEventListener('input', () => {
     pause();
@@ -283,18 +327,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (player.frames.length) renderFrame(player.index);
     else updateReadout();
   });
-  scrubber.addEventListener('change', () => void seek(Number(scrubber.value)));
+  scrubber.addEventListener('change', () => {
+    void seek(Number(scrubber.value));
+  });
 
-  frameCountSelect.addEventListener('change', () => {
-    invalidate();
-    player.index = 0;
-    updateReadout();
-  });
-  trackSelect.addEventListener('change', () => {
-    invalidate();
-    player.index = 0;
-    updateReadout();
-  });
+  frameCountSelect.addEventListener('change', invalidate);
+  trackSelect.addEventListener('change', invalidate);
   speedSelect.addEventListener('change', () => {
     const wasPlaying = player.status === 'playing';
     pause();
@@ -306,7 +344,6 @@ window.addEventListener('DOMContentLoaded', () => {
   for (const button of resolutionButtons) {
     button.addEventListener('click', () => {
       const resolution = Number(button.dataset.resolution);
-      stop();
       invalidate();
       resolutionSelect.value = String(resolution);
       resolutionOutput.textContent = `${resolution} × ${resolution}`;
@@ -314,7 +351,9 @@ window.addEventListener('DOMContentLoaded', () => {
         candidate.setAttribute('aria-pressed', String(candidate === button));
       }
       applyZoom();
-      queueRender([{ op: 'set', id: 'rendering.size', value: resolution }], true);
+      queueRender([
+        { op: 'set', id: 'rendering.size', value: resolution },
+      ], true);
     });
   }
 
@@ -341,8 +380,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   for (const eventName of ['change', 'input']) {
     document.addEventListener(eventName, event => {
-      if (event.target.closest('.media-deck') || event.target.closest('.preview-controls')) return;
-      if (player.status === 'playing') pause();
+      if (event.target.closest('.media-deck') ||
+          event.target.closest('.preview-controls')) {
+        return;
+      }
+      if (player.status === 'playing' || player.status === 'loading') pause();
       player.cacheKey = '';
     }, { capture: true });
   }
@@ -357,6 +399,14 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(waitForInitialRequest, 30);
   }
 
-  window.avatarPlayer = { play, pause, stop, seek, invalidate, syncResolution };
+  window.avatarPlayer = {
+    play,
+    pause,
+    stop,
+    seek,
+    invalidate,
+    syncResolution,
+    isPlaying: () => player.status === 'playing',
+  };
   waitForInitialRequest();
 });
