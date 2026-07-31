@@ -16,6 +16,9 @@ final class RainFieldRenderer implements AvatarPartRenderer {
     final style = context.string('v4.weather');
     if (!styles.contains(style)) return;
 
+    final dimensions = _dimensions(state);
+    final width = dimensions.$1;
+    final height = dimensions.$2;
     final density = clampInt(context.integer('v4.weatherDensity', 3), 1, 6);
     final globalWind = clampInt(context.integer('v4.weatherDrift'), -4, 4);
     final count = switch (style) {
@@ -23,11 +26,11 @@ final class RainFieldRenderer implements AvatarPartRenderer {
       'lightDrizzle' => 6 + density * 3,
       _ => 12 + density * 5,
     };
-    final back = PixelMask();
-    final middle = PixelMask();
-    final front = PixelMask();
-    final splash = PixelMask();
-    final collision = _collisionMask(state);
+    final back = PixelMask(width: width, height: height);
+    final middle = PixelMask(width: width, height: height);
+    final front = PixelMask(width: width, height: height);
+    final splash = PixelMask(width: width, height: height);
+    final collision = _collisionMask(state, width, height);
     final trajectories = <Object>[];
 
     for (var index = 0; index < count; index++) {
@@ -47,17 +50,25 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         'heavyRain' => 2 + depth,
         _ => 2 + depth,
       };
-      final cycle =
-          clampInt(58 ~/ speedY + 5 + baseRandom.nextInt(0, 5), 10, 36);
+      final cycle = clampInt(
+        (height + 10) ~/ speedY + 5 + baseRandom.nextInt(0, 5),
+        10,
+        42,
+      );
       final spawnPhase = baseRandom.nextInt(0, cycle - 1);
       final cycleIndex = (context.phase - spawnPhase) ~/ cycle;
       final age = positiveMod(context.phase - spawnPhase, cycle);
       final cycleRandom = context.random('rain.field.$style.$index.$cycleIndex');
-      final startX = cycleRandom.nextInt(-8, 55);
+      final startX = cycleRandom.nextInt(-8, width + 7);
       final startY = cycleRandom.nextInt(-12, -2);
       final x = startX + speedX * age;
       final y = startY + speedY * age;
-      if (y < -streakLength || y > 52 || x < -10 || x > 58) continue;
+      if (y < -streakLength ||
+          y > height + 4 ||
+          x < -10 ||
+          x > width + 10) {
+        continue;
+      }
 
       final magnitude = clampInt(speedX.abs() + speedY, 1, 20);
       final tailX = x - (speedX * streakLength / magnitude).round();
@@ -69,8 +80,8 @@ final class RainFieldRenderer implements AvatarPartRenderer {
       if (hit != null && depth > 0) {
         target.set(hit.$1, hit.$2, false);
         _splash(splash, hit.$1, hit.$2, speedX.sign);
-      } else if (y >= 47 && depth > 0) {
-        _splash(splash, x, 47, speedX.sign);
+      } else if (y >= height - 1 && depth > 0) {
+        _splash(splash, x, height - 1, speedX.sign);
       }
 
       if (index < 12) {
@@ -140,12 +151,26 @@ final class RainFieldRenderer implements AvatarPartRenderer {
       'style': style,
       'globalWind': globalWind,
       'dropCount': count,
+      'canvasWidth': width,
+      'canvasHeight': height,
       'trajectories': trajectories,
     };
   }
 
-  PixelMask _collisionMask(AvatarRenderState state) {
-    var output = PixelMask();
+  (int, int) _dimensions(AvatarRenderState state) {
+    if (state.layers.isNotEmpty) {
+      return (state.layers.first.mask.width, state.layers.first.mask.height);
+    }
+    final torso = state.mask('torso');
+    return (torso.width, torso.height);
+  }
+
+  PixelMask _collisionMask(
+    AvatarRenderState state,
+    int width,
+    int height,
+  ) {
+    var output = PixelMask(width: width, height: height);
     for (final id in const <String>[
       'headwear',
       'head',
@@ -154,9 +179,16 @@ final class RainFieldRenderer implements AvatarPartRenderer {
       'armor',
       'cape',
       'shoulderProp',
+      'leftArm',
+      'rightArm',
+      'leftHand',
+      'rightHand',
     ]) {
       final mask = state.mask(id);
-      if (mask.count > 0) output = output.union(mask);
+      if (mask.count == 0 || mask.width != width || mask.height != height) {
+        continue;
+      }
+      output = output.union(mask);
     }
     return output;
   }
@@ -168,7 +200,7 @@ final class RainFieldRenderer implements AvatarPartRenderer {
     int x1,
     int y1,
   ) {
-    final steps = clampInt((x1 - x0).abs() + (y1 - y0).abs(), 1, 16);
+    final steps = clampInt((x1 - x0).abs() + (y1 - y0).abs(), 1, 20);
     for (var step = 0; step <= steps; step++) {
       final x = (x0 + (x1 - x0) * step / steps).round();
       final y = (y0 + (y1 - y0) * step / steps).round();
