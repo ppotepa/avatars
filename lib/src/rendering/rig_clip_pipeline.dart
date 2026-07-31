@@ -416,13 +416,12 @@ final class RigClipPipeline {
     final bounds = face?.bounds;
     if (bounds == null) return;
 
-    final clearance = PixelMask(width: face!.width, height: face.height)
-      ..fillRect(
-        (bounds.left - 3).clamp(0, face.width - 1),
-        (bounds.top - 3).clamp(0, face.height - 1),
-        (bounds.width + 6).clamp(1, face.width),
-        (bounds.height + 6).clamp(1, face.height),
-      );
+    final left = (bounds.left - 3).clamp(0, face!.width - 1).toInt();
+    final top = (bounds.top - 3).clamp(0, face.height - 1).toInt();
+    final width = (bounds.width + 6).clamp(1, face.width - left).toInt();
+    final height = (bounds.height + 6).clamp(1, face.height - top).toInt();
+    final clearance = PixelMask(width: face.width, height: face.height)
+      ..fillRect(left, top, width, height);
 
     var removedPixels = 0;
     for (var index = 0; index < state.layers.length; index++) {
@@ -454,12 +453,13 @@ final class RigClipPipeline {
       rebuilt[layer.nodeId] =
           existing == null ? layer.mask.clone() : existing.union(layer.mask);
     }
-    state.masks
-      ..clear()
-      ..addAll(rebuilt);
+    for (final entry in rebuilt.entries) {
+      state.putMask(entry.key, entry.value);
+    }
     state.metadata['semanticMaskOwnership'] = <String, Object>{
       'nodeCount': rebuilt.length,
       'source': 'transformedLayers',
+      'legacyAliasesPreserved': true,
     };
   }
 
