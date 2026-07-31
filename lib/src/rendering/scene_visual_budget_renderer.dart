@@ -15,14 +15,14 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
     final removed = <String>[];
 
     state.layers.removeWhere((layer) {
-      final channel = _channelFor(layer, context);
+      final channel = _channelFor(layer);
       final remove = channel != null && channel != winner;
       if (remove) removed.add(layer.id);
       return remove;
     });
 
     final effectLayers = state.layers
-        .where((layer) => _channelFor(layer, context) != null)
+        .where((layer) => _channelFor(layer) != null)
         .toList(growable: false);
     var union = PixelMask();
     var componentCount = 0;
@@ -68,7 +68,7 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
     };
   }
 
-  String? _channelFor(RenderLayer layer, AvatarRenderContext context) {
+  String? _channelFor(RenderLayer layer) {
     final id = layer.id;
     final part = layer.meta['part']?.toString();
     if (id.startsWith('cosmic.v42') || part == 'cosmic') {
@@ -83,16 +83,18 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
     if (id.startsWith('backgroundEvent.v42') || part == 'backgroundEvent') {
       return 'v4.backgroundEvent';
     }
+    if (id.startsWith('particle.v3.weather.') || part == 'weatherParticle') {
+      return 'v4.weather';
+    }
+    if (id.startsWith('particle.v3.effect.') || part == 'effectParticle') {
+      return 'v4.effect';
+    }
     if (id.startsWith('rain.field') ||
         id.startsWith('weather.v42') ||
         part == 'weather' ||
         part == 'rain' ||
         part == 'rainSplash') {
       return 'v4.weather';
-    }
-    if (id.startsWith('particle.v3')) {
-      final weather = context.string('v4.weather');
-      return weather != 'none' ? 'v4.weather' : 'v4.effect';
     }
     if (id.startsWith('effect.back') || id.startsWith('effect.front')) {
       return 'v4.effect';
