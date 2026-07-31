@@ -267,6 +267,7 @@ final class RigAnchorResolver {
             !existing.add(id)) {
           continue;
         }
+        state.anchorNode(nodeId, id);
         output.add(RigAnchor(
           id: id,
           nodeId: nodeId,
