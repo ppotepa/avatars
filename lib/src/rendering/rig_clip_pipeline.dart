@@ -40,6 +40,7 @@ import 'rig_layer_binding.dart';
 import 'rig_model.dart';
 import 'rig_pose_applier.dart';
 import 'rig_quality_evaluator.dart';
+import 'rig_validation_entries.dart';
 import 'runtime_rig_builder.dart';
 import 'scene_visual_budget_renderer.dart';
 import 'wearable_attachment_policy.dart';
@@ -283,12 +284,8 @@ final class RigClipPipeline {
     final constraintQuality =
         const RigQualityEvaluator().evaluate(graph, solvedPose);
 
-    // World-space emitters and weather collisions must use the final actor pose.
     const WorldSmokeEmitterRenderer().render(context, state);
     const RainFieldRenderer().render(context, state);
-
-    // This gate must remain the final scene mutation before composition so its
-    // diagnostics describe the actual image, including post-pose emitters.
     const SceneVisualBudgetRenderer().render(context, state);
 
     state.metadata
@@ -328,6 +325,7 @@ final class RigClipPipeline {
     state.nodeTransforms.addAll(raw.state.nodeTransforms);
     final image = camera.cropImage(raw.image);
     validator.validate(state, image, raw.guard);
+    final runtimeQuality = const RigValidationEntries().evaluate(raw.state, camera);
     return RigPipelineFrame(
       phase: raw.phase,
       state: state,
@@ -336,6 +334,7 @@ final class RigClipPipeline {
       validation: ValidationReport(<ValidationEntry>[
         ...prepared.baseValidation,
         ...raw.guard.entries,
+        ...runtimeQuality,
       ]),
     );
   }
