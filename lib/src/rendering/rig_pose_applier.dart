@@ -63,8 +63,7 @@ final class RigPoseApplier {
     }
 
     final hairRig = state.metadata['hairRig'];
-    final localHairMotion =
-        hairRig is Map && hairRig['localMotion'] == true;
+    final localHairMotion = hairRig is Map && hairRig['localMotion'] == true;
     if (localHairMotion) {
       remove(const <String>[
         'hairBackMiddle',
@@ -90,11 +89,28 @@ final class RigPoseApplier {
         'shoulderCompanion',
         'companionBody',
         'companionHead',
+        'companionEyes',
+        'companionMouth',
+        'companionBeak',
         'companionWings',
+        'companionLeftWing',
+        'companionRightWing',
+        'companionLeftArm',
+        'companionRightArm',
+        'companionLeftLeg',
+        'companionRightLeg',
         'companionTail',
         'companionEars',
-        'companionEyes',
-        'companionBeak',
+        'companionLeftEar',
+        'companionRightEar',
+        'companionLeftAntenna',
+        'companionRightAntenna',
+        'companionLeftTentacle',
+        'companionRightTentacle',
+        'companionHeldItem',
+        'companionTrail',
+        'companionShadow',
+        'companionLight',
       ]);
     }
     if (state.metadata.containsKey('backRig')) {
