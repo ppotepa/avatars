@@ -49,7 +49,11 @@ Options:
     final host = _argumentValue(arguments, '--host') ?? '127.0.0.1';
     final port = int.tryParse(_argumentValue(arguments, '--port') ?? '') ?? 8080;
     if (port < 0 || port > 65535) {
-      throw ArgumentError.value(port, 'port', 'Port must be between 0 and 65535.');
+      throw ArgumentError.value(
+        port,
+        'port',
+        'Port must be between 0 and 65535.',
+      );
     }
     return ServerConfig(
       host: host,
@@ -114,10 +118,69 @@ final class AvatarEditorHttpApplication {
         );
         return;
       }
+      if (request.method == 'POST' && path == '/api/animation/clip') {
+        final payload = await _readJson(request);
+        final editorResponse = _generateFromPayload(payload);
+        final frameCount = _integerOption(
+          payload,
+          'frameCount',
+          fallback: 16,
+          min: 1,
+          max: 64,
+        );
+        final frameDurationMs = _integerOption(
+          payload,
+          'frameDurationMs',
+          fallback: 140,
+          min: 16,
+          max: 2000,
+        );
+        final svgScale = _integerOption(
+          payload,
+          'svgScale',
+          fallback: 1,
+          min: 1,
+          max: 16,
+        );
+        final loop = _boolOption(payload, 'loop') ?? true;
+        final animation = service.generator.generateAnimation(
+          editorResponse.request,
+          frameCount: frameCount,
+          frameDuration: Duration(milliseconds: frameDurationMs),
+          loop: loop,
+        );
+        final codec = AvatarSvgCodec(
+          scale: svgScale,
+          includeMetadata: false,
+        );
+        await _json(request, <String, Object>{
+          'frameCount': frameCount,
+          'frameDurationMs': frameDurationMs,
+          'loop': loop,
+          'width': animation.frames.first.image.width,
+          'height': animation.frames.first.image.height,
+          'frames': <Object>[
+            for (var index = 0; index < animation.frames.length; index++)
+              <String, Object>{
+                'index': index,
+                'phase': index,
+                'imageHash': animation.frames[index].imageHash,
+                'svg': codec.encode(animation.frames[index]),
+              },
+          ],
+        });
+        return;
+      }
       if (request.method == 'POST' && path == '/api/export/png') {
         final payload = await _readJson(request);
         final editorResponse = _generateFromPayload(payload);
-        final scale = _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final scale = _integerOption(
+          payload,
+          'scale',
+          fallback: 8,
+          min: 1,
+          max: 64,
+        );
         final bytes = AvatarPngCodec(scale: scale).encode(editorResponse.result);
         await _binary(
           request,
@@ -130,7 +193,13 @@ final class AvatarEditorHttpApplication {
       if (request.method == 'POST' && path == '/api/export/svg') {
         final payload = await _readJson(request);
         final editorResponse = _generateFromPayload(payload);
-        final scale = _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final scale = _integerOption(
+          payload,
+          'scale',
+          fallback: 8,
+          min: 1,
+          max: 64,
+        );
         final svg = AvatarSvgCodec(
           scale: scale,
           includeMetadata: true,
@@ -146,8 +215,13 @@ final class AvatarEditorHttpApplication {
       if (request.method == 'POST' && path == '/api/export/spritesheet') {
         final payload = await _readJson(request);
         final editorResponse = _generateFromPayload(payload);
-        final frameCount =
-            _integerOption(payload, 'frameCount', fallback: 16, min: 1, max: 64);
+        final frameCount = _integerOption(
+          payload,
+          'frameCount',
+          fallback: 16,
+          min: 1,
+          max: 64,
+        );
         final frameDurationMs = _integerOption(
           payload,
           'frameDurationMs',
@@ -155,17 +229,29 @@ final class AvatarEditorHttpApplication {
           min: 16,
           max: 2000,
         );
-        final columns =
-            _integerOption(payload, 'columns', fallback: 4, min: 1, max: 16);
-        final scale =
-            _integerOption(payload, 'scale', fallback: 1, min: 1, max: 16);
+        final columns = _integerOption(
+          payload,
+          'columns',
+          fallback: 4,
+          min: 1,
+          max: 16,
+        );
+        final scale = _integerOption(
+          payload,
+          'scale',
+          fallback: 1,
+          min: 1,
+          max: 16,
+        );
         final animation = service.generator.generateAnimation(
           editorResponse.request,
           frameCount: frameCount,
           frameDuration: Duration(milliseconds: frameDurationMs),
         );
-        final bytes =
-            AvatarSpriteSheetCodec(columns: columns, scale: scale).encode(animation);
+        final bytes = AvatarSpriteSheetCodec(
+          columns: columns,
+          scale: scale,
+        ).encode(animation);
         await _binary(
           request,
           bytes,
@@ -178,8 +264,16 @@ final class AvatarEditorHttpApplication {
       if (request.method == 'POST' && path == '/api/save') {
         final payload = await _readJson(request);
         final response = _generateFromPayload(payload);
-        final id = _safeId(payload['id'] as String? ?? response.result.imageHash);
-        final scale = _integerOption(payload, 'scale', fallback: 8, min: 1, max: 64);
+        final id = _safeId(
+          payload['id'] as String? ?? response.result.imageHash,
+        );
+        final scale = _integerOption(
+          payload,
+          'scale',
+          fallback: 8,
+          min: 1,
+          max: 64,
+        );
         final saved = await _saveAvatar(id, response, scale: scale);
         await _json(request, saved);
         return;
@@ -189,7 +283,9 @@ final class AvatarEditorHttpApplication {
         final file = switch (path) {
           '/' || '/index.html' => 'index.html',
           '/app.js' => 'app.js',
+          '/player.js' => 'player.js',
           '/styles.css' => 'styles.css',
+          '/player.css' => 'player.css',
           _ => null,
         };
         if (file != null) {
@@ -247,9 +343,11 @@ final class AvatarEditorHttpApplication {
         : payload;
     final avatarRequest = AvatarRequest.fromJson(requestJson);
     final actions = (payload['actions'] as List<Object?>? ?? const <Object?>[])
-        .map((value) => AvatarEditorAction.fromJson(
-              Map<String, Object?>.from(value! as Map),
-            ))
+        .map(
+          (value) => AvatarEditorAction.fromJson(
+            Map<String, Object?>.from(value! as Map),
+          ),
+        )
         .toList(growable: false);
     final svgScale = _integerOption(
       payload,
@@ -283,7 +381,10 @@ final class AvatarEditorHttpApplication {
       pretty.convert(response.result.toJson(includePixels: false)),
     );
     await svgFile.writeAsString(
-      AvatarSvgCodec(scale: scale, includeMetadata: true).encode(response.result),
+      AvatarSvgCodec(
+        scale: scale,
+        includeMetadata: true,
+      ).encode(response.result),
     );
     await pngFile.writeAsBytes(
       AvatarPngCodec(scale: scale).encode(response.result),
@@ -338,8 +439,10 @@ final class AvatarEditorHttpApplication {
     }
     request.response.headers.contentType = switch (name) {
       'index.html' => ContentType.html,
-      'app.js' => ContentType('text', 'javascript', charset: 'utf-8'),
-      'styles.css' => ContentType('text', 'css', charset: 'utf-8'),
+      'app.js' || 'player.js' =>
+        ContentType('text', 'javascript', charset: 'utf-8'),
+      'styles.css' || 'player.css' =>
+        ContentType('text', 'css', charset: 'utf-8'),
       _ => ContentType.binary,
     };
     request.response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
