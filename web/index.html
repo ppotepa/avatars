@@ -251,6 +251,42 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+    (() => {
+      const nativeFetch = window.fetch.bind(window);
+      let clipController = null;
+
+      window.abortAvatarClip = () => {
+        clipController?.abort();
+        clipController = null;
+      };
+
+      window.fetch = (input, options = {}) => {
+        const url = typeof input === 'string' ? input : input?.url || '';
+        if (!url.includes('/api/animation/clip')) {
+          return nativeFetch(input, options);
+        }
+        window.abortAvatarClip();
+        clipController = new AbortController();
+        const request = nativeFetch(input, {
+          ...options,
+          signal: clipController.signal,
+        });
+        return request.finally(() => {
+          clipController = null;
+        });
+      };
+
+      for (const id of [
+        'animation-stop-button',
+        'animation-track',
+        'animation-frames',
+      ]) {
+        document.getElementById(id)?.addEventListener('change', window.abortAvatarClip);
+        document.getElementById(id)?.addEventListener('click', window.abortAvatarClip);
+      }
+    })();
+  </script>
   <script src="/app.js" defer></script>
   <script src="/player.js" defer></script>
 </body>
