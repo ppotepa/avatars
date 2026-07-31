@@ -8,17 +8,14 @@ import 'avatar_genome_model.dart';
 import 'diversity_genome_generator.dart';
 import 'genome_generator.dart';
 
-/// Decorates the complete diversity generator with a final scene-noise pass.
-///
-/// The pass runs after overrides, presets, world composition and chaotic range
-/// expansion, so no later stage can reactivate a second full-screen channel.
+/// Decorates the complete diversity generator with final compatibility passes.
 final class BudgetedGenomeGenerator implements GenomeGenerator {
   BudgetedGenomeGenerator({
     ParameterCatalog? catalog,
     GenomeGenerator? base,
-  })  : catalog = catalog ?? ParameterCatalog.v41,
+  })  : catalog = catalog ?? ParameterCatalog.current,
         base = base ??
-            DiversityGenomeGenerator(catalog: catalog ?? ParameterCatalog.v41);
+            DiversityGenomeGenerator(catalog: catalog ?? ParameterCatalog.current);
 
   final ParameterCatalog catalog;
   final GenomeGenerator base;
@@ -28,7 +25,8 @@ final class BudgetedGenomeGenerator implements GenomeGenerator {
     final generated = base.generate(request, guard);
     final values = <String, Object>{...generated.values};
     final sources = <String, GenomeValueSource>{...generated.sources};
-    _resolveConflicts(values, sources);
+    _resolveShoulderProps(values, sources);
+    _resolveSceneConflicts(values, sources);
     SceneVisualNoise.enforce(
       values: values,
       sources: sources,
@@ -47,7 +45,28 @@ final class BudgetedGenomeGenerator implements GenomeGenerator {
     );
   }
 
-  void _resolveConflicts(
+  /// The historical extra field is a fallback slot, not a second simultaneous
+  /// creature. This keeps one unambiguous shoulder root without changing the
+  /// request schema.
+  void _resolveShoulderProps(
+    Map<String, Object> values,
+    Map<String, GenomeValueSource> sources,
+  ) {
+    final primary = values['v4.shoulderProp'] as String? ?? 'none';
+    final fallback = values['v4.extraShoulderProp'] as String? ?? 'none';
+    if (primary == 'none' || fallback == 'none') return;
+    final field = catalog.fieldById['v4.extraShoulderProp'];
+    if (field == null || !field.accepts('none')) return;
+    final previous = sources['v4.extraShoulderProp'];
+    values['v4.extraShoulderProp'] = 'none';
+    sources['v4.extraShoulderProp'] = GenomeValueSource(
+      source: 'companionSlotConflict:v4.shoulderProp',
+      priority: previous?.priority ?? 1,
+      category: field.category,
+    );
+  }
+
+  void _resolveSceneConflicts(
     Map<String, Object> values,
     Map<String, GenomeValueSource> sources,
   ) {
