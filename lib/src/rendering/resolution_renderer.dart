@@ -3,17 +3,17 @@ import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import 'native_detail_renderer.dart';
 import 'render_model.dart';
+import 'resolution_render_cache.dart';
 
-/// Expands the canonical 48×48 composition into a resolution-aware pixel
-/// render. Destination sampling is centered and mirrored around the canvas axis
-/// so non-integer profiles such as 64×64 and 80×80 do not accumulate all narrow
-/// source cells on one side of the face.
+/// Expands the canonical composition to the requested pixel grid, applies
+/// material-aware semantic detail and caches the immutable final image.
 final class ResolutionAwareRenderer {
   const ResolutionAwareRenderer({
     this.nativeDetails = const NativeDetailRenderer(),
   });
 
   final NativeDetailRenderer nativeDetails;
+  static final ResolutionRenderCache _cache = ResolutionRenderCache();
 
   IndexedImage render({
     required IndexedImage source,
@@ -25,33 +25,38 @@ final class ResolutionAwareRenderer {
     if (settings.size == source.width && settings.size == source.height) {
       return source;
     }
-    final size = settings.size;
-    final output = IndexedImage(width: size, height: size);
+
+    final key = _cacheKey(source, layers, palette, settings, phase);
+    final cached = _cache.get(key);
+    if (cached != null) return cached;
+
     final owners = _owners(layers, source.width, source.height);
-    for (var y = 0; y < size; y++) {
-      final sy = _sourceCoordinate(y, size, source.height);
-      for (var x = 0; x < size; x++) {
-        final sx = _sourceCoordinate(x, size, source.width);
-        final color = source.get(sx, sy);
-        if (color == source.transparentIndex) continue;
+    final output = IndexedImage(width: settings.size, height: settings.size);
+    for (var y = 0; y < output.height; y++) {
+      final sy = _sourceCoordinate(y, output.height, source.height);
+      for (var x = 0; x < output.width; x++) {
+        final sx = _sourceCoordinate(x, output.width, source.width);
+        final original = source.get(sx, sy);
+        if (original == source.transparentIndex) continue;
         output.setPixel(
           x,
           y,
-          _detailColor(
+          _shade(
             source: source,
             palette: palette,
             settings: settings,
-            owners: owners,
+            owner: owners[sy * source.width + sx] ?? '',
+            original: original,
             sx: sx,
             sy: sy,
             x: x,
             y: y,
-            phase: phase,
           ),
         );
       }
     }
-    return nativeDetails.enhance(
+
+    final enhanced = nativeDetails.enhance(
       image: output,
       source: source,
       layers: layers,
@@ -59,6 +64,25 @@ final class ResolutionAwareRenderer {
       settings: settings,
       phase: phase,
     );
+    _cache.put(key, enhanced);
+    return enhanced;
+  }
+
+  String _cacheKey(
+    IndexedImage source,
+    List<RenderLayer> layers,
+    AvatarPalette palette,
+    AvatarRenderSettings settings,
+    int phase,
+  ) {
+    final layerSignature = layers
+        .map((layer) =>
+            '${layer.id}:${layer.nodeId}:${layer.slot.index}:${layer.localOrder}:${layer.mask.count}')
+        .join('|');
+    return '${source.hashWithPalette(palette.colors)}:'
+        '${settings.size}:${settings.detailLevel.name}:'
+        '${settings.lightingDirection.name}:${settings.shadingStrength}:'
+        '$phase:$layerSignature';
   }
 
   int _sourceCoordinate(int destination, int destinationSize, int sourceSize) {
@@ -72,107 +96,42 @@ final class ResolutionAwareRenderer {
     return mirrored ? sourceSize - 1 - localSource : localSource;
   }
 
-  int _detailColor({
+  int _shade({
     required IndexedImage source,
     required AvatarPalette palette,
     required AvatarRenderSettings settings,
-    required List<String?> owners,
+    required String owner,
+    required int original,
     required int sx,
     required int sy,
     required int x,
     required int y,
-    required int phase,
   }) {
-    final original = source.get(sx, sy);
     if (settings.detailLevel == AvatarDetailLevel.basic ||
         settings.shadingStrength == 0) {
       return original;
     }
 
     final size = settings.size;
-    final leftEdge =
-        x == 0 || _sourceCoordinate(x - 1, size, source.width) != sx;
+    final leftEdge = x == 0 ||
+        _sourceCoordinate(x - 1, size, source.width) != sx;
     final rightEdge = x == size - 1 ||
         _sourceCoordinate(x + 1, size, source.width) != sx;
-    final topEdge =
-        y == 0 || _sourceCoordinate(y - 1, size, source.height) != sy;
+    final topEdge = y == 0 ||
+        _sourceCoordinate(y - 1, size, source.height) != sy;
     final bottomEdge = y == size - 1 ||
         _sourceCoordinate(y + 1, size, source.height) != sy;
-
-    final owner = owners[sy * source.width + sx] ?? '';
     final frontal =
         settings.lightingDirection == AvatarLightingDirection.frontal;
-    final lightFromRight =
+    final fromRight =
         settings.lightingDirection == AvatarLightingDirection.upperRight;
-    final lightEdge =
-        topEdge || (!frontal && (lightFromRight ? rightEdge : leftEdge));
+    final lightEdge = topEdge || (!frontal && (fromRight ? rightEdge : leftEdge));
     final shadowEdge =
-        bottomEdge || (!frontal && (lightFromRight ? leftEdge : rightEdge));
-    final lightNeighbourX = lightFromRight ? sx + 1 : sx - 1;
-    final shadowNeighbourX = lightFromRight ? sx - 1 : sx + 1;
-    final exposedToLight =
-        (!frontal && source.get(lightNeighbourX, sy) != original) ||
-            source.get(sx, sy - 1) != original;
-    final exposedToShadow =
-        (!frontal && source.get(shadowNeighbourX, sy) != original) ||
-            source.get(sx, sy + 1) != original;
+        bottomEdge || (!frontal && (fromRight ? leftEdge : rightEdge));
 
-    if (lightEdge && exposedToLight) {
-      return _ramp(original, palette, lighter: true, owner: owner);
-    }
-    if (settings.shadingStrength >= 2 && shadowEdge && exposedToShadow) {
+    if (lightEdge) return _ramp(original, palette, lighter: true, owner: owner);
+    if (settings.shadingStrength >= 2 && shadowEdge) {
       return _ramp(original, palette, lighter: false, owner: owner);
-    }
-
-    if (settings.detailLevel == AvatarDetailLevel.rich) {
-      final roles = palette.roles;
-      if (owner == 'eyes' &&
-          original == roles['irisBase'] &&
-          (x + y * 2) % 5 == 0) {
-        return roles['irisLight']!;
-      }
-      if (owner == 'mouth' &&
-          original == roles['mouthBase'] &&
-          y.isEven &&
-          x % 3 == 0) {
-        return roles['mouthLight']!;
-      }
-      final material = owner == 'jewelry' ||
-          owner == 'armor' ||
-          owner == 'eyewear' ||
-          owner == 'cyber';
-      if (material && (x + y + phase ~/ 8) % 7 == 0) {
-        return _ramp(original, palette, lighter: true, owner: owner);
-      }
-      if (owner == 'background' &&
-          settings.shadingStrength >= 2 &&
-          (x + y * 3) % 11 == 0) {
-        return _ramp(
-          original,
-          palette,
-          lighter: ((x + y) ~/ 3).isEven,
-          owner: owner,
-        );
-      }
-      if ((owner == 'hair' || owner == 'clothing') &&
-          (x * 3 + y + phase ~/ 16) % 13 == 0) {
-        return _ramp(
-          original,
-          palette,
-          lighter: y < size ~/ 2,
-          owner: owner,
-        );
-      }
-      if (owner == 'clothing' &&
-          y > size * 2 ~/ 3 &&
-          (x - size ~/ 2).abs() % 11 == 0) {
-        return _ramp(
-          original,
-          palette,
-          lighter: x < size ~/ 2,
-          owner: owner,
-        );
-      }
     }
     return original;
   }
@@ -199,10 +158,7 @@ final class ResolutionAwareRenderer {
       if (color == ramp.$3) return lighter ? ramp.$3 : ramp.$2;
     }
     if (lighter &&
-        (owner == 'jewelry' || owner == 'armor' || owner == 'eyewear') &&
-        (color == roles['clothAccent'] ||
-            color == roles['fantasyLight'] ||
-            color == roles['irisLight'])) {
+        (owner == 'jewelry' || owner == 'armor' || owner == 'eyewear')) {
       return roles['white']!;
     }
     return color;
@@ -212,13 +168,15 @@ final class ResolutionAwareRenderer {
     final owners = List<String?>.filled(width * height, null);
     final sorted = List<RenderLayer>.from(layers)
       ..sort((a, b) {
-        final byZ = a.z.compareTo(b.z);
-        return byZ != 0 ? byZ : a.id.compareTo(b.id);
+        final bySlot = a.slot.index.compareTo(b.slot.index);
+        if (bySlot != 0) return bySlot;
+        final byLocal = a.localOrder.compareTo(b.localOrder);
+        return byLocal != 0 ? byLocal : a.id.compareTo(b.id);
       });
     for (final layer in sorted) {
       final owner = layer.meta['part'] is String
           ? layer.meta['part']! as String
-          : layer.id.split('.').first;
+          : layer.nodeId;
       for (var y = 0; y < height; y++) {
         for (var x = 0; x < width; x++) {
           if (layer.mask.get(x, y) != 0) owners[y * width + x] = owner;
