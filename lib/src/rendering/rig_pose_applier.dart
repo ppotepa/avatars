@@ -151,20 +151,31 @@ final class RigPoseApplier {
     if (id.startsWith('hair.side.right.tip')) return 'hairSideRightTip';
     if (id.startsWith('hair.back')) return 'hairBack';
     if (id.startsWith('hair.front') || id == 'hair.all') return 'hairFront';
-    if (id.startsWith('head')) return 'head';
-    if (id.startsWith('neck')) return 'neck';
-    if (id.startsWith('torso') || id == 'skinChest') return 'torso';
-    if (id.startsWith('clothing')) return 'clothing';
-    if (id.startsWith('armor')) return 'armor';
-    if (id.startsWith('eye')) return 'eyes';
-    if (id.startsWith('mouth')) return 'mouth';
-    if (id.startsWith('ear')) return 'ears';
     if (id.startsWith('headwear')) return 'headwear';
+    if (id.startsWith('headAdornment')) return 'headAdornment';
+    if (id.startsWith('head')) return 'head';
     if (id.startsWith('eyewear')) return 'eyewear';
     if (id.startsWith('faceMask')) return 'faceMask';
+    if (id.startsWith('leftArm')) return 'leftArm';
+    if (id.startsWith('rightArm')) return 'rightArm';
+    if (id.startsWith('leftHand')) return 'leftHand';
+    if (id.startsWith('rightHand')) return 'rightHand';
+    if (id.startsWith('cape')) return 'cape';
+    if (id.startsWith('armor')) return 'armor';
+    if (id.startsWith('clothing')) return 'clothing';
+    if (id.startsWith('neck')) return 'neck';
+    if (id.startsWith('torso') || id == 'skinChest') return 'torso';
+    if (id.startsWith('eye')) return 'eyes';
+    if (id.startsWith('mouthProp')) return 'mouthProp';
+    if (id.startsWith('mouth')) return 'mouth';
+    if (id.startsWith('leftEar')) return 'leftEar';
+    if (id.startsWith('rightEar')) return 'rightEar';
+    if (id.startsWith('ear')) return 'ears';
     if (id.startsWith('necklace.left')) return 'necklaceLeft';
     if (id.startsWith('necklace.right')) return 'necklaceRight';
     if (id.startsWith('necklace.pendant')) return 'pendant';
+    if (id.startsWith('jewelry.rig.leftEar')) return 'leftEarJewelry';
+    if (id.startsWith('jewelry.rig.rightEar')) return 'rightEarJewelry';
     if (id.startsWith('jewelry')) return 'necklace';
     if (id.startsWith('companion.body')) return 'companionBody';
     if (id.startsWith('companion.head')) return 'companionHead';
@@ -173,7 +184,7 @@ final class RigPoseApplier {
     if (id.startsWith('companion.ears')) return 'companionEars';
     if (id.startsWith('companion.beak')) return 'companionBeak';
     if (id.startsWith('companion.eyes')) return 'companionEyes';
-    if (id.startsWith('shoulderProp')) return 'shoulderCompanion';
+    if (id.startsWith('shoulderProp')) return 'shoulderObject';
     return 'actor';
   }
 }
