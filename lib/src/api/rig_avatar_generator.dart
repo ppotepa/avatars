@@ -135,6 +135,23 @@ final class AvatarGenerator {
         );
       }
     }
+
+    final unparented = <String>[
+      for (final node in rig.nodes)
+        if (node.id != 'scene' &&
+            node.id != 'background' &&
+            node.parentId == null)
+          node.id,
+    ]..sort();
+    final wearableNodes = frame.state.layers
+        .where((layer) =>
+            layer.meta.containsKey('wearableOwner') ||
+            layer.meta.containsKey('attachmentKind'))
+        .map((layer) => layer.nodeId)
+        .toSet()
+        .toList(growable: false)
+      ..sort();
+
     graph
       ..addValue('rig.camera', 'clipCamera', frame.camera.toJson())
       ..addValue(
@@ -147,6 +164,21 @@ final class AvatarGenerator {
         'overscan',
         frame.state.metadata['overscan'],
       )
+      ..addValue(
+        'rig.anchors',
+        'rigAnchors',
+        frame.state.metadata['rigAnchors'],
+      )
+      ..addValue(
+        'rig.constraints',
+        'rigConstraints',
+        frame.state.metadata['rigConstraints'],
+      )
+      ..addValue(
+        'rig.worldTransforms',
+        'rigWorldTransforms',
+        frame.state.metadata['rigWorldTransforms'],
+      )
       ..addValue('rig.hair', 'secondaryRig', frame.state.metadata['hairRig'])
       ..addValue(
         'rig.jewelry',
@@ -158,7 +190,26 @@ final class AvatarGenerator {
         'articulatedRig',
         frame.state.metadata['companionRig'],
       )
-      ..addValue('rig.back', 'secondaryRig', frame.state.metadata['backRig']);
+      ..addValue(
+        'rig.shoulderObject',
+        'rigidAttachment',
+        frame.state.metadata['shoulderObjectRig'],
+      )
+      ..addValue('rig.back', 'secondaryRig', frame.state.metadata['backRig'])
+      ..addValue('rig.seams', 'rigSeams', frame.state.metadata['rigSeams'])
+      ..addValue('rig.arms', 'articulatedRig', frame.state.metadata['armRig'])
+      ..addValue('rig.rain', 'weatherField', frame.state.metadata['rainField'])
+      ..addValue(
+        'rig.quality',
+        'rigQuality',
+        <String, Object>{
+          'unparentedNodes': unparented,
+          'wearableNodes': wearableNodes,
+          'actorOccupancy': frame.camera.actorOccupancy,
+          'cameraScale': frame.camera.scale,
+          'layerCount': frame.state.layers.length,
+        },
+      );
     return AvatarLayout(
       values: source.values,
       landmarks: source.landmarks,
