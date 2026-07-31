@@ -1,33 +1,14 @@
+import '../companion/articulated_companion_v2_renderer.dart';
+import '../companion/companion_style_registry.dart';
 import '../render_model.dart';
 import '../rig_model.dart';
-import 'articulated_companion_renderer.dart';
 
-/// Routes living shoulder companions to the articulated rig while preserving
-/// ordinary shoulder wearables as rigid objects attached to the chosen side.
+/// Routes living shoulder companions to the articulated V2 rig while ordinary
+/// shoulder wearables remain rigid objects attached to the selected side.
 final class GatedCompanionRenderer implements AvatarPartRenderer {
   const GatedCompanionRenderer();
 
-  static const Set<String> companionStyles = <String>{
-    'parrot',
-    'cat',
-    'smallDragon',
-    'shoulderRobot',
-    'ghost',
-    'insect',
-    'owl',
-    'crow',
-    'raven',
-    'bat',
-    'snake',
-    'frog',
-    'mushroomBuddy',
-    'floatingSkull',
-    'miniDrone',
-    'lanternSpirit',
-    'starOrb',
-    'cloudSpirit',
-    'bookFamiliar',
-  };
+  static const Set<String> companionStyles = kArticulatedCompanionStyles;
 
   @override
   void render(AvatarRenderContext context, AvatarRenderState state) {
@@ -37,7 +18,7 @@ final class GatedCompanionRenderer implements AvatarPartRenderer {
     if (style == 'none') return;
 
     if (companionStyles.contains(style)) {
-      const ArticulatedCompanionRenderer().render(context, state);
+      const ArticulatedCompanionV2Renderer().render(context, state);
       return;
     }
 
