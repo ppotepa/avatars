@@ -4,6 +4,7 @@ import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import '../rendering/render_model.dart';
+import '../rendering/resolution_renderer.dart';
 import 'avatar_version.dart';
 
 final class AvatarMetrics {
@@ -131,6 +132,9 @@ final class AvatarResult {
   final String imageHash;
   final List<EffectiveAdjustment> effectiveAdjustments;
 
+  Map<String, Object> get nativeGeometryDiagnostics =>
+      ResolutionAwareRenderer.diagnosticsFor(image, palette);
+
   Map<String, Object?> toJson({bool includePixels = true}) => <String, Object?>{
         'schemaVersion': AvatarGenomeVersion.resultSchema,
         'generatorVersion': genome.generatorVersion,
@@ -152,7 +156,10 @@ final class AvatarResult {
         'palette': palette.toJson(),
         'layers': layers.map((layer) => layer.toJson()).toList(growable: false),
         'validation': validation.toJson(),
-        'metrics': metrics.toJson(),
+        'metrics': <String, Object>{
+          ...metrics.toJson(),
+          ...nativeGeometryDiagnostics,
+        },
         if (includePixels) 'image': image.toJson(),
       };
 }
