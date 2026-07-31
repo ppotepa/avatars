@@ -1,4 +1,5 @@
 import '../../pixels/pixel_mask.dart';
+import '../../random/random_stream.dart';
 import '../../util/math_utils.dart';
 import '../render_helpers.dart';
 import '../render_model.dart';
@@ -146,7 +147,7 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }
 
   void _hockey(
-    dynamic random,
+    RandomStream random,
     PixelMask dark,
     PixelMask accent,
     PixelMask light, {
@@ -198,7 +199,7 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }
 
   void _respirator(
-    dynamic random,
+    RandomStream random,
     PixelMask dark,
     PixelMask accent,
     PixelMask light, {
@@ -231,7 +232,7 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }
 
   void _robot(
-    dynamic random,
+    RandomStream random,
     PixelMask dark,
     PixelMask accent,
     PixelMask light, {
@@ -260,7 +261,7 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }
 
   void _ornamental(
-    dynamic random,
+    RandomStream random,
     PixelMask dark,
     PixelMask accent,
     PixelMask light, {
@@ -294,7 +295,7 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }
 
   void _fabric(
-    dynamic random,
+    RandomStream random,
     PixelMask dark,
     PixelMask accent,
     PixelMask light, {
@@ -318,7 +319,7 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }
 
   void _general(
-    dynamic random,
+    RandomStream random,
     PixelMask dark,
     PixelMask accent,
     PixelMask light, {

@@ -5,6 +5,7 @@ import '../genome/diversity_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
+import '../util/math_utils.dart';
 import '../pixels/indexed_image.dart';
 import '../pixels/pixel_mask.dart';
 import '../rendering/parts/accessories_renderer.dart';
