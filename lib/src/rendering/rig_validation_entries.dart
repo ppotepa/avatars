@@ -171,10 +171,14 @@ final class RigValidationEntries {
     final output = PixelMask(width: size, height: size);
     for (var y = 0; y < size; y++) {
       final top = y * source.height ~/ size;
-      final bottom = ((y + 1) * source.height ~/ size).clamp(top + 1, source.height);
+      final bottom = ((y + 1) * source.height ~/ size)
+          .clamp(top + 1, source.height)
+          .toInt();
       for (var x = 0; x < size; x++) {
         final left = x * source.width ~/ size;
-        final right = ((x + 1) * source.width ~/ size).clamp(left + 1, source.width);
+        final right = ((x + 1) * source.width ~/ size)
+            .clamp(left + 1, source.width)
+            .toInt();
         var occupied = 0;
         var total = 0;
         for (var sy = top; sy < bottom; sy++) {
