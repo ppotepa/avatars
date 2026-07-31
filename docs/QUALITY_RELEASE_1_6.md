@@ -63,14 +63,18 @@ They make the resolution-specific information gain measurable in API responses
 and tests. Profiles use names such as `canonical48`, `native64.budget1`,
 `native80.budget2` and `native96.budget3`.
 
+Diagnostics are copied into each `AvatarResult` at construction time. Existing
+results therefore retain their metrics even after the bounded global diagnostic
+registry evicts older hashes.
+
 ### Caching
 
 - Destination-grid renders use a bounded immutable LRU cache.
 - Cached images are cloned on read and write.
 - Cache keys include source appearance, destination settings, animation phase,
   semantic layer ownership, slot, order, pixel count and bounds.
-- Resolution diagnostics are retained by final image hash in a separate bounded
-  registry, including cache-hit results.
+- Resolution diagnostics are retained by final image hash for cache hits and
+  copied into every returned result.
 
 ## Quality gates
 
