@@ -12,27 +12,31 @@ final class NaturalParticleFieldRenderer implements AvatarPartRenderer {
     state.layers.removeWhere(
       (layer) => layer.id.startsWith('effect.back') ||
           layer.id.startsWith('effect.front') ||
-          layer.id.startsWith('weather.v42.'),
+          layer.id.startsWith('weather.v42.') ||
+          layer.id.startsWith('particle.v3.'),
     );
 
-    final back = _ParticleMasks();
-    final front = _ParticleMasks();
+    final effectBack = _ParticleMasks();
+    final effectFront = _ParticleMasks();
     _renderChannel(
       context,
-      back,
-      front,
+      effectBack,
+      effectFront,
       style: context.string('v4.effect'),
       density: context.integer('v4.particleDensity'),
       namespace: 'effect',
       depth: 3,
       globalWind: 0,
     );
+
+    final weatherBack = _ParticleMasks();
+    final weatherFront = _ParticleMasks();
     final weather = context.string('v4.weather');
     if (!_isRain(weather)) {
       _renderChannel(
         context,
-        back,
-        front,
+        weatherBack,
+        weatherFront,
         style: weather,
         density: context.integer('v4.weatherDensity'),
         namespace: 'weather',
@@ -41,31 +45,81 @@ final class NaturalParticleFieldRenderer implements AvatarPartRenderer {
       );
     }
 
+    _addChannelLayers(
+      context,
+      state,
+      namespace: 'effect',
+      back: effectBack,
+      front: effectFront,
+      part: 'effectParticle',
+    );
+    _addChannelLayers(
+      context,
+      state,
+      namespace: 'weather',
+      back: weatherBack,
+      front: weatherFront,
+      part: 'weatherParticle',
+    );
+  }
+
+  void _addChannelLayers(
+    AvatarRenderContext context,
+    AvatarRenderState state, {
+    required String namespace,
+    required _ParticleMasks back,
+    required _ParticleMasks front,
+    required String part,
+  }) {
     state
-      ..addLayer('particle.v3.back.dark', 6, back.dark,
+      ..addLayer('particle.v3.$namespace.back.dark', 6, back.dark,
           context.color('bgDark'),
           nodeId: 'atmosphere',
-          meta: const {'part': 'particle', 'depth': 'back'})
-      ..addLayer('particle.v3.back', 7, back.base,
+          meta: <String, Object>{
+            'part': part,
+            'particleChannel': namespace,
+            'depth': 'back',
+          })
+      ..addLayer('particle.v3.$namespace.back', 7, back.base,
           context.color('bgLight'),
           nodeId: 'atmosphere',
-          meta: const {'part': 'particle', 'depth': 'back'})
-      ..addLayer('particle.v3.back.light', 8, back.light,
+          meta: <String, Object>{
+            'part': part,
+            'particleChannel': namespace,
+            'depth': 'back',
+          })
+      ..addLayer('particle.v3.$namespace.back.light', 8, back.light,
           context.color('fantasyLight'),
           nodeId: 'atmosphere',
-          meta: const {'part': 'particle', 'depth': 'back'})
-      ..addLayer('particle.v3.front.dark', 233, front.dark,
+          meta: <String, Object>{
+            'part': part,
+            'particleChannel': namespace,
+            'depth': 'back',
+          })
+      ..addLayer('particle.v3.$namespace.front.dark', 233, front.dark,
           context.color('bgDark'),
           nodeId: 'foreground',
-          meta: const {'part': 'particle', 'depth': 'front'})
-      ..addLayer('particle.v3.front', 234, front.base,
+          meta: <String, Object>{
+            'part': part,
+            'particleChannel': namespace,
+            'depth': 'front',
+          })
+      ..addLayer('particle.v3.$namespace.front', 234, front.base,
           context.color('fantasyBase'),
           nodeId: 'foreground',
-          meta: const {'part': 'particle', 'depth': 'front'})
-      ..addLayer('particle.v3.front.light', 235, front.light,
+          meta: <String, Object>{
+            'part': part,
+            'particleChannel': namespace,
+            'depth': 'front',
+          })
+      ..addLayer('particle.v3.$namespace.front.light', 235, front.light,
           context.color('fantasyLight'),
           nodeId: 'foreground',
-          meta: const {'part': 'particle', 'depth': 'front'});
+          meta: <String, Object>{
+            'part': part,
+            'particleChannel': namespace,
+            'depth': 'front',
+          });
   }
 
   void _renderChannel(
