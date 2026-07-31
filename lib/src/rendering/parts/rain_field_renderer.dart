@@ -92,7 +92,7 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         'rain.field.back',
         7,
         back,
-        context.color('bgLight'),
+        context.color('weatherRainDark'),
         nodeId: 'atmosphere',
         meta: const <String, Object?>{
           'part': 'rain',
@@ -104,7 +104,7 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         'rain.field.middle',
         232,
         middle,
-        context.color('fantasyBase'),
+        context.color('weatherRainBase'),
         nodeId: 'foreground',
         meta: const <String, Object?>{
           'part': 'rain',
@@ -116,7 +116,7 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         'rain.field.front',
         236,
         front,
-        context.color('fantasyLight'),
+        context.color('weatherRainLight'),
         nodeId: 'foreground',
         meta: const <String, Object?>{
           'part': 'rain',
@@ -128,7 +128,7 @@ final class RainFieldRenderer implements AvatarPartRenderer {
         'rain.field.splash',
         237,
         splash,
-        context.color('white'),
+        context.color('weatherLightning'),
         nodeId: 'foreground',
         meta: const <String, Object?>{
           'part': 'rainSplash',
