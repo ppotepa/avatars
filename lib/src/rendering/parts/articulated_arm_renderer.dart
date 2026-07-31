@@ -47,6 +47,23 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       }
     }
 
+    // Extremely broad torsos can cover the generated arm extension completely.
+    // Reserve the outer edge of each occupied row so animation never targets an
+    // empty arm node.
+    if (torso.intersect(leftZone).count == 0 ||
+        torso.intersect(rightZone).count == 0) {
+      for (var y = top + 2; y <= armBottom; y++) {
+        final row = _rowBounds(torso, y);
+        if (row == null) continue;
+        leftZone
+          ..set(row.$1, y)
+          ..set(row.$1 + 1, y);
+        rightZone
+          ..set(row.$2, y)
+          ..set(row.$2 - 1, y);
+      }
+    }
+
     final replacement = <RenderLayer>[];
     final leftCombined = PixelMask(width: torso.width, height: torso.height);
     final rightCombined = PixelMask(width: torso.width, height: torso.height);
@@ -126,5 +143,16 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
       'rightHandPixels': rightHand.count,
       'armBottom': armBottom,
     };
+  }
+
+  (int, int)? _rowBounds(PixelMask mask, int y) {
+    var left = mask.width;
+    var right = -1;
+    for (var x = 0; x < mask.width; x++) {
+      if (mask.get(x, y) == 0) continue;
+      if (x < left) left = x;
+      if (x > right) right = x;
+    }
+    return right < left ? null : (left, right);
   }
 }
