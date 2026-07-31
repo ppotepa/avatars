@@ -29,6 +29,9 @@ final class AvatarMetrics {
     this.actorAreaOccupancy = 0,
     this.faceHeightOccupancy = 0,
     this.sceneEffectPixelRatio = 0,
+    this.nativeGeometryPixelCount = 0,
+    this.nativeGeometryPixelRatio = 0,
+    this.geometryProfile = 'canonical48',
   });
 
   final int usedColorCount;
@@ -52,6 +55,9 @@ final class AvatarMetrics {
   final int eyeContrastScore;
   final int silhouetteContrastScore;
   final int visualDensityScore;
+  final int nativeGeometryPixelCount;
+  final double nativeGeometryPixelRatio;
+  final String geometryProfile;
 
   Map<String, Object> toJson() => <String, Object>{
         'usedColorCount': usedColorCount,
@@ -75,6 +81,9 @@ final class AvatarMetrics {
         'eyeContrastScore': eyeContrastScore,
         'silhouetteContrastScore': silhouetteContrastScore,
         'visualDensityScore': visualDensityScore,
+        'nativeGeometryPixelCount': nativeGeometryPixelCount,
+        'nativeGeometryPixelRatio': nativeGeometryPixelRatio,
+        'geometryProfile': geometryProfile,
       };
 }
 
