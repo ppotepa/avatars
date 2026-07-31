@@ -23,8 +23,10 @@ final class FlexibleBackRigRenderer implements AvatarPartRenderer {
   };
   static const Set<String> _softBackStyles = <String>{
     'spiritRibbon',
-    'energyRibbons',
     'prayerScrollBack',
+    'capeTorn',
+    'capeRoyal',
+    'cloakStarry',
   };
 
   final RigAnchorResolver anchorResolver;
