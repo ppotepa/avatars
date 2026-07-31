@@ -32,13 +32,19 @@ final class RigAnchorResolver {
     final torsoTop = torsoBounds?.top ?? layout.integer('torso.topY', 35);
     final torsoBottom = torsoBounds?.bottom ?? 47;
     final leftClavicle = PixelPoint(
-      clampInt(torsoCenterX - (shoulderRow.right - shoulderRow.left) ~/ 5,
-          shoulderRow.left, torsoCenterX),
+      clampInt(
+        torsoCenterX - (shoulderRow.right - shoulderRow.left) ~/ 5,
+        shoulderRow.left,
+        torsoCenterX,
+      ),
       clampInt(shoulderY + 1, torsoTop, torsoBottom),
     );
     final rightClavicle = PixelPoint(
-      clampInt(torsoCenterX + (shoulderRow.right - shoulderRow.left) ~/ 5,
-          torsoCenterX, shoulderRow.right),
+      clampInt(
+        torsoCenterX + (shoulderRow.right - shoulderRow.left) ~/ 5,
+        torsoCenterX,
+        shoulderRow.right,
+      ),
       clampInt(shoulderY + 1, torsoTop, torsoBottom),
     );
 
@@ -51,13 +57,19 @@ final class RigAnchorResolver {
     final headAttach = _centerOfBottomRows(head) ??
         layout.landmarks['head.neckAttach'] ??
         PixelPoint(torsoCenterX, neckTop.y);
-    final headCenter = headBounds?.center ?? PixelPoint(24, 20);
+    final headCenter = headBounds?.center ?? const PixelPoint(24, 20);
     final headTop = PixelPoint(headCenter.x, headBounds?.top ?? 4);
 
     final leftEar = _sideCenter(ears, left: true) ??
-        PixelPoint(headBounds?.left ?? 12, layout.integer('ears.centerY', 20));
+        PixelPoint(
+          headBounds?.left ?? 12,
+          layout.integer('ears.centerY', 20),
+        );
     final rightEar = _sideCenter(ears, left: false) ??
-        PixelPoint(headBounds?.right ?? 35, layout.integer('ears.centerY', 20));
+        PixelPoint(
+          headBounds?.right ?? 35,
+          layout.integer('ears.centerY', 20),
+        );
 
     final hairRootY = clampInt(
       layout.integer('head.topY', headBounds?.top ?? 4),
@@ -70,7 +82,10 @@ final class RigAnchorResolver {
         ) ??
         (left: headBounds?.left ?? 14, right: headBounds?.right ?? 34);
 
-    final upperSpine = PixelPoint(torsoCenterX, clampInt(torsoTop + 2, 0, 47));
+    final upperSpine = PixelPoint(
+      torsoCenterX,
+      clampInt(torsoTop + 2, 0, 47),
+    );
     final midSpine = PixelPoint(
       torsoCenterX,
       clampInt((torsoTop + torsoBottom) ~/ 2, 0, 47),
@@ -87,41 +102,179 @@ final class RigAnchorResolver {
     final mouth = layout.landmarks['face.mouth'] ??
         PixelPoint(headCenter.x, layout.integer('face.mouthY', 27));
     final leftEye = layout.landmarks['face.leftEye'] ??
-        PixelPoint(layout.integer('face.leftEyeX', 19), layout.integer('face.eyeY', 18));
+        PixelPoint(
+          layout.integer('face.leftEyeX', 19),
+          layout.integer('face.eyeY', 18),
+        );
     final rightEye = layout.landmarks['face.rightEye'] ??
-        PixelPoint(layout.integer('face.rightEyeX', 29), layout.integer('face.eyeY', 18));
+        PixelPoint(
+          layout.integer('face.rightEyeX', 29),
+          layout.integer('face.eyeY', 18),
+        );
 
-    return <RigAnchor>[
-      RigAnchor(id: 'torso.center', nodeId: 'torso', localPosition: torsoBounds?.center ?? PixelPoint(torsoCenterX, torsoTop)),
-      RigAnchor(id: 'torso.top', nodeId: 'torso', localPosition: PixelPoint(torsoCenterX, torsoTop)),
-      RigAnchor(id: 'torso.bottom', nodeId: 'torso', localPosition: PixelPoint(torsoCenterX, torsoBottom)),
+    final output = <RigAnchor>[
+      RigAnchor(
+        id: 'torso.center',
+        nodeId: 'torso',
+        localPosition: torsoBounds?.center ?? PixelPoint(torsoCenterX, torsoTop),
+      ),
+      RigAnchor(
+        id: 'torso.top',
+        nodeId: 'torso',
+        localPosition: PixelPoint(torsoCenterX, torsoTop),
+      ),
+      RigAnchor(
+        id: 'torso.bottom',
+        nodeId: 'torso',
+        localPosition: PixelPoint(torsoCenterX, torsoBottom),
+      ),
       RigAnchor(id: 'neck.base', nodeId: 'neck', localPosition: neckBase),
       RigAnchor(id: 'neck.top', nodeId: 'neck', localPosition: neckTop),
-      RigAnchor(id: 'head.neckJoint', nodeId: 'head', localPosition: headAttach),
-      RigAnchor(id: 'head.center', nodeId: 'head', localPosition: headCenter),
+      RigAnchor(
+        id: 'head.neckJoint',
+        nodeId: 'head',
+        localPosition: headAttach,
+      ),
+      RigAnchor(
+        id: 'head.center',
+        nodeId: 'head',
+        localPosition: headCenter,
+      ),
       RigAnchor(id: 'head.top', nodeId: 'head', localPosition: headTop),
-      RigAnchor(id: 'head.left', nodeId: 'head', localPosition: PixelPoint(headBounds?.left ?? 12, headCenter.y)),
-      RigAnchor(id: 'head.right', nodeId: 'head', localPosition: PixelPoint(headBounds?.right ?? 35, headCenter.y)),
-      RigAnchor(id: 'leftShoulder.joint', nodeId: 'leftShoulder', localPosition: leftShoulder),
-      RigAnchor(id: 'rightShoulder.joint', nodeId: 'rightShoulder', localPosition: rightShoulder),
-      RigAnchor(id: 'leftClavicle', nodeId: 'torso', localPosition: leftClavicle),
-      RigAnchor(id: 'rightClavicle', nodeId: 'torso', localPosition: rightClavicle),
-      RigAnchor(id: 'upperSpine', nodeId: 'torso', localPosition: upperSpine),
-      RigAnchor(id: 'midSpine', nodeId: 'torso', localPosition: midSpine),
-      RigAnchor(id: 'leftEar.center', nodeId: 'leftEar', localPosition: leftEar),
-      RigAnchor(id: 'rightEar.center', nodeId: 'rightEar', localPosition: rightEar),
-      RigAnchor(id: 'mouth.center', nodeId: 'mouth', localPosition: mouth),
-      RigAnchor(id: 'leftEye.center', nodeId: 'eyes', localPosition: leftEye),
-      RigAnchor(id: 'rightEye.center', nodeId: 'eyes', localPosition: rightEye),
-      RigAnchor(id: 'hair.rootLeft', nodeId: 'hairBackRoot', localPosition: PixelPoint(hairRootRow.left, hairRootY)),
-      RigAnchor(id: 'hair.rootCenter', nodeId: 'hairBackRoot', localPosition: PixelPoint((hairRootRow.left + hairRootRow.right) ~/ 2, hairRootY)),
-      RigAnchor(id: 'hair.rootRight', nodeId: 'hairBackRoot', localPosition: PixelPoint(hairRootRow.right, hairRootY)),
-      RigAnchor(id: 'cape.leftRoot', nodeId: 'capeLeftRoot', localPosition: capeLeft),
-      RigAnchor(id: 'cape.rightRoot', nodeId: 'capeRightRoot', localPosition: capeRight),
-      RigAnchor(id: 'cape.center', nodeId: 'capeCenter', localPosition: upperSpine),
-      RigAnchor(id: 'back.upper', nodeId: 'backAdornment', localPosition: upperSpine),
-      RigAnchor(id: 'back.middle', nodeId: 'backAdornment', localPosition: midSpine),
+      RigAnchor(
+        id: 'head.left',
+        nodeId: 'head',
+        localPosition: PixelPoint(headBounds?.left ?? 12, headCenter.y),
+      ),
+      RigAnchor(
+        id: 'head.right',
+        nodeId: 'head',
+        localPosition: PixelPoint(headBounds?.right ?? 35, headCenter.y),
+      ),
+      RigAnchor(
+        id: 'leftShoulder.joint',
+        nodeId: 'leftShoulder',
+        localPosition: leftShoulder,
+      ),
+      RigAnchor(
+        id: 'rightShoulder.joint',
+        nodeId: 'rightShoulder',
+        localPosition: rightShoulder,
+      ),
+      RigAnchor(
+        id: 'leftClavicle',
+        nodeId: 'torso',
+        localPosition: leftClavicle,
+      ),
+      RigAnchor(
+        id: 'rightClavicle',
+        nodeId: 'torso',
+        localPosition: rightClavicle,
+      ),
+      RigAnchor(
+        id: 'upperSpine',
+        nodeId: 'torso',
+        localPosition: upperSpine,
+      ),
+      RigAnchor(
+        id: 'midSpine',
+        nodeId: 'torso',
+        localPosition: midSpine,
+      ),
+      RigAnchor(
+        id: 'leftEar.center',
+        nodeId: 'leftEar',
+        localPosition: leftEar,
+      ),
+      RigAnchor(
+        id: 'rightEar.center',
+        nodeId: 'rightEar',
+        localPosition: rightEar,
+      ),
+      RigAnchor(
+        id: 'mouth.center',
+        nodeId: 'mouth',
+        localPosition: mouth,
+      ),
+      RigAnchor(
+        id: 'leftEye.center',
+        nodeId: 'eyes',
+        localPosition: leftEye,
+      ),
+      RigAnchor(
+        id: 'rightEye.center',
+        nodeId: 'eyes',
+        localPosition: rightEye,
+      ),
+      RigAnchor(
+        id: 'hair.rootLeft',
+        nodeId: 'hairBackRoot',
+        localPosition: PixelPoint(hairRootRow.left, hairRootY),
+      ),
+      RigAnchor(
+        id: 'hair.rootCenter',
+        nodeId: 'hairBackRoot',
+        localPosition: PixelPoint(
+          (hairRootRow.left + hairRootRow.right) ~/ 2,
+          hairRootY,
+        ),
+      ),
+      RigAnchor(
+        id: 'hair.rootRight',
+        nodeId: 'hairBackRoot',
+        localPosition: PixelPoint(hairRootRow.right, hairRootY),
+      ),
+      RigAnchor(
+        id: 'cape.leftRoot',
+        nodeId: 'capeLeftRoot',
+        localPosition: capeLeft,
+      ),
+      RigAnchor(
+        id: 'cape.rightRoot',
+        nodeId: 'capeRightRoot',
+        localPosition: capeRight,
+      ),
+      RigAnchor(
+        id: 'cape.center',
+        nodeId: 'capeCenter',
+        localPosition: upperSpine,
+      ),
+      RigAnchor(
+        id: 'back.upper',
+        nodeId: 'backAdornment',
+        localPosition: upperSpine,
+      ),
+      RigAnchor(
+        id: 'back.middle',
+        nodeId: 'backAdornment',
+        localPosition: midSpine,
+      ),
     ];
+
+    final existing = output.map((anchor) => anchor.id).toSet();
+    final runtime = state.metadata['runtimeAnchors'];
+    if (runtime is List) {
+      for (final raw in runtime) {
+        if (raw is! Map) continue;
+        final id = raw['id']?.toString();
+        final nodeId = raw['nodeId']?.toString();
+        final x = raw['x'];
+        final y = raw['y'];
+        if (id == null ||
+            nodeId == null ||
+            x is! num ||
+            y is! num ||
+            !existing.add(id)) {
+          continue;
+        }
+        output.add(RigAnchor(
+          id: id,
+          nodeId: nodeId,
+          localPosition: PixelPoint(x.toInt(), y.toInt()),
+        ));
+      }
+    }
+    return output;
   }
 
   int _resolvedShoulderY(AvatarLayout layout, PixelMask torso) {
@@ -151,7 +304,9 @@ final class RigAnchorResolver {
   PixelPoint? _centerOfTopRows(PixelMask mask) {
     final bounds = mask.bounds;
     if (bounds == null) return null;
-    for (var y = bounds.top; y <= clampInt(bounds.top + 2, 0, bounds.bottom); y++) {
+    for (var y = bounds.top;
+        y <= clampInt(bounds.top + 2, 0, bounds.bottom);
+        y++) {
       final row = _rowExtents(mask, y);
       if (row != null) return PixelPoint((row.left + row.right) ~/ 2, y);
     }
@@ -161,7 +316,9 @@ final class RigAnchorResolver {
   PixelPoint? _centerOfBottomRows(PixelMask mask) {
     final bounds = mask.bounds;
     if (bounds == null) return null;
-    for (var y = bounds.bottom; y >= clampInt(bounds.bottom - 2, bounds.top, 47); y--) {
+    for (var y = bounds.bottom;
+        y >= clampInt(bounds.bottom - 2, bounds.top, 47);
+        y--) {
       final row = _rowExtents(mask, y);
       if (row != null) return PixelPoint((row.left + row.right) ~/ 2, y);
     }
