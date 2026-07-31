@@ -48,10 +48,10 @@ window.addEventListener('DOMContentLoaded', () => {
     scrubber.value = String(player.index);
     positionOutput.textContent = `${String(player.index + 1).padStart(2, '0')}/${String(count).padStart(2, '0')}`;
     timeOutput.textContent = formatTime(player.index * frameDuration());
-    playerTitle.textContent = switchStatusLabel(player.status);
+    playerTitle.textContent = statusLabel(player.status);
   }
 
-  function switchStatusLabel(status) {
+  function statusLabel(status) {
     if (status === 'loading') return 'LOADING';
     if (status === 'error') return 'ERROR';
     if (status === 'playing') return 'PLAY';
@@ -165,19 +165,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function mapLimit(count, limit, task) {
-    const output = new Array(count);
-    let cursor = 0;
-    async function worker() {
-      while (cursor < count) {
-        const index = cursor++;
-        output[index] = await task(index);
-      }
-    }
-    await Promise.all(Array.from({ length: Math.min(limit, count) }, worker));
-    return output;
-  }
-
   async function ensureClip() {
     if (!state.request) return false;
     const baseRequest = requestForTrack();
@@ -190,20 +177,23 @@ window.addEventListener('DOMContentLoaded', () => {
     clearTimer();
     setStatus('loading');
     try {
-      const frames = await mapLimit(frameCount(), 4, async index => {
-        const request = typeof structuredClone === 'function'
-          ? structuredClone(baseRequest)
-          : JSON.parse(JSON.stringify(baseRequest));
-        request.phase = index;
-        return apiJson('/api/avatar', {
-          method: 'POST',
-          body: JSON.stringify({ request, includePixels: false, svgScale: 1 }),
-        });
+      const clip = await apiJson('/api/animation/clip', {
+        method: 'POST',
+        body: JSON.stringify({
+          request: baseRequest,
+          frameCount: frameCount(),
+          frameDurationMs: frameDuration(),
+          loop: loopInput.checked,
+          svgScale: 1,
+        }),
       });
       if (token !== player.loadToken) return false;
-      player.frames = frames;
+      player.frames = Array.isArray(clip.frames) ? clip.frames : [];
+      if (player.frames.length !== frameCount()) {
+        throw new Error('Serwer zwrócił niepełny klip animacji.');
+      }
       player.cacheKey = key;
-      player.index = Math.min(player.index, frames.length - 1);
+      player.index = Math.min(player.index, player.frames.length - 1);
       setStatus('paused');
       renderFrame(player.index);
       return true;
