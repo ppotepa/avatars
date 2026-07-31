@@ -4,11 +4,28 @@ import '../render_helpers.dart';
 import '../render_model.dart';
 import '../rig_anchor_resolver.dart';
 
-/// Splits capes and wings into multi-anchor chains with delayed tip response.
+/// Routes back wearables to rigid, cloth-chain or articulated-wing strategies.
 final class FlexibleBackRigRenderer implements AvatarPartRenderer {
   const FlexibleBackRigRenderer({
     this.anchorResolver = const RigAnchorResolver(),
   });
+
+  static const Set<String> _softCapeStyles = <String>{
+    'shortCape',
+    'longCape',
+    'scarfBack',
+  };
+  static const Set<String> _wingCapeStyles = <String>{
+    'angelWings',
+    'demonWings',
+    'dragonWings',
+    'mechanicalWings',
+  };
+  static const Set<String> _softBackStyles = <String>{
+    'spiritRibbon',
+    'energyRibbons',
+    'prayerScrollBack',
+  };
 
   final RigAnchorResolver anchorResolver;
 
@@ -24,6 +41,7 @@ final class FlexibleBackRigRenderer implements AvatarPartRenderer {
     }
     state
       ..parentNode('cape', 'torso')
+      ..parentNode('rigidBackWearable', 'torso')
       ..parentNode('capeLeftRoot', 'leftShoulder')
       ..parentNode('capeRightRoot', 'rightShoulder')
       ..parentNode('capeCenter', 'torso')
@@ -41,9 +59,22 @@ final class FlexibleBackRigRenderer implements AvatarPartRenderer {
     final combined = <RenderLayer>[];
     for (final layer in state.layers) {
       if (layer.id.startsWith('cape.')) {
-        combined.addAll(_splitCape(context, layer));
+        if (_softCapeStyles.contains(capeStyle)) {
+          combined.addAll(_splitCloth(context, layer));
+        } else if (_wingCapeStyles.contains(capeStyle)) {
+          combined.addAll(_splitWings(context, layer));
+        } else {
+          combined.add(_rigid(layer, capeStyle));
+        }
       } else if (layer.id.startsWith('backAdornment.v42')) {
-        combined.addAll(_splitBackAdornment(context, layer, backStyle));
+        final winged = backStyle.contains('wings') || backStyle.contains('Wings');
+        if (winged) {
+          combined.addAll(_splitWings(context, layer));
+        } else if (_softBackStyles.contains(backStyle)) {
+          combined.addAll(_splitCloth(context, layer));
+        } else {
+          combined.add(_rigid(layer, backStyle));
+        }
       } else {
         combined.add(layer);
       }
@@ -54,7 +85,9 @@ final class FlexibleBackRigRenderer implements AvatarPartRenderer {
 
     state.metadata['backRig'] = <String, Object>{
       'capeStyle': capeStyle,
+      'capeStrategy': _strategy(capeStyle),
       'backStyle': backStyle,
+      'backStrategy': _strategy(backStyle),
       'anchors': <String, Object>{
         for (final anchor in anchors.where((item) => item.id.startsWith('cape.')))
           anchor.id: anchor.localPosition.toJson(),
@@ -62,7 +95,30 @@ final class FlexibleBackRigRenderer implements AvatarPartRenderer {
     };
   }
 
-  List<RenderLayer> _splitCape(
+  String _strategy(String style) {
+    if (style == 'none') return 'none';
+    if (_softCapeStyles.contains(style) || _softBackStyles.contains(style)) {
+      return 'clothChain';
+    }
+    if (_wingCapeStyles.contains(style) ||
+        style.contains('wings') ||
+        style.contains('Wings')) {
+      return 'articulatedWings';
+    }
+    return 'rigidBackWearable';
+  }
+
+  RenderLayer _rigid(RenderLayer source, String style) => source.copyWith(
+        nodeId: 'rigidBackWearable',
+        slot: RenderSlot.capeHairBack,
+        meta: <String, Object?>{
+          ...source.meta,
+          'attachmentKind': 'rigidBackWearable',
+          'backStyle': style,
+        },
+      );
+
+  List<RenderLayer> _splitCloth(
     AvatarRenderContext context,
     RenderLayer source,
   ) {
@@ -110,17 +166,10 @@ final class FlexibleBackRigRenderer implements AvatarPartRenderer {
     );
   }
 
-  List<RenderLayer> _splitBackAdornment(
+  List<RenderLayer> _splitWings(
     AvatarRenderContext context,
     RenderLayer source,
-    String style,
   ) {
-    final winged = style.contains('wings') || style.contains('Wings');
-    if (!winged) {
-      return <RenderLayer>[
-        source.copyWith(nodeId: 'backAdornment'),
-      ];
-    }
     final bounds = source.mask.bounds;
     if (bounds == null) return <RenderLayer>[];
     final centerX = bounds.center.x;
