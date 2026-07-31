@@ -3,6 +3,7 @@ import '../../util/math_utils.dart';
 import '../render_model.dart';
 import '../rig_model.dart';
 import 'forearm_segmentation_renderer.dart';
+import 'semantic_hand_shape_renderer.dart';
 
 /// Splits side geometry from torso/clothing/armor layers into real arm nodes.
 ///
@@ -172,6 +173,7 @@ final class ArticulatedArmRenderer implements AvatarPartRenderer {
     };
 
     const ForearmSegmentationRenderer().render(context, state);
+    const SemanticHandShapeRenderer().render(context, state);
   }
 
   (int, int)? _rowBounds(PixelMask mask, int y) {
