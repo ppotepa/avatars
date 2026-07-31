@@ -14,6 +14,7 @@ import '../rendering/parts/armor_renderer.dart';
 import '../rendering/parts/background_renderer.dart';
 import '../rendering/parts/face_renderer.dart';
 import '../rendering/parts/hair_renderer.dart';
+import '../rendering/parts/natural_particle_renderer.dart';
 import '../rendering/parts/props_renderer.dart';
 import '../rendering/parts/v42_aura_renderer.dart';
 import '../rendering/parts/v42_detail_renderer.dart';
@@ -53,6 +54,7 @@ final class CompositeAvatarRenderer implements AvatarRenderer {
         PropsRenderer(),
         AvatarMotionRenderer(),
         ForegroundEffectsRenderer(),
+        NaturalParticleFieldRenderer(),
       ];
 
   final List<AvatarPartRenderer> parts;
