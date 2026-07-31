@@ -17,301 +17,160 @@ final class RigLayerBinding {
     Map<String, Object?> meta,
   ) {
     final explicitNode = meta['nodeId']?.toString();
-    final explicitSlot = meta['slot']?.toString();
     if (explicitNode != null) {
-      return RigLayerBinding(
-        nodeId: explicitNode,
-        slot: _parseSlot(explicitSlot) ?? _slotForNode(explicitNode),
-        localOrder: legacyOrder,
-      );
+      return _binding(explicitNode, legacyOrder);
     }
 
-    if (id.startsWith('background') ||
-        id.startsWith('cosmic.') ||
+    final node = _nodeFor(id, meta);
+    return _binding(node, legacyOrder);
+  }
+
+  static RigLayerBinding _binding(String node, int order) => RigLayerBinding(
+        nodeId: node,
+        slot: _slotFor(node),
+        localOrder: order,
+      );
+
+  static String _nodeFor(String id, Map<String, Object?> meta) {
+    final segment = meta['rigSegment']?.toString();
+    if (segment != null) return segment;
+
+    if (id.startsWith('background')) return 'background';
+    if (id.startsWith('cosmic.') ||
         id.startsWith('ambient.') ||
         id.startsWith('weather.v42.back') ||
-        id.startsWith('flames.')) {
-      return RigLayerBinding(
-        nodeId: id.startsWith('background') ? 'background' : 'atmosphere',
-        slot: RenderSlot.background,
-        localOrder: legacyOrder,
-      );
+        id.startsWith('flames.')) return 'atmosphere';
+    if (id.startsWith('particle.') || id.startsWith('effect.front')) {
+      return 'foreground';
     }
-    if (id.startsWith('aura.') || id.startsWith('halo.v42.back')) {
-      return RigLayerBinding(
-        nodeId: id.startsWith('halo.') ? 'halo' : 'aura',
-        slot: RenderSlot.auraBack,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('cape') || id.startsWith('backAdornment')) {
-      return RigLayerBinding(
-        nodeId: id.startsWith('cape') ? 'cape' : 'backAdornment',
-        slot: RenderSlot.capeHairBack,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('hair.back')) {
-      return RigLayerBinding(
-        nodeId: 'hairBack',
-        slot: RenderSlot.capeHairBack,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('torso.') || id.startsWith('chest.')) {
-      return RigLayerBinding(
-        nodeId: id.startsWith('chest.') ? 'chest' : 'torso',
-        slot: RenderSlot.torsoClothing,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('clothing.')) {
-      return RigLayerBinding(
-        nodeId: 'clothing',
-        slot: RenderSlot.torsoClothing,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('armor.')) {
-      return RigLayerBinding(
-        nodeId: 'armor',
-        slot: RenderSlot.armor,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('neck.')) {
-      return RigLayerBinding(
-        nodeId: 'neck',
-        slot: RenderSlot.neck,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('head.')) {
-      return RigLayerBinding(
-        nodeId: 'head',
-        slot: RenderSlot.head,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('ears.')) {
-      return RigLayerBinding(
-        nodeId: 'ears',
-        slot: RenderSlot.head,
-        localOrder: legacyOrder,
-      );
-    }
+    if (id.startsWith('aura.')) return 'aura';
+    if (id.startsWith('halo.')) return 'halo';
+    if (id.startsWith('cape')) return 'cape';
+    if (id.startsWith('backAdornment')) return 'backAdornment';
+    if (id.startsWith('hair.back')) return 'hairBack';
+    if (id.startsWith('hair.front') ||
+        id.startsWith('hair.gray') ||
+        id.startsWith('hair.part')) return 'hairFront';
+    if (id.startsWith('torso.')) return 'torso';
+    if (id.startsWith('chest.')) return 'chest';
+    if (id.startsWith('clothing.')) return 'clothing';
+    if (id.startsWith('armor.')) return 'armor';
+    if (id.startsWith('neck.')) return 'neck';
+    if (id.startsWith('head.')) return 'head';
+    if (id.startsWith('ears.')) return 'ears';
     if (id.startsWith('eyes.') ||
         id.startsWith('expression.eyes') ||
-        id.startsWith('motion.v42.eye')) {
-      return RigLayerBinding(
-        nodeId: 'eyes',
-        slot: RenderSlot.face,
-        localOrder: legacyOrder,
-      );
-    }
+        id.startsWith('motion.v42.eye')) return 'eyes';
     if (id == 'brows' ||
         id.startsWith('expression.brows') ||
-        id.startsWith('motion.v42.brows')) {
-      return RigLayerBinding(
-        nodeId: 'brows',
-        slot: RenderSlot.face,
-        localOrder: legacyOrder,
-      );
-    }
+        id.startsWith('motion.v42.brows')) return 'brows';
     if (id.startsWith('mouth.') || id.startsWith('expression.mouth')) {
-      return RigLayerBinding(
-        nodeId: 'mouth',
-        slot: RenderSlot.face,
-        localOrder: legacyOrder,
-      );
+      return 'mouth';
     }
     if (id.startsWith('nose.') ||
         id.startsWith('cheeks.') ||
-        id.startsWith('skin.details')) {
-      return RigLayerBinding(
-        nodeId: 'face',
-        slot: RenderSlot.face,
-        localOrder: legacyOrder,
-      );
-    }
+        id.startsWith('skin.details')) return 'face';
     if (id.startsWith('expression.mark') || id.startsWith('emote.v42')) {
-      return RigLayerBinding(
-        nodeId: 'expressionMarks',
-        slot: RenderSlot.emotionEffects,
-        localOrder: legacyOrder,
-      );
+      return 'expressionMarks';
     }
-    if (id.startsWith('facialHair.')) {
-      return RigLayerBinding(
-        nodeId: 'facialHair',
-        slot: RenderSlot.facialHair,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('hair.front') ||
-        id.startsWith('hair.gray') ||
-        id.startsWith('hair.part')) {
-      return RigLayerBinding(
-        nodeId: 'hairFront',
-        slot: RenderSlot.hairFront,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('headwear.')) {
-      return RigLayerBinding(
-        nodeId: 'headwear',
-        slot: RenderSlot.headwear,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('eyewear.')) {
-      return RigLayerBinding(
-        nodeId: 'eyewear',
-        slot: RenderSlot.eyewear,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('faceMask.')) {
-      return RigLayerBinding(
-        nodeId: 'faceMask',
-        slot: RenderSlot.faceMask,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('cyber.')) {
-      final part = meta['part']?.toString();
-      final node = part == 'cybernetics' ? 'headAdornment' : 'actorEffects';
-      return RigLayerBinding(
-        nodeId: node,
-        slot: node == 'headAdornment'
-            ? RenderSlot.hairFront
-            : RenderSlot.emotionEffects,
-        localOrder: legacyOrder,
-      );
-    }
+    if (id.startsWith('facialHair.')) return 'facialHair';
+    if (id.startsWith('headwear.')) return 'headwear';
+    if (id.startsWith('eyewear.')) return 'eyewear';
+    if (id.startsWith('faceMask.')) return 'faceMask';
     if (id.startsWith('fantasy.') || id.startsWith('hornAccent')) {
-      return RigLayerBinding(
-        nodeId: 'horns',
-        slot: RenderSlot.hairFront,
-        localOrder: legacyOrder,
-      );
+      return 'horns';
     }
-    if (id.startsWith('halo.')) {
-      return RigLayerBinding(
-        nodeId: 'halo',
-        slot: id.contains('.back')
-            ? RenderSlot.auraBack
-            : RenderSlot.headwear,
-        localOrder: legacyOrder,
-      );
+    if (id.startsWith('headAdornment.')) return 'headAdornment';
+    if (id.startsWith('creature.')) return 'creatureTraits';
+    if (id.startsWith('cyber.')) return 'headAdornment';
+
+    if (id.startsWith('jewelry.rig.leftChain')) return 'necklaceLeft';
+    if (id.startsWith('jewelry.rig.rightChain')) return 'necklaceRight';
+    if (id.startsWith('jewelry.rig.pendant')) return 'pendant';
+    if (id.startsWith('jewelry.rig.leftEar')) return 'leftEarJewelry';
+    if (id.startsWith('jewelry.rig.rightEar')) return 'rightEarJewelry';
+    if (id.startsWith('jewelry.') || id.startsWith('relic.')) {
+      return 'necklace';
     }
-    if (id.startsWith('headAdornment.')) {
-      return RigLayerBinding(
-        nodeId: 'headAdornment',
-        slot: RenderSlot.hairFront,
-        localOrder: legacyOrder,
-      );
+
+    if (id.startsWith('companion.rig.body')) return 'companionBody';
+    if (id.startsWith('companion.rig.head')) return 'companionHead';
+    if (id.startsWith('companion.rig.wings')) return 'companionWings';
+    if (id.startsWith('companion.rig.tail')) return 'companionTail';
+    if (id.startsWith('companion.rig.ears')) return 'companionEars';
+    if (id.startsWith('companion.rig.eyes')) return 'companionEyes';
+    if (id.startsWith('companion.rig.beak')) return 'companionBeak';
+    if (id.startsWith('companion.rig')) return 'shoulderCompanion';
+    if (id.startsWith('shoulderProp.') || id.startsWith('companion.v42')) {
+      return 'shoulderCompanion';
     }
-    if (id.startsWith('creature.')) {
-      return RigLayerBinding(
-        nodeId: 'creatureTraits',
-        slot: RenderSlot.face,
-        localOrder: legacyOrder,
-      );
+
+    if (id.startsWith('mouthProp.smoke')) return 'smokeEmitter';
+    if (id.startsWith('mouthProp.')) return 'mouthProp';
+    if (id.startsWith('eventMotion') || id.startsWith('emotion')) {
+      return 'actorEffects';
     }
-    if (id.startsWith('jewelry.')) {
-      final earRelated = id.contains('ear') || meta['attachment'] == 'ear';
-      return RigLayerBinding(
-        nodeId: earRelated ? 'leftEarJewelry' : 'necklace',
-        slot: earRelated ? RenderSlot.headwear : RenderSlot.frontArms,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('relic.')) {
-      return RigLayerBinding(
-        nodeId: 'necklace',
-        slot: RenderSlot.frontArms,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('shoulderProp.') || id.startsWith('companion.')) {
-      return RigLayerBinding(
-        nodeId: _companionPartNode(id),
-        slot: RenderSlot.shoulderCompanion,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('mouthProp.smoke')) {
-      return RigLayerBinding(
-        nodeId: 'smokeEmitter',
-        slot: RenderSlot.mouthProp,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('mouthProp.')) {
-      return RigLayerBinding(
-        nodeId: 'mouthProp',
-        slot: RenderSlot.mouthProp,
-        localOrder: legacyOrder,
-      );
-    }
-    if (id.startsWith('particle.') || id.startsWith('effect.front')) {
-      return RigLayerBinding(
-        nodeId: 'foreground',
-        slot: RenderSlot.foreground,
-        localOrder: legacyOrder,
-      );
-    }
-    return RigLayerBinding(
-      nodeId: 'actorEffects',
-      slot: RenderSlot.emotionEffects,
-      localOrder: legacyOrder,
-    );
+    return 'actorEffects';
   }
 
-  static String _companionPartNode(String id) {
-    if (id.contains('head')) return 'companionHead';
-    if (id.contains('wing')) return 'companionWings';
-    if (id.contains('tail')) return 'companionTail';
-    if (id.contains('ear')) return 'companionEars';
-    if (id.contains('beak')) return 'companionBeak';
-    if (id.contains('eyes')) return 'companionEyes';
-    return 'shoulderCompanion';
-  }
-
-  static RenderSlot _slotForNode(String nodeId) => switch (nodeId) {
+  static RenderSlot _slotFor(String node) => switch (node) {
         'background' || 'atmosphere' => RenderSlot.background,
         'aura' => RenderSlot.auraBack,
-        'cape' || 'hairBack' || 'backAdornment' => RenderSlot.capeHairBack,
-        'torso' || 'chest' || 'clothing' || 'necklace' =>
-          RenderSlot.torsoClothing,
+        'cape' ||
+        'backAdornment' ||
+        'hairBack' ||
+        'hairBackRoot' ||
+        'hairBackMiddle' ||
+        'hairBackTips' ||
+        'capeLeftRoot' ||
+        'capeRightRoot' ||
+        'capeCenter' ||
+        'capeMidLeft' ||
+        'capeMidRight' ||
+        'capeTipLeft' ||
+        'capeTipRight' ||
+        'leftWingRoot' ||
+        'leftWingMid' ||
+        'leftWingTip' ||
+        'rightWingRoot' ||
+        'rightWingMid' ||
+        'rightWingTip' => RenderSlot.capeHairBack,
+        'torso' || 'chest' || 'clothing' => RenderSlot.torsoClothing,
         'armor' => RenderSlot.armor,
         'neck' => RenderSlot.neck,
         'head' || 'ears' => RenderSlot.head,
-        'face' || 'eyes' || 'brows' || 'mouth' || 'creatureTraits' =>
-          RenderSlot.face,
+        'face' ||
+        'eyes' ||
+        'brows' ||
+        'mouth' ||
+        'creatureTraits' => RenderSlot.face,
         'facialHair' => RenderSlot.facialHair,
-        'hairFront' || 'horns' || 'headAdornment' => RenderSlot.hairFront,
+        'hairFront' ||
+        'hairSideLeftRoot' ||
+        'hairSideLeftTip' ||
+        'hairSideRightRoot' ||
+        'hairSideRightTip' ||
+        'horns' ||
+        'headAdornment' => RenderSlot.hairFront,
         'headwear' || 'halo' => RenderSlot.headwear,
         'eyewear' => RenderSlot.eyewear,
         'faceMask' => RenderSlot.faceMask,
+        'necklace' ||
+        'necklaceLeft' ||
+        'necklaceRight' ||
+        'pendant' ||
+        'leftEarJewelry' ||
+        'rightEarJewelry' => RenderSlot.frontArms,
         'shoulderCompanion' ||
+        'companionBody' ||
         'companionHead' ||
         'companionWings' ||
         'companionTail' ||
         'companionEars' ||
-        'companionBeak' ||
-        'companionEyes' =>
-          RenderSlot.shoulderCompanion,
+        'companionEyes' ||
+        'companionBeak' => RenderSlot.shoulderCompanion,
         'mouthProp' || 'smokeEmitter' => RenderSlot.mouthProp,
+        'foreground' => RenderSlot.foreground,
         _ => RenderSlot.emotionEffects,
       };
-
-  static RenderSlot? _parseSlot(String? value) {
-    if (value == null) return null;
-    for (final slot in RenderSlot.values) {
-      if (slot.name == value) return slot;
-    }
-    return null;
-  }
 }

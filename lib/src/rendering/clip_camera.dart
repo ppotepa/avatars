@@ -3,6 +3,7 @@ import '../pixels/indexed_image.dart';
 import '../pixels/pixel_mask.dart';
 import '../util/math_utils.dart';
 import 'render_model.dart';
+import 'rig_model.dart';
 
 final class OverscanCanvas {
   const OverscanCanvas({
@@ -146,48 +147,27 @@ abstract final class ClipCameraFitter {
       );
     }
 
-    final minimumX = clampInt(union.right - viewportWidth + 1, 0,
-        clampInt(canvasWidth - viewportWidth, 0, canvasWidth));
-    final maximumX = clampInt(union.left, minimumX,
-        clampInt(canvasWidth - viewportWidth, 0, canvasWidth));
-    final minimumY = clampInt(union.bottom - viewportHeight + 1, 0,
-        clampInt(canvasHeight - viewportHeight, 0, canvasHeight));
-    final maximumY = clampInt(union.top, minimumY,
-        clampInt(canvasHeight - viewportHeight, 0, canvasHeight));
+    final minimumX = clampInt(
+      union.right - viewportWidth + 1,
+      0,
+      clampInt(canvasWidth - viewportWidth, 0, canvasWidth),
+    );
+    final maximumX = clampInt(
+      union.left,
+      minimumX,
+      clampInt(canvasWidth - viewportWidth, 0, canvasWidth),
+    );
+    final minimumY = clampInt(
+      union.bottom - viewportHeight + 1,
+      0,
+      clampInt(canvasHeight - viewportHeight, 0, canvasHeight),
+    );
+    final maximumY = clampInt(
+      union.top,
+      minimumY,
+      clampInt(canvasHeight - viewportHeight, 0, canvasHeight),
+    );
 
     return ClipCamera(
       x: clampInt(preferredX, minimumX, maximumX),
-      y: clampInt(preferredY, minimumY, maximumY),
-      width: viewportWidth,
-      height: viewportHeight,
-      baseline: baseline,
-    );
-  }
-
-  static PixelRect? actorBounds(List<RenderLayer> layers) {
-    PixelRect? result;
-    for (final layer in layers) {
-      if (_isSceneLayer(layer)) continue;
-      final bounds = layer.mask.bounds;
-      if (bounds == null) continue;
-      result = result == null ? bounds : _union(result, bounds);
-    }
-    return result;
-  }
-
-  static bool _isSceneLayer(RenderLayer layer) =>
-      layer.nodeId == 'background' ||
-      layer.nodeId == 'foreground' ||
-      layer.slot == RenderSlot.background ||
-      layer.meta['part'] == 'weather' ||
-      layer.meta['part'] == 'ambient' ||
-      layer.meta['part'] == 'cosmic';
-}
-
-PixelRect _union(PixelRect first, PixelRect second) {
-  final left = first.left < second.left ? first.left : second.left;
-  final top = first.top < second.top ? first.top : second.top;
-  final right = first.right > second.right ? first.right : second.right;
-  final bottom = first.bottom > second.bottom ? first.bottom : second.bottom;
-  return PixelRect(left, top, right - left + 1, bottom - top + 1);
-}
+      y: clampInt(preferredY, minimum„°µ…á¥µÕµd¤°(€€€€€İ¥‘Ñ èÙ¥•İÁ½ÉÑ]¥‘Ñ °(€€€€€¡•¥¡ĞèÙ¥•İÁ½ÉÑ!•¥¡Ğ°(€€€€€‰…Í•±¥¹”è‰…Í•±¥¹”°(€€€€¤ì(€ô((€ÍÑ…Ñ¥ŒA¥á•±I•Ğü…Ñ½É	½Õ¹‘Ì¡1¥ÍĞñI•¹‘•É1…å•Èø±…å•ÉÌ¤ì(€€€A¥á•±I•ĞüÉ•ÍÕ±Ğì(€€€™½È€¡™¥¹…°±…å•È¥¸±…å•ÉÌ¤ì(€€€€€¥˜€¡}¥ÍM•¹•1…å•È¡±…å•È¤¤½¹Ñ¥¹Õ”ì(€€€€€™¥¹…°‰½Õ¹‘Ì€ô±…å•È¹µ…Í¬¹‰½Õ¹‘Ìì(€€€€€¥˜€¡‰½Õ¹‘Ì€ôô¹Õ±°¤½¹Ñ¥¹Õ”ì(€€€€€É•ÍÕ±Ğ€ôÉ•ÍÕ±Ğ€ôô¹Õ±°€ü‰½Õ¹‘Ì€è}Õ¹¥½¸¡É•ÍÕ±Ğ°‰½Õ¹‘Ì¤ì(€€€ô(€€€É•ÑÕÉ¸É•ÍÕ±Ğì(€ô((€ÍÑ…Ñ¥Œ‰½½°}¥ÍM•¹•1…å•È¡I•¹‘•É1…å•È±…å•È¤€ôø(€€€€€±…å•È¹¹½‘•%€ôô€‰…­É½Õ¹œñğ(€€€€€±…å•È¹¹½‘•%€ôô€™½É•É½Õ¹œñğ(€€€€€±…å•È¹Í±½Ğ€ôôI•¹‘•ÉM±½Ğ¹‰…­É½Õ¹ñğ(€€€€€±…å•È¹µ•Ñ…lÁ…ÉĞt€ôô€İ•…Ñ¡•Èœñğ(€€€€€±…å•È¹µ•Ñ…lÁ…ÉĞt€ôô€…µ‰¥•¹Ğœñğ(€€€€€±…å•È¹µ•Ñ…lÁ…ÉĞt€ôô€½Íµ¥Œœì)ô()A¥á•±I•Ğ}Õ¹¥½¸¡A¥á•±I•Ğ™¥ÉÍĞ°A¥á•±I•ĞÍ•½¹¤ì(€™¥¹…°±•™Ğ€ô™¥ÉÍĞ¹±•™Ğ€ğÍ•½¹¹±•™Ğ€ü™¥ÉÍĞ¹±•™Ğ€èÍ•½¹¹±•™Ğì(€™¥¹…°Ñ½À€ô™¥ÉÍĞ¹Ñ½À€ğÍ•½¹¹Ñ½À€ü™¥ÉÍĞ¹Ñ½À€èÍ•½¹¹Ñ½Àì(€™¥¹…°É¥¡Ğ€ô™¥ÉÍĞ¹É¥¡Ğ€øÍ•½¹¹É¥¡Ğ€ü™¥ÉÍĞ¹É¥¡Ğ€èÍ•½¹¹É¥¡Ğì(€™¥¹…°‰½ÑÑ½´€ô™¥ÉÍĞ¹‰½ÑÑ½´€øÍ•½¹¹‰½ÑÑ½´€ü™¥ÉÍĞ¹‰½ÑÑ½´€èÍ•½¹¹‰½ÑÑ½´ì(€É•ÑÕÉ¸A¥á•±I•Ğ¡±•™Ğ°Ñ½À°É¥¡Ğ€´±•™Ğ€¬€Ä°‰½ÑÑ½´€´Ñ½À€¬€Ä¤ì)ô(
