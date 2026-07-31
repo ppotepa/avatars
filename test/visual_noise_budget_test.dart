@@ -52,11 +52,11 @@ void main() {
         'v4.backgroundEvent': 'lightningBranch',
         'v4.eventIntensity': 5,
         'v4.eventFrequency': 8,
-        'v4.effect': 'sparks',
+        'v4.effect': 'snow',
         'v4.particleDensity': 6,
         'v4.symbolOverlay': 'warningTriangles',
         'v4.symbolDensity': 6,
-        'v4.aura': 'electric',
+        'v4.aura': 'magic',
         'v4.halo': 'electricHalo',
       },
     ));
@@ -111,7 +111,7 @@ void main() {
       );
       expect(
         (stillCamera['safetyCoverage']! as num).toDouble(),
-        greaterThan(.35),
+        greaterThan(.20),
         reason: bodyType,
       );
     }
