@@ -147,27 +147,27 @@ final class AvatarRequest {
       throw FormatException('Unsupported AvatarRequest schema: $schema.');
     }
     return AvatarRequest(
-        seed: json['seed']! as String,
-        settings: GenomeSettings.fromJson(
-          Map<String, Object?>.from(
-            json['settings'] as Map? ?? const <String, Object?>{},
-          ),
+      seed: json['seed']! as String,
+      settings: GenomeSettings.fromJson(
+        Map<String, Object?>.from(
+          json['settings'] as Map? ?? const <String, Object?>{},
         ),
-        rendering: AvatarRenderSettings.fromJson(
-          Map<String, Object?>.from(
-            json['rendering'] as Map? ?? const <String, Object?>{},
-          ),
+      ),
+      rendering: AvatarRenderSettings.fromJson(
+        Map<String, Object?>.from(
+          json['rendering'] as Map? ?? const <String, Object?>{},
         ),
-        overrides: _objectMap(json['overrides']),
-        lockedParameters: _objectMap(json['lockedParameters']),
-        lockedCategories: _nestedObjectMap(json['lockedCategories']),
-        categoryNonces: <String, int>{
-          for (final entry in _objectMap(json['categoryNonces']).entries)
-            entry.key: (entry.value as num).toInt(),
-        },
-        phase: (json['phase'] as num?)?.toInt() ?? 0,
-        guardEnabled: json['guardEnabled'] as bool? ?? true,
-      );
+      ),
+      overrides: _canonicalObjectMap(json['overrides']),
+      lockedParameters: _canonicalObjectMap(json['lockedParameters']),
+      lockedCategories: _canonicalNestedObjectMap(json['lockedCategories']),
+      categoryNonces: <String, int>{
+        for (final entry in _objectMap(json['categoryNonces']).entries)
+          entry.key: (entry.value as num).toInt(),
+      },
+      phase: (json['phase'] as num?)?.toInt() ?? 0,
+      guardEnabled: json['guardEnabled'] as bool? ?? true,
+    );
   }
 
   final String seed;
@@ -234,11 +234,26 @@ final class AvatarRequest {
     };
   }
 
-  static Map<String, Map<String, Object>> _nestedObjectMap(Object? value) {
+  static Map<String, Object> _canonicalObjectMap(Object? value) {
+    final values = _objectMap(value);
+    return <String, Object>{
+      for (final entry in values.entries)
+        entry.key: _canonicalValue(entry.key, entry.value),
+    };
+  }
+
+  static Map<String, Map<String, Object>> _canonicalNestedObjectMap(
+    Object? value,
+  ) {
     if (value is! Map) return <String, Map<String, Object>>{};
     return <String, Map<String, Object>>{
       for (final entry in value.entries)
-        entry.key.toString(): _objectMap(entry.value),
+        entry.key.toString(): _canonicalObjectMap(entry.value),
     };
+  }
+
+  static Object _canonicalValue(String id, Object value) {
+    if (id == 'v4.faceAnimation' && value == 'laughing') return 'laugh';
+    return value;
   }
 }
