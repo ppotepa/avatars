@@ -28,6 +28,7 @@ final class BudgetedGenomeGenerator implements GenomeGenerator {
     final generated = base.generate(request, guard);
     final values = <String, Object>{...generated.values};
     final sources = <String, GenomeValueSource>{...generated.sources};
+    _resolveConflicts(values, sources);
     SceneVisualNoise.enforce(
       values: values,
       sources: sources,
@@ -45,4 +46,40 @@ final class BudgetedGenomeGenerator implements GenomeGenerator {
       sources: sources,
     );
   }
+
+  void _resolveConflicts(
+    Map<String, Object> values,
+    Map<String, GenomeValueSource> sources,
+  ) {
+    final active = SceneVisualNoise.activeChannels(values);
+    if (active.length <= 1) return;
+    active.sort((a, b) {
+      final sourcePriority = (sources[b]?.priority ?? 1)
+          .compareTo(sources[a]?.priority ?? 1);
+      if (sourcePriority != 0) return sourcePriority;
+      return _semanticPriority(b).compareTo(_semanticPriority(a));
+    });
+    final winner = active.first;
+    for (final id in active.skip(1)) {
+      final field = catalog.fieldById[id];
+      if (field == null || !field.accepts('none')) continue;
+      final previous = sources[id];
+      values[id] = 'none';
+      sources[id] = GenomeValueSource(
+        source: 'sceneChannelConflict:$winner',
+        priority: previous?.priority ?? 1,
+        category: field.category,
+      );
+    }
+  }
+
+  int _semanticPriority(String id) => switch (id) {
+        'v4.weather' => 6,
+        'v4.cosmicLayer' => 5,
+        'v4.ambientOverlay' => 4,
+        'v4.backFlames' => 3,
+        'v4.effect' => 2,
+        'v4.backgroundEvent' => 1,
+        _ => 0,
+      };
 }
