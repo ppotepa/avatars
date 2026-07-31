@@ -17,11 +17,78 @@ window.addEventListener('DOMContentLoaded', () => {
   const zoomSelect = document.getElementById('preview-zoom');
 
   const trackDefinitions = Object.freeze({
+    current: Object.freeze({ overrides: Object.freeze({}) }),
+    none: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'none',
+        'v4.faceAnimation': 'none',
+        'v4.mouthMotionStyle': 'none',
+      }),
+    }),
     idle: Object.freeze({
       overrides: Object.freeze({
         'v4.animation': 'idle',
         'v4.faceAnimation': 'none',
         'v4.mouthMotionStyle': 'none',
+      }),
+    }),
+    blink: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'blink',
+        'v4.faceAnimation': 'none',
+      }),
+    }),
+    lookAround: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'lookAround',
+        'v4.faceAnimation': 'none',
+      }),
+    }),
+    smoke: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'smoke',
+        'v4.effect': 'smoke',
+        'v4.mouthProp': 'cigarette',
+        'v4.smokeAmount': 4,
+      }),
+    }),
+    hairWind: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'hairWind',
+        'hair.lengthStyle': 'shoulder',
+        'hair.length': 12,
+        'hair.volumeBack': 3,
+        'hair.volumeSides': 2,
+      }),
+    }),
+    jewelrySwing: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'jewelrySwing',
+        'v4.earJewelry': 'dangling',
+        'v4.neckJewelry': 'medallion',
+        'v4.jewelrySize': 2,
+      }),
+    }),
+    glowPulse: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'glowPulse',
+        'v4.aura': 'electric',
+        'v4.animationAmplitude': 3,
+      }),
+    }),
+    auraPulse: Object.freeze({
+      overrides: Object.freeze({
+        'v4.animation': 'auraPulse',
+        'v4.aura': 'magic',
+        'v4.animationAmplitude': 3,
+      }),
+    }),
+    particles: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.animation': 'particles',
+        'v4.effect': 'snow',
+        'v4.particleDensity': 4,
       }),
     }),
     talk: Object.freeze({
@@ -37,6 +104,109 @@ window.addEventListener('DOMContentLoaded', () => {
         'v4.mouthExpression': 'laughOpen',
         'v4.faceAnimation': 'laugh',
         'v4.mouthMotionStyle': 'laughLoop',
+      }),
+    }),
+    smirk: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'confident',
+        'v4.eyeExpression': 'suspicious',
+        'v4.browExpression': 'skepticalSingle',
+        'v4.mouthExpression': 'smirkLeft',
+        'v4.faceAnimation': 'smirk',
+      }),
+    }),
+    angry: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'angry',
+        'v4.eyeExpression': 'angry',
+        'v4.browExpression': 'angryDown',
+        'v4.mouthExpression': 'snarl',
+        'v4.faceAnimation': 'angry',
+      }),
+    }),
+    sleepy: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'sleepy',
+        'v4.eyeExpression': 'halfLidded',
+        'v4.browExpression': 'sleepyFlat',
+        'v4.mouthExpression': 'breathingOpen',
+        'v4.faceAnimation': 'sleepy',
+        'v4.blinkStyle': 'sleepyBlink',
+      }),
+    }),
+    curious: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'surprised',
+        'v4.eyeExpression': 'wide',
+        'v4.browExpression': 'liftedOuter',
+        'v4.mouthExpression': 'oShape',
+        'v4.faceAnimation': 'curious',
+      }),
+    }),
+    proud: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'proud',
+        'v4.eyeExpression': 'focused',
+        'v4.browExpression': 'confidentTilt',
+        'v4.mouthExpression': 'smallSmile',
+        'v4.faceAnimation': 'proud',
+        'v4.poseMotion': 'proudPose',
+      }),
+    }),
+    sad: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'sad',
+        'v4.eyeExpression': 'sad',
+        'v4.browExpression': 'sadUp',
+        'v4.mouthExpression': 'sadFrown',
+        'v4.faceAnimation': 'sad',
+      }),
+    }),
+    surprised: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'surprised',
+        'v4.eyeExpression': 'wide',
+        'v4.browExpression': 'surprisedHigh',
+        'v4.mouthExpression': 'oShape',
+        'v4.faceAnimation': 'surprised',
+      }),
+    }),
+    evil: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'evilSmile',
+        'v4.eyeExpression': 'narrowed',
+        'v4.browExpression': 'angryDown',
+        'v4.mouthExpression': 'fangSmile',
+        'v4.faceAnimation': 'evil',
+      }),
+    }),
+    happy: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'bigSmile',
+        'v4.eyeExpression': 'happy',
+        'v4.browExpression': 'relaxed',
+        'v4.mouthExpression': 'wideSmile',
+        'v4.faceAnimation': 'happy',
+        'v4.emotionMark': 'blush',
+      }),
+    }),
+    bashful: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'shy',
+        'v4.eyeExpression': 'soft',
+        'v4.browExpression': 'liftedInner',
+        'v4.mouthExpression': 'tinySmile',
+        'v4.faceAnimation': 'bashful',
+        'v4.emotionMark': 'blush',
+      }),
+    }),
+    confused: Object.freeze({
+      overrides: Object.freeze({
+        'v4.expression': 'worried',
+        'v4.eyeExpression': 'suspicious',
+        'v4.browExpression': 'skepticalSingle',
+        'v4.mouthExpression': 'flatAnnoyed',
+        'v4.faceAnimation': 'confused',
       }),
     }),
     storm: Object.freeze({
@@ -63,6 +233,56 @@ window.addEventListener('DOMContentLoaded', () => {
         'v4.eventIntensity': 5,
       }),
     }),
+    cosmic: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.background': 'space',
+        'v4.cosmicLayer': 'starsDense',
+        'v4.cosmicDensity': 5,
+        'v4.backgroundEvent': 'cometPass',
+        'v4.eventFrequency': 3,
+        'v4.eventIntensity': 4,
+      }),
+    }),
+    rain: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.weather': 'rain',
+        'v4.weatherDensity': 5,
+        'v4.weatherDepth': 2,
+        'v4.weatherDrift': 1,
+      }),
+    }),
+    snow: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.weather': 'snow',
+        'v4.weatherDensity': 5,
+        'v4.weatherDepth': 2,
+        'v4.weatherDrift': 2,
+      }),
+    }),
+    embers: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.weather': 'embers',
+        'v4.weatherDensity': 5,
+        'v4.weatherDepth': 3,
+        'v4.backFlames': 'smallFlames',
+        'v4.flameHeight': 4,
+        'v4.flameIntensity': 4,
+      }),
+    }),
+    fog: Object.freeze({
+      animateBackground: true,
+      overrides: Object.freeze({
+        'v4.weather': 'fog',
+        'v4.weatherDensity': 4,
+        'v4.weatherDepth': 3,
+        'v4.ambientOverlay': 'softFog',
+        'v4.ambientDensity': 4,
+      }),
+    }),
   });
 
   const player = {
@@ -73,6 +293,7 @@ window.addEventListener('DOMContentLoaded', () => {
     cacheKey: '',
     loadToken: 0,
     catalogFields: null,
+    autoStarted: false,
   };
 
   function frameCount() {
@@ -373,8 +594,14 @@ window.addEventListener('DOMContentLoaded', () => {
     void seek(Number(scrubber.value));
   });
 
-  frameCountSelect.addEventListener('change', invalidate);
-  trackSelect.addEventListener('change', invalidate);
+  frameCountSelect.addEventListener('change', () => {
+    invalidate();
+    void play();
+  });
+  trackSelect.addEventListener('change', () => {
+    invalidate();
+    void play();
+  });
   speedSelect.addEventListener('change', () => {
     const wasPlaying = player.status === 'playing';
     pause();
@@ -386,6 +613,7 @@ window.addEventListener('DOMContentLoaded', () => {
   for (const button of resolutionButtons) {
     button.addEventListener('click', () => {
       const resolution = Number(button.dataset.resolution);
+      const wasPlaying = player.status === 'playing';
       invalidate();
       resolutionSelect.value = String(resolution);
       resolutionOutput.textContent = `${resolution} × ${resolution}`;
@@ -396,6 +624,7 @@ window.addEventListener('DOMContentLoaded', () => {
       queueRender([
         { op: 'set', id: 'rendering.size', value: resolution },
       ], true);
+      if (wasPlaying) void play();
     });
   }
 
@@ -432,10 +661,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function waitForInitialRequest() {
-    if (state.request && state.schema) {
+    if (state.request && state.schema && state.response) {
       syncResolution();
       updateReadout();
       updatePlayButton();
+      if (!player.autoStarted) {
+        player.autoStarted = true;
+        trackSelect.value = 'idle';
+        void play();
+      }
       return;
     }
     setTimeout(waitForInitialRequest, 30);
