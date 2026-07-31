@@ -1,4 +1,5 @@
 import '../../pixels/pixel_mask.dart';
+import '../render_helpers.dart';
 import '../render_model.dart';
 
 /// Splits rendered hair into anchored root/middle/tip rig segments without
@@ -96,6 +97,10 @@ final class SegmentedHairRigRenderer implements AvatarPartRenderer {
 
     state.metadata['hairRig'] = <String, Object>{
       'headBottom': headBottom,
+      'localMotion': animationChannelEnabled(
+        context.string('v4.animation'),
+        'hairWind',
+      ),
       'segments': <String, int>{
         'backRoot': state.mask('hair.back.root').count,
         'backMiddle': state.mask('hair.back.middle').count,
