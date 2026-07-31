@@ -18,6 +18,8 @@ jobs:
         with:
           sdk: stable
       - run: python3 tool/static_audit.py
+      - run: node --check web/app.js
+      - run: node --check web/player.js
       - run: dart pub get
       - run: dart format lib test bin tool benchmark
       - run: dart analyze --no-fatal-warnings
