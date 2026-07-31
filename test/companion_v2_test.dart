@@ -58,10 +58,30 @@ void main() {
       frameCount: 8,
     );
 
+    final leftSignatures = <String>{};
+    final rightSignatures = <String>{};
+    final leftAnchors = <String>{};
+    final rightAnchors = <String>{};
+
     for (final frame in clip.frames) {
       final ids = frame.state.layers.map((layer) => layer.nodeId).toSet();
       expect(ids, contains('companionLeftWing'));
       expect(ids, contains('companionRightWing'));
+
+      final body = frame.state.layers
+          .firstWhere((layer) => layer.nodeId == 'companionBody')
+          .mask;
+      final leftWing = frame.state.layers
+          .firstWhere((layer) => layer.nodeId == 'companionLeftWing')
+          .mask;
+      final rightWing = frame.state.layers
+          .firstWhere((layer) => layer.nodeId == 'companionRightWing')
+          .mask;
+      expect(body.dilated().intersect(leftWing).count, greaterThan(0));
+      expect(body.dilated().intersect(rightWing).count, greaterThan(0));
+      leftSignatures.add(leftWing.data.join());
+      rightSignatures.add(rightWing.data.join());
+
       final rig = frame.state.metadata['companionRig']! as Map;
       final anchors = rig['anchors']! as Map;
       expect(anchors, contains('companionLeftWing'));
@@ -70,10 +90,18 @@ void main() {
         anchors['companionLeftWing'],
         isNot(equals(anchors['companionRightWing'])),
       );
+      leftAnchors.add(anchors['companionLeftWing'].toString());
+      rightAnchors.add(anchors['companionRightWing'].toString());
+
       final runtime = frame.state.metadata['rigAnchors']! as Map;
       expect(runtime, contains('companion.leftWing.anchor'));
       expect(runtime, contains('companion.rightWing.anchor'));
     }
+
+    expect(leftSignatures.length, greaterThan(1));
+    expect(rightSignatures.length, greaterThan(1));
+    expect(leftAnchors, hasLength(1));
+    expect(rightAnchors, hasLength(1));
   });
 
   test('skeleton and jellyfish expose limb and tentacle anchors', () {
