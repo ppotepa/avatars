@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   final generator = AvatarGenerator();
 
-  test('every articulated companion is accepted and renders owned parts', () {
+  test('every articulated companion is accepted and renders anchored parts', () {
     final shoulderField =
         ParameterCatalog.v41.fieldById['v4.shoulderProp']!;
     final extraField =
@@ -39,8 +39,16 @@ void main() {
         reason: '$style has an unowned layer',
       );
       final rig = frame.state.metadata['companionRig']! as Map;
+      final anchors = rig['anchors']! as Map;
       expect(rig['version'], 2, reason: style);
-      expect((rig['anchors']! as Map).isNotEmpty, isTrue, reason: style);
+      expect(anchors.isNotEmpty, isTrue, reason: style);
+      for (final layer in layers) {
+        expect(
+          anchors,
+          contains(layer.nodeId),
+          reason: '$style/${layer.nodeId} has no companion pivot',
+        );
+      }
     }
   });
 
@@ -96,6 +104,17 @@ void main() {
       final runtime = frame.state.metadata['rigAnchors']! as Map;
       expect(runtime, contains('companion.leftWing.anchor'));
       expect(runtime, contains('companion.rightWing.anchor'));
+
+      final runtimeGraph = frame.state.metadata['rigGraph']! as Map;
+      final nodes = (runtimeGraph['nodes']! as List).cast<Map>();
+      final leftNode = nodes.firstWhere(
+        (node) => node['id'] == 'companionLeftWing',
+      );
+      final rightNode = nodes.firstWhere(
+        (node) => node['id'] == 'companionRightWing',
+      );
+      expect(leftNode['anchorId'], 'companion.leftWing.anchor');
+      expect(rightNode['anchorId'], 'companion.rightWing.anchor');
     }
 
     expect(leftSignatures.length, greaterThan(1));
