@@ -92,7 +92,9 @@ final class RenderGrid {
   }
 
   int _scaled(num value) =>
-      ((value * profile.size * 2 + 48) ~/ (48 * 2)).clamp(0, profile.size - 1);
+      ((value * profile.size * 2 + 48) ~/ (48 * 2))
+          .clamp(0, profile.size - 1)
+          .toInt();
 
   int _scaledLength(num value) {
     final scaled = (value * profile.size / 48).round();
