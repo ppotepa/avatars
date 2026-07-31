@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import '../pixels/pixel_mask.dart';
 import 'render_model.dart';
 import 'rig_model.dart';
@@ -19,7 +17,8 @@ final class RigPoseApplier {
     RigGraph graph,
     RigPose requestedPose,
   ) {
-    final solved = const RigConstraintSolver().solve(graph, requestedPose);
+    final ownedPose = _removeDuplicateSecondaryMotion(state, requestedPose);
+    final solved = const RigConstraintSolver().solve(graph, ownedPose);
     final matrices = const RigWorldResolver().resolveMatrices(graph, solved);
 
     for (var index = 0; index < state.layers.length; index++) {
@@ -51,6 +50,63 @@ final class RigPoseApplier {
         },
     };
     return solved;
+  }
+
+  RigPose _removeDuplicateSecondaryMotion(
+    AvatarRenderState state,
+    RigPose requested,
+  ) {
+    final pose = requested.clone();
+
+    void remove(Iterable<String> ids) {
+      for (final id in ids) pose.transforms.remove(id);
+    }
+
+    if (state.metadata.containsKey('hairRig')) {
+      remove(const <String>[
+        'hairBackMiddle',
+        'hairBackTips',
+        'hairSideLeftRoot',
+        'hairSideLeftTip',
+        'hairSideRightRoot',
+        'hairSideRightTip',
+      ]);
+    }
+    if (state.metadata.containsKey('jewelryRig')) {
+      remove(const <String>[
+        'necklace',
+        'necklaceLeft',
+        'necklaceRight',
+        'pendant',
+        'leftEarJewelry',
+        'rightEarJewelry',
+      ]);
+    }
+    if (state.metadata.containsKey('companionRig')) {
+      remove(const <String>[
+        'shoulderCompanion',
+        'companionBody',
+        'companionHead',
+        'companionWings',
+        'companionTail',
+        'companionEars',
+        'companionEyes',
+        'companionBeak',
+      ]);
+    }
+    if (state.metadata.containsKey('backRig')) {
+      remove(const <String>[
+        'capeMidLeft',
+        'capeMidRight',
+        'capeTipLeft',
+        'capeTipRight',
+        'leftWingMid',
+        'leftWingTip',
+        'rightWingMid',
+        'rightWingTip',
+      ]);
+    }
+    return pose;
   }
 
   PixelMask _transformMask(PixelMask source, RigMatrix matrix) {
