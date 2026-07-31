@@ -51,7 +51,7 @@ final class BudgetedGenomeGenerator implements GenomeGenerator {
     Map<String, Object> values,
     Map<String, GenomeValueSource> sources,
   ) {
-    final active = SceneVisualNoise.activeChannels(values);
+    final active = SceneVisualNoise.activeChannels(values).toList();
     if (active.length <= 1) return;
     active.sort((a, b) {
       final sourcePriority = (sources[b]?.priority ?? 1)
