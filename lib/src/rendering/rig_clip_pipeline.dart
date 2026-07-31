@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import '../api/avatar_request.dart';
 import '../constraints/avatar_validator.dart';
 import '../constraints/validation.dart';
@@ -35,9 +33,10 @@ import 'parts/v42_features_renderer.dart';
 import 'parts/v42_motion_renderer.dart';
 import 'parts/v42_scenic_light_renderer.dart';
 import 'render_model.dart';
-import 'rig_anchor_resolver.dart';
 import 'rig_layer_binding.dart';
 import 'rig_model.dart';
+import 'rig_pose_applier.dart';
+import 'runtime_rig_builder.dart';
 
 final class RigPreparedAvatar {
   const RigPreparedAvatar({
@@ -225,16 +224,27 @@ final class RigClipPipeline {
         localOrder: binding.localOrder,
       );
     }
+
+    // Canonical parents are defaults. Renderer-defined asymmetric attachments
+    // such as a right-shoulder companion must never be overwritten here.
     for (final entry in CanonicalRig.parents.entries) {
-      state.parentNode(entry.key, entry.value);
+      if (!state.nodeParents.containsKey(entry.key)) {
+        state.parentNode(entry.key, entry.value);
+      }
     }
-    final anchors = const RigAnchorResolver().resolve(context.layout, state);
-    for (final anchor in anchors) state.anchorNode(anchor.nodeId, anchor.id);
 
     final backgrounds = <String, PixelMask>{
       for (final layer in state.layers)
         if (layer.slot == RenderSlot.background) layer.id: layer.mask,
     };
+
+    final graph = const RuntimeRigBuilder().build(
+      context.layout,
+      state,
+      offsetX: canvas.offsetX,
+      offsetY: canvas.offsetY,
+    );
+
     canvas.embedState(state);
     for (var index = 0; index < state.layers.length; index++) {
       final layer = state.layers[index];
@@ -249,22 +259,25 @@ final class RigClipPipeline {
       context,
       controller.sample(context),
     );
-    final order = state.buildRigGraph().topologicalOrder();
-    for (final nodeId in order) {
-      final transform = sample.transformFor(nodeId);
-      if (transform.isIdentity) continue;
-      state.translateNode(nodeId, dx: transform.dx, dy: transform.dy);
-      if (transform.rotationDegrees != 0) {
-        _rotateNode(state, nodeId, transform.rotationDegrees);
-      }
-      state.setNodeTransform(nodeId, transform);
-    }
+    final requestedPose = RigPose(sample.transforms);
+    final solvedPose = const RigPoseApplier().solveAndApply(
+      state,
+      graph,
+      requestedPose,
+    );
+
     state.metadata
-      ..['motionSample'] = sample.toJson()
-      ..['rigAnchors'] = <String, Object>{
-        for (final anchor in anchors) anchor.id: anchor.toJson(),
+      ..['motionSample'] = <String, Object>{
+        ...sample.toJson(),
+        'solvedTransforms': solvedPose.toJson(),
       }
-      ..['rigGraph'] = state.buildRigGraph().toJson();
+      ..['rigAnchors'] = <String, Object>{
+        for (final anchor in graph.anchors) anchor.id: anchor.toJson(),
+      }
+      ..['rigConstraints'] = graph.constraints
+          .map((constraint) => constraint.toJson())
+          .toList(growable: false)
+      ..['rigGraph'] = graph.toJson();
   }
 
   RigPipelineFrame _cropAndValidate(
@@ -311,57 +324,6 @@ final class RigClipPipeline {
       }
     }
     return output;
-  }
-
-  void _rotateNode(AvatarRenderState state, String nodeId, int degrees) {
-    final descendants = state.nodeAndDescendants(nodeId);
-    PixelRect? bounds;
-    for (final layer in state.layers) {
-      if (!descendants.contains(layer.nodeId)) continue;
-      final current = layer.mask.bounds;
-      if (current == null) continue;
-      bounds = bounds == null ? current : _union(bounds, current);
-    }
-    if (bounds == null) return;
-    final pivotX = bounds.center.x;
-    final pivotY = nodeId == 'head' || nodeId == 'companionHead'
-        ? bounds.bottom
-        : nodeId.contains('Arm') || nodeId.contains('Tip')
-            ? bounds.top
-            : bounds.center.y;
-    final angle = degrees.clamp(-12, 12).toInt();
-    for (var index = 0; index < state.layers.length; index++) {
-      final layer = state.layers[index];
-      if (!descendants.contains(layer.nodeId)) continue;
-      state.layers[index] = layer.copyWith(
-        mask: _rotate(layer.mask, angle, pivotX, pivotY),
-      );
-    }
-  }
-
-  PixelMask _rotate(PixelMask source, int degrees, int pivotX, int pivotY) {
-    final output = PixelMask(width: source.width, height: source.height);
-    final radians = degrees * math.pi / 180;
-    final cosine = math.cos(radians);
-    final sine = math.sin(radians);
-    for (var y = 0; y < source.height; y++) {
-      for (var x = 0; x < source.width; x++) {
-        final dx = x - pivotX;
-        final dy = y - pivotY;
-        final sx = pivotX + cosine * dx + sine * dy;
-        final sy = pivotY - sine * dx + cosine * dy;
-        if (source.get(sx.round(), sy.round()) != 0) output.set(x, y);
-      }
-    }
-    return output;
-  }
-
-  PixelRect _union(PixelRect first, PixelRect second) {
-    final left = math.min(first.left, second.left);
-    final top = math.min(first.top, second.top);
-    final right = math.max(first.right, second.right);
-    final bottom = math.max(first.bottom, second.bottom);
-    return PixelRect(left, top, right - left + 1, bottom - top + 1);
   }
 }
 
