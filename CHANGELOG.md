@@ -1,11 +1,20 @@
 ## Unreleased
 
-- Fixed the Laugh player track to use the catalogued `v4.faceAnimation=\"laugh\"`
+- Restored the complete animation-track menu with 31 grouped choices: current
+  configuration, disabled animation, all nine classic V4.1 channels, thirteen
+  face-expression tracks and seven atmospheric tracks.
+- Made `Idle` the default selected track and automatically starts local playback
+  after the initial avatar render completes.
+- Made track changes immediately prepare and play the selected clip instead of
+  leaving the player stopped on the previous frame.
+- Fixed native Edge/Windows select-menu readability with an explicit dark color
+  scheme and dark backgrounds for options and option groups.
+- Fixed the Laugh player track to use the catalogued `v4.faceAnimation="laugh"`
   value instead of the invalid `laughing` value that caused HTTP 400 responses.
 - Added client-side validation of every animation-track override against the
   server-provided catalog before requesting a clip.
 - Added backward-compatible request normalization from the legacy
-  `v4.faceAnimation=\"laughing\"` alias to `laugh`, including locked values.
+  `v4.faceAnimation="laughing"` alias to `laugh`, including locked values.
 - Rebuilt the browser animation controls as a compact media deck with fixed SVG
   transport buttons, first/previous/rewind/play/pause/stop/forward/next/last
   semantics, a scrubber, frame/time readouts, loop mode and animation tracks.
