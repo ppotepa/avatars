@@ -66,6 +66,18 @@ final class RigMatrix {
         y: b * x + d * y + ty,
       );
 
+  /// Converts a world-space vector into this matrix's local coordinate space.
+  ({double x, double y}) inverseVector(num x, num y) {
+    final determinant = a * d - b * c;
+    if (determinant.abs() < .000001) {
+      return (x: x.toDouble(), y: y.toDouble());
+    }
+    return (
+      x: (d * x - c * y) / determinant,
+      y: (-b * x + a * y) / determinant,
+    );
+  }
+
   PixelPoint transformPoint(PixelPoint point) {
     final result = transform(point.x, point.y);
     return PixelPoint(result.x.round(), result.y.round());
@@ -131,9 +143,9 @@ final class RigWorldResolver {
 
 /// Small deterministic positional solver for attachments and chains.
 ///
-/// It intentionally adjusts translations only. Rotation is authored by motion
-/// profiles, while attachment and fixed-distance constraints keep connected
-/// pieces from opening seams after those transforms are applied.
+/// It adjusts child translations in the coordinate system of the child's
+/// parent. This keeps constraints correct when a shoulder, neck or torso has
+/// already rotated.
 final class RigConstraintSolver {
   const RigConstraintSolver({this.iterations = 5});
 
@@ -185,14 +197,15 @@ final class RigConstraintSolver {
       matrices: matrices,
     );
     final childId = constraint.nodeIds[1];
+    final worldDx = (parentPoint.x - childPoint.x) * constraint.stiffness;
+    final worldDy = (parentPoint.y - childPoint.y) * constraint.stiffness;
+    final local = _parentLocalVector(graph, matrices, childId, worldDx, worldDy);
     final current = pose.transformFor(childId);
     pose.set(
       childId,
       current.copyWith(
-        dx: current.dx +
-            ((parentPoint.x - childPoint.x) * constraint.stiffness).round(),
-        dy: current.dy +
-            ((parentPoint.y - childPoint.y) * constraint.stiffness).round(),
+        dx: current.dx + local.x.round(),
+        dy: current.dy + local.y.round(),
       ),
     );
   }
@@ -230,14 +243,31 @@ final class RigConstraintSolver {
     );
     final correction = (wanted - distance) * constraint.stiffness;
     final childId = constraint.nodeIds[1];
+    final worldDx = dx / distance * correction;
+    final worldDy = dy / distance * correction;
+    final local = _parentLocalVector(graph, matrices, childId, worldDx, worldDy);
     final current = pose.transformFor(childId);
     pose.set(
       childId,
       current.copyWith(
-        dx: current.dx + (dx / distance * correction).round(),
-        dy: current.dy + (dy / distance * correction).round(),
+        dx: current.dx + local.x.round(),
+        dy: current.dy + local.y.round(),
       ),
     );
+  }
+
+  ({double x, double y}) _parentLocalVector(
+    RigGraph graph,
+    Map<String, RigMatrix> matrices,
+    String childId,
+    double worldX,
+    double worldY,
+  ) {
+    final parentId = graph.byId[childId]?.parentId;
+    final parent = parentId == null
+        ? RigMatrix.identity
+        : matrices[parentId] ?? RigMatrix.identity;
+    return parent.inverseVector(worldX, worldY);
   }
 
   void _limitRotation(RigPose pose, RigConstraint constraint) {
