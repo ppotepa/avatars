@@ -151,6 +151,8 @@ final class AvatarGenerator {
         .toSet()
         .toList(growable: false)
       ..sort();
+    final constraintQuality = frame.state.metadata['rigConstraintQuality'] ??
+        const <String, Object>{};
 
     graph
       ..addValue('rig.camera', 'clipCamera', frame.camera.toJson())
@@ -173,6 +175,11 @@ final class AvatarGenerator {
         'rig.constraints',
         'rigConstraints',
         frame.state.metadata['rigConstraints'],
+      )
+      ..addValue(
+        'rig.constraintQuality',
+        'rigConstraintQuality',
+        constraintQuality,
       )
       ..addValue(
         'rig.worldTransforms',
@@ -200,6 +207,11 @@ final class AvatarGenerator {
       ..addValue('rig.arms', 'articulatedRig', frame.state.metadata['armRig'])
       ..addValue('rig.rain', 'weatherField', frame.state.metadata['rainField'])
       ..addValue(
+        'rig.worldSmoke',
+        'worldEmitter',
+        frame.state.metadata['worldSmokeEmitter'],
+      )
+      ..addValue(
         'rig.quality',
         'rigQuality',
         <String, Object>{
@@ -208,6 +220,7 @@ final class AvatarGenerator {
           'actorOccupancy': frame.camera.actorOccupancy,
           'cameraScale': frame.camera.scale,
           'layerCount': frame.state.layers.length,
+          'constraintQuality': constraintQuality,
         },
       );
     return AvatarLayout(
