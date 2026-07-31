@@ -38,10 +38,9 @@ void main() {
         isTrue,
         reason: '$style has an unowned layer',
       );
-      final rig = frame.state.metadata['companionRig'];
-      expect(rig, isA<Map>(), reason: style);
-      expect((rig! as Map)['version'], 2, reason: style);
-      expect((rig['anchors'] as Map).isNotEmpty, isTrue, reason: style);
+      final rig = frame.state.metadata['companionRig']! as Map;
+      expect(rig['version'], 2, reason: style);
+      expect((rig['anchors']! as Map).isNotEmpty, isTrue, reason: style);
     }
   });
 
