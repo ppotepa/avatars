@@ -38,11 +38,10 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
         ? 0.0
         : edgePixels / (union.width * union.height);
     final configured = SceneVisualNoise.score(context.genome.values);
-    final structural = clampInt(
-      configured + clampInt(componentCount ~/ 12, 0, 8) +
-          (edgeDensity * 10).round(),
+    final structuralPressure = clampInt(
+      clampInt(componentCount ~/ 12, 0, 8) + (edgeDensity * 10).round(),
       0,
-      100,
+      16,
     );
     final target = SceneVisualNoise.probabilisticTarget(
       context.genome.values,
@@ -57,7 +56,8 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
       'targetScore': target,
       'hardLimit': SceneVisualNoise.hardLimit,
       'configuredScore': configured,
-      'structuralScore': structural,
+      'finalScore': configured,
+      'structuralPressure': structuralPressure,
       'activeChannel': winner,
       'activeChannelCount': active.length,
       'effectLayerCount': effectLayers.length,
