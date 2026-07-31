@@ -9,6 +9,7 @@
   box-shadow:
     inset 0 1px rgb(255 255 255 / 0.04),
     inset 0 -1px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
 }
 
 .deck-display {
@@ -44,11 +45,29 @@
   min-width: 0;
   min-height: 28px;
   padding: 0.2rem 1.7rem 0.2rem 0.4rem;
-  border-color: transparent;
-  background: transparent;
-  color: #a7e8c2;
+  border-color: #263649;
+  background-color: #091019;
+  color: #d1f6df;
+  color-scheme: dark;
   font-family: inherit;
   font-size: 0.72rem;
+}
+
+.deck-track select:hover,
+.deck-track select:focus {
+  border-color: #4b9d76;
+  outline: none;
+}
+
+.deck-track select option,
+.deck-track select optgroup {
+  background-color: #091019;
+  color: #d1f6df;
+}
+
+.deck-track select optgroup {
+  color: #65d59a;
+  font-weight: 700;
 }
 
 .deck-readout {
