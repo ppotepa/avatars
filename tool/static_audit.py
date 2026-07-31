@@ -105,9 +105,8 @@ def delimiter_errors(path: Path) -> list[str]:
     stack: list[tuple[str, int]] = []
     errors: list[str] = []
     for index, char in enumerate(source):
-        if char in "([{“":
-            if char != "“":
-                stack.append((char, index))
+        if char in "([{":
+            stack.append((char, index))
         elif char in ")]}":
             if not stack or stack[-1][0] != pairs[char]:
                 line = source.count("\n", 0, index) + 1
@@ -214,7 +213,14 @@ def project_contract_errors(field_ids: list[str]) -> list[str]:
         ROOT / "lib" / "src" / "rendering" / "parts" / "v42_motion_renderer.dart",
         ROOT / "lib" / "src" / "rendering" / "parts" / "v42_detail_renderer.dart",
         ROOT / "lib" / "src" / "rendering" / "parts" / "v42_scenic_light_renderer.dart",
+        ROOT / "lib" / "src" / "rendering" / "parts" / "natural_particle_renderer.dart",
+        ROOT / "lib" / "src" / "rendering" / "parts" / "procedural_mask_renderer.dart",
+        ROOT / "lib" / "src" / "rendering" / "parts" / "procedural_surface_renderer.dart",
         ROOT / "test" / "v42_features_test.dart",
+        ROOT / "test" / "player_ui_contract_test.dart",
+        ROOT / "test" / "procedural_variation_test.dart",
+        ROOT / "test" / "resolution_symmetry_test.dart",
+        ROOT / "test" / "surface_variation_test.dart",
         ROOT / ".github" / "workflows" / "dart-ci.yml",
         ROOT / "README.md",
         ROOT / "docs" / "ARCHITECTURE.md",
@@ -226,7 +232,9 @@ def project_contract_errors(field_ids: list[str]) -> list[str]:
         ROOT / "bin" / "avatar_editor_server.dart",
         ROOT / "web" / "index.html",
         ROOT / "web" / "app.js",
+        ROOT / "web" / "player.js",
         ROOT / "web" / "styles.css",
+        ROOT / "web" / "player.css",
     ]
     errors = [
         f"missing required file: {path.relative_to(ROOT)}"
@@ -266,17 +274,31 @@ def project_contract_errors(field_ids: list[str]) -> list[str]:
         "/api/catalog",
         "/api/default-request",
         "/api/avatar",
+        "/api/animation/clip",
         "/api/export/png",
         "/api/export/svg",
         "/api/save",
     ):
         if route not in server:
             errors.append(f"server route missing: {route}")
+    for asset in ("/player.js", "/player.css"):
+        if asset not in server:
+            errors.append(f"server static asset missing: {asset}")
 
     html_path = ROOT / "web" / "index.html"
     html = html_path.read_text(encoding="utf-8") if html_path.is_file() else ""
     if "<canvas" in html.lower():
         errors.append("web editor must not use canvas")
+    for control in (
+        "frame-rewind-button",
+        "frame-forward-button",
+        "animation-scrubber",
+        "animation-loop",
+        "animation-track",
+        "preview-zoom",
+    ):
+        if f'id="{control}"' not in html:
+            errors.append(f"compact player control missing: {control}")
 
     app_path = ROOT / "web" / "app.js"
     app_js = app_path.read_text(encoding="utf-8") if app_path.is_file() else ""
@@ -286,6 +308,18 @@ def project_contract_errors(field_ids: list[str]) -> list[str]:
             "frontend hardcodes catalog fields instead of using bindings: "
             + ", ".join(hardcoded[:10])
         )
+    for obsolete in ("function toggleAnimation", "function startAnimation"):
+        if obsolete in app_js:
+            errors.append(f"obsolete duplicate player controller remains: {obsolete}")
+
+    player_path = ROOT / "web" / "player.js"
+    player_js = (
+        player_path.read_text(encoding="utf-8") if player_path.is_file() else ""
+    )
+    if "MutationObserver" in player_js:
+        errors.append("player must not synchronize state through MutationObserver")
+    if "/api/animation/clip" not in player_js:
+        errors.append("player does not use the animation clip endpoint")
     return errors
 
 
@@ -305,6 +339,8 @@ def main() -> int:
     print("- 274 referenced fields")
     print(f"- {len(dart_files())} Dart files with balanced delimiters")
     print("- all relative imports resolve")
+    print("- compact player and animation clip contract present")
+    print("- procedural variation and natural particle renderers present")
     print(
         "Run `dart analyze` and `dart test` in a Dart SDK environment "
         "for compiler-level validation."
