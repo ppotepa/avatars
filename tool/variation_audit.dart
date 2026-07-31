@@ -95,7 +95,7 @@ void main(List<String> arguments) {
       ));
       signatures.add(_signature(result, probe.layerPrefixes));
     }
-    final required = probe.minimumUnique.clamp(1, samples);
+    final required = probe.minimumUnique.clamp(1, samples).toInt();
     final passed = signatures.length >= required;
     stdout.writeln(
       '- ${probe.id}: ${signatures.length}/$samples unique '
@@ -120,5 +120,5 @@ int _samples(List<String> arguments) {
   final index = arguments.indexOf('--samples');
   if (index < 0 || index + 1 >= arguments.length) return 100;
   final parsed = int.tryParse(arguments[index + 1]) ?? 100;
-  return parsed.clamp(10, 1000);
+  return parsed.clamp(10, 1000).toInt();
 }
