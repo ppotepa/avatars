@@ -11,6 +11,7 @@ if (Test-Path $FlutterDart) {
 
 Write-Host "Using Dart: $Dart"
 Write-Host "Starting Avatar Genome Editor on http://127.0.0.1:8080"
+Write-Host "Dart run will incrementally rebuild changed sources. Use scripts/rebuild.ps1 for a clean rebuild."
 
 $env:DART_SUPPRESS_ANALYTICS = "true"
 $env:CI = "true"

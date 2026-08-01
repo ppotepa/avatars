@@ -12,7 +12,7 @@ void main() {
         overrides: <String, Object>{
           'v4.animation': 'idle',
           'hair.lengthStyle': 'belowShoulder',
-          'hair.length': 18,
+          'hair.length': 15,
           'v4.neckJewelry': 'medallion',
           'v4.shoulderProp': 'parrot',
         },
@@ -23,7 +23,8 @@ void main() {
     for (final frame in animation.frames) {
       expect(frame.image.width, 48);
       expect(frame.image.height, 48);
-      cameras.add(frame.layout.graph.nodes['rig.camera']?.value.toString() ?? '');
+      cameras
+          .add(frame.layout.graph.nodes['rig.camera']?.value.toString() ?? '');
       for (final layer in frame.layers) {
         expect(layer.nodeId, isNotEmpty, reason: layer.id);
       }
@@ -41,7 +42,7 @@ void main() {
       overrides: <String, Object>{
         'v4.animation': 'hairWind',
         'hair.lengthStyle': 'belowShoulder',
-        'hair.length': 18,
+        'hair.length': 15,
         'v4.neckJewelry': 'royalMedallion',
         'v4.earJewelry': 'dangling',
         'v4.shoulderProp': 'parrot',

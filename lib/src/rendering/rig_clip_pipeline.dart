@@ -113,7 +113,7 @@ final class RigClipPipeline {
   final List<AvatarPartRenderer> parts;
   final ClipCameraCache cameraCache;
 
-  /// Minimum canvas. Wide content automatically upgrades to 80 or 88 pixels.
+  /// Minimum canvas. Wide content automatically upgrades to 96 or 104 pixels.
   final OverscanCanvas canvas;
 
   static List<AvatarPartRenderer> get defaultParts =>
@@ -272,6 +272,11 @@ final class RigClipPipeline {
     );
     final state = AvatarRenderState();
     for (final part in parts) part.render(context, state);
+    _ensureBackgroundContrast(context, state);
+    _simplifyHighFrequencyBackground(context, state);
+    _simplifyFaceMaskPattern(context, state);
+    _reduceInternalOutlines(state);
+    _reduceMicroFaceDetails(state);
     _bindRig(context, state, workingCanvas);
     final image = compositor.compose(state.layers);
     return _RawRigFrame(
@@ -280,6 +285,156 @@ final class RigClipPipeline {
       image: image,
       guard: guard,
     );
+  }
+
+  void _reduceInternalOutlines(AvatarRenderState state) {
+    const structuralParts = <String>{
+      'torso',
+      'neck',
+      'head',
+      'hair',
+      'cape',
+      'armor',
+      'headwear',
+      'fantasy',
+      'companion',
+    };
+    var removed = 0;
+    state.layers.removeWhere((layer) {
+      if (!layer.id.endsWith('.outline')) return false;
+      final part = layer.meta['part']?.toString() ?? layer.id.split('.').first;
+      final remove = !structuralParts.contains(part);
+      if (remove) removed++;
+      return remove;
+    });
+    state.metadata['outlineBudget'] = <String, Object>{
+      'removedInternalOutlines': removed,
+      'structuralParts': structuralParts.toList(growable: false),
+    };
+  }
+
+  void _simplifyHighFrequencyBackground(
+    AvatarRenderContext context,
+    AvatarRenderState state,
+  ) {
+    const noisyBackgrounds = <String>{
+      'checker',
+      'diagonalStripes',
+      'pixelNoise',
+      'warpTunnel',
+      'voidStatic',
+      'factionSymbol',
+      'dataGrid',
+      'cathedralWindow',
+      'citySkyline',
+      'starshipBridge',
+      'spaceStation',
+      'castleWall',
+      'throneRoom',
+      'libraryShelves',
+      'neonCity',
+      'laboratory',
+      'terminal',
+    };
+    final background = context.string('v4.background');
+    if (!noisyBackgrounds.contains(background)) return;
+    var removed = 0;
+    state.layers.removeWhere((layer) {
+      if (!layer.id.startsWith('background.') ||
+          layer.id == 'background.base') {
+        return false;
+      }
+      removed++;
+      return true;
+    });
+    state.metadata['backgroundClarityBudget'] = <String, Object>{
+      'background': background,
+      'removedHighFrequencyLayers': removed,
+      'reason': 'highFrequencyPattern',
+    };
+  }
+
+  void _simplifyFaceMaskPattern(
+    AvatarRenderContext context,
+    AvatarRenderState state,
+  ) {
+    // robotMask's procedural cross/grid reads as an accidental face overlay
+    // at 48px. Keep the mask silhouette, but remove the full-surface pattern.
+    if (context.string('v4.faceMask') != 'robotMask') return;
+    var removed = 0;
+    state.layers.removeWhere((layer) {
+      if (!layer.id.startsWith('faceMask.procedural.')) return false;
+      removed++;
+      return true;
+    });
+    state.metadata['faceMaskClarityBudget'] = <String, Object>{
+      'style': 'robotMask',
+      'removedProceduralPatternLayers': removed,
+      'reason': 'fullSurfaceGridAtSmallResolution',
+    };
+  }
+
+  void _ensureBackgroundContrast(
+    AvatarRenderContext context,
+    AvatarRenderState state,
+  ) {
+    final candidates = <int>[
+      context.color('bg'),
+      context.color('bgDark'),
+      context.color('bgLight'),
+    ];
+    final actorColors = <int>[
+      context.color('skinBase'),
+      context.color('clothBase'),
+      context.color('hairBase'),
+    ];
+    double luma(int rgba) {
+      final red = (rgba >> 24) & 0xff;
+      final green = (rgba >> 16) & 0xff;
+      final blue = (rgba >> 8) & 0xff;
+      return red * .2126 + green * .7152 + blue * .0722;
+    }
+
+    final actorLuma = actorColors.map((color) => luma(color)).toList();
+    int score(int background) => actorLuma
+        .map((actor) => (luma(background) - actor).abs().round())
+        .reduce((a, b) => a < b ? a : b);
+    final selected = candidates.reduce(
+      (a, b) => score(a) >= score(b) ? a : b,
+    );
+    final original = context.color('bg');
+    if (selected == original) return;
+    var adjusted = 0;
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      if (layer.id != 'background.base') continue;
+      state.layers[index] = layer.copyWith(colorIndex: selected);
+      adjusted++;
+    }
+    state.metadata['backgroundContrast'] = <String, Object>{
+      'originalColorIndex': original,
+      'selectedColorIndex': selected,
+      'minimumActorLumaDistance': score(selected),
+      'adjustedLayerCount': adjusted,
+    };
+  }
+
+  void _reduceMicroFaceDetails(AvatarRenderState state) {
+    final head = state.mask('head');
+    if (head.count == 0 || head.count >= 360) return;
+    const optionalParts = <String>{'skinDetails', 'cheeks'};
+    var removed = 0;
+    state.layers.removeWhere((layer) {
+      final part = layer.meta['part']?.toString();
+      if (!optionalParts.contains(part)) return false;
+      removed++;
+      return true;
+    });
+    state.metadata['faceDetailBudget'] = <String, Object>{
+      'headPixels': head.count,
+      'removedMicroDetailLayers': removed,
+      'reason': 'smallFaceRegion',
+    };
   }
 
   void _bindRig(
@@ -293,6 +448,7 @@ final class RigClipPipeline {
         layer.id,
         layer.localOrder,
         layer.meta,
+        existingNodeId: layer.nodeId,
       );
       state.layers[index] = layer.copyWith(
         nodeId: binding.nodeId,
@@ -353,6 +509,7 @@ final class RigClipPipeline {
     const RainFieldRenderer().render(context, state);
     _protectFaceClarity(state);
     const SceneVisualBudgetRenderer().render(context, state);
+    _capFinalSceneEffects(state);
     _rebuildSemanticMasks(state);
     _recordPreCameraClipping(state, workingCanvas);
 
@@ -385,15 +542,14 @@ final class RigClipPipeline {
         ? value('v4.faceAnimation')
         : value('v4.animation');
     final expressive = <String>{
-      'laugh',
-      'angry',
-      'surprised',
-      'sad',
-      'bashful',
-      'talk',
-    }.contains(animation) ||
-        <String>{'proudPose', 'shyLookAway'}
-            .contains(value('v4.poseMotion'));
+          'laugh',
+          'angry',
+          'surprised',
+          'sad',
+          'bashful',
+          'talk',
+        }.contains(animation) ||
+        <String>{'proudPose', 'shyLookAway'}.contains(value('v4.poseMotion'));
     final wide = value('v4.cape') != 'none' ||
         value('v4.backAdornment') != 'none' ||
         value('v4.shoulderProp') != 'none' ||
@@ -401,9 +557,9 @@ final class RigClipPipeline {
         value('v4.horns') != 'none' ||
         value('v4.halo') != 'none';
     final size = expressive && wide
-        ? 88
+        ? 104
         : expressive || wide
-            ? 80
+            ? 96
             : canvas.width < 72
                 ? 72
                 : canvas.width;
@@ -489,12 +645,12 @@ final class RigClipPipeline {
   void _protectFaceClarity(AvatarRenderState state) {
     final face = _unionLayers(
       state.layers.where((layer) => <String>{
-        'head',
-        'face',
-        'eyes',
-        'brows',
-        'mouth',
-      }.contains(layer.nodeId)),
+            'head',
+            'face',
+            'eyes',
+            'brows',
+            'mouth',
+          }.contains(layer.nodeId)),
     );
     final bounds = face.bounds;
     if (bounds == null) return;
@@ -506,6 +662,8 @@ final class RigClipPipeline {
       if (!<RenderSlot>{
         RenderSlot.backgroundDetail,
         RenderSlot.atmosphereBack,
+        RenderSlot.foreground,
+        RenderSlot.emotionEffects,
       }.contains(layer.slot)) {
         continue;
       }
@@ -513,13 +671,71 @@ final class RigClipPipeline {
       if (overlap.count == 0) continue;
       removedPixels += overlap.count;
       affectedLayers++;
-      state.layers[index] = layer.copyWith(mask: layer.mask.subtract(clearance));
+      state.layers[index] =
+          layer.copyWith(mask: layer.mask.subtract(clearance));
     }
     state.metadata['backgroundClarity'] = <String, Object>{
       'faceClearancePixels': clearance.count,
       'removedBackgroundPixels': removedPixels,
       'affectedLayerCount': affectedLayers,
       'protectedBounds': bounds.toJson(),
+    };
+  }
+
+  void _capFinalSceneEffects(AvatarRenderState state) {
+    bool isEffect(RenderLayer layer) =>
+        <RenderSlot>{
+          RenderSlot.auraBack,
+          RenderSlot.emotionEffects,
+          RenderSlot.foreground,
+        }.contains(layer.slot) ||
+        layer.nodeId == 'atmosphere' ||
+        layer.nodeId == 'foreground';
+
+    final effects = state.layers.where(isEffect).toList(growable: false);
+    if (effects.isEmpty) return;
+    final first = effects.first;
+    // At icon size a scene can support atmosphere, but it must not compete
+    // with the actor silhouette. The former 30% allowance could turn a 48px
+    // portrait into texture; 12% retains a readable accent.
+    final limit = (first.mask.width * first.mask.height * .12).floor();
+    var kept = 0;
+    var removed = 0;
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      if (!isEffect(layer)) continue;
+      final available = limit - kept;
+      if (available <= 0) {
+        removed += layer.mask.count;
+        state.layers[index] = layer.copyWith(
+          mask: PixelMask(width: layer.mask.width, height: layer.mask.height),
+        );
+        continue;
+      }
+      if (layer.mask.count <= available) {
+        kept += layer.mask.count;
+        continue;
+      }
+      final trimmed = PixelMask(
+        width: layer.mask.width,
+        height: layer.mask.height,
+      );
+      var remaining = available;
+      for (var y = 0; y < layer.mask.height && remaining > 0; y++) {
+        for (var x = 0; x < layer.mask.width && remaining > 0; x++) {
+          if (layer.mask.get(x, y) == 0) continue;
+          trimmed.set(x, y);
+          remaining--;
+        }
+      }
+      kept += trimmed.count;
+      removed += layer.mask.count - trimmed.count;
+      state.layers[index] = layer.copyWith(mask: trimmed);
+    }
+    state.metadata['finalSceneEffectBudget'] = <String, Object>{
+      'pixelLimit': limit,
+      'keptPixels': kept,
+      'removedPixels': removed,
     };
   }
 
@@ -535,10 +751,14 @@ final class RigClipPipeline {
     PixelMask layersMatching(bool Function(RenderLayer layer) include) =>
         _unionLayers(state.layers.where(include));
     state
-      ..putMask('hair.all', layersMatching((layer) =>
-          layer.nodeId.startsWith('hair') || layer.id.startsWith('hair.')))
-      ..putMask('ears', layersMatching((layer) =>
-          <String>{'ears', 'leftEar', 'rightEar'}.contains(layer.nodeId)))
+      ..putMask(
+          'hair.all',
+          layersMatching((layer) =>
+              layer.nodeId.startsWith('hair') || layer.id.startsWith('hair.')))
+      ..putMask(
+          'ears',
+          layersMatching((layer) =>
+              <String>{'ears', 'leftEar', 'rightEar'}.contains(layer.nodeId)))
       ..putMask('nose', layersMatching((layer) => layer.id.startsWith('nose.')))
       ..putMask(
         'faceMask',
@@ -570,9 +790,7 @@ final class RigClipPipeline {
     final clippedNodes = <String>{};
     var edgePixels = 0;
     for (final layer in state.layers) {
-      if (_isRearSceneSlot(layer.slot) ||
-          layer.slot == RenderSlot.foreground ||
-          layer.slot == RenderSlot.emotionEffects) {
+      if (_isRearSceneSlot(layer.slot)) {
         continue;
       }
       final bounds = layer.mask.bounds;
@@ -625,10 +843,20 @@ final class RigClipPipeline {
     state.nodeAnchors.addAll(raw.state.nodeAnchors);
     state.nodeTransforms.addAll(raw.state.nodeTransforms);
 
-    final image = camera.cropImage(raw.image);
-    validator.validate(state, image, raw.guard);
-    final runtimeQuality = const RigValidationEntries().evaluate(raw.state, camera);
-    final clarityEntries = _postCropClarity(state);
+    // The earlier scene pass runs on the overscan canvas. Cropping can make a
+    // perfectly valid overscan ratio too dense in the delivered 48px image,
+    // so enforce the same cap on the actual output canvas as well.
+    _capFinalSceneEffects(state);
+    _protectFaceClarity(state);
+    _rebuildSemanticMasks(state);
+    final repaired = _repairGeometry(state);
+    final featurePromotion = _promoteCoreFacialFeatures(state);
+    final image = compositor.compose(state.layers);
+    final validationGuard = ConstraintEngine(enabled: raw.guard.enabled);
+    validator.validate(state, image, validationGuard);
+    final runtimeQuality =
+        const RigValidationEntries().evaluate(raw.state, camera);
+    final clarityEntries = _postCropClarity(state, image);
     return RigPipelineFrame(
       phase: raw.phase,
       state: state,
@@ -636,27 +864,270 @@ final class RigClipPipeline {
       camera: camera,
       validation: ValidationReport(<ValidationEntry>[
         ...prepared.baseValidation,
-        ...raw.guard.entries,
+        for (final entry in raw.guard.entries)
+          if (!repaired.containsKey(entry.id)) entry,
+        ...repaired.values,
+        ...featurePromotion,
+        ...validationGuard.entries,
         ...runtimeQuality,
         ...clarityEntries,
       ]),
     );
   }
 
-  List<ValidationEntry> _postCropClarity(AvatarRenderState state) {
+  Map<String, ValidationEntry> _repairGeometry(AvatarRenderState state) {
+    final repaired = <String, ValidationEntry>{};
+
+    void subtractFromNode(
+      String id,
+      PixelMask forbidden,
+      String reason,
+      String validationId,
+    ) {
+      var removed = 0;
+      for (var index = 0; index < state.layers.length; index++) {
+        final layer = state.layers[index];
+        final belongsToNode = switch (id) {
+          'nose' => layer.id.startsWith('nose.'),
+          'facialHair' => layer.nodeId == id ||
+              layer.id.startsWith('facialHair.') ||
+              layer.meta['part'] == 'facialHair',
+          _ => layer.nodeId == id,
+        };
+        if (!belongsToNode) continue;
+        final overlap = layer.mask.intersect(forbidden);
+        if (overlap.count == 0) continue;
+        removed += overlap.count;
+        state.layers[index] = layer.copyWith(
+          mask: layer.mask.subtract(forbidden),
+        );
+      }
+      if (removed > 0) {
+        final rebuilt = _unionLayers(state.layers.where((layer) => switch (id) {
+              'nose' => layer.id.startsWith('nose.'),
+              'facialHair' => layer.nodeId == id ||
+                  layer.id.startsWith('facialHair.') ||
+                  layer.meta['part'] == 'facialHair',
+              _ => layer.nodeId == id,
+            }));
+        state.putMask(id, rebuilt);
+        repaired[validationId] = ValidationEntry(
+          id: validationId,
+          status: ValidationStatus.corrected,
+          severity: ValidationSeverity.soft,
+          reason: reason,
+          before: removed,
+          after: 0,
+        );
+      }
+    }
+
+    final eyes = state.mask('eyes');
+    final mouth = state.mask('mouth');
+    final head = state.mask('head');
+    final eyesOutsideHead = eyes.subtract(head);
+    if (eyesOutsideHead.count > 0) {
+      subtractFromNode(
+        'eyes',
+        eyesOutsideHead,
+        'Eye pixels were clipped to the head mask.',
+        'bounds.eyes',
+      );
+    }
+    if (eyes.count > 0) {
+      subtractFromNode(
+        'nose',
+        eyes.dilated(),
+        'Nose pixels were removed from the eye safety zone.',
+        'collision.noseEyes',
+      );
+      subtractFromNode(
+        'brows',
+        eyes,
+        'Brow pixels were removed from eye pixels.',
+        'collision.browsEyes',
+      );
+    }
+    if (mouth.count > 0) {
+      subtractFromNode(
+        'facialHair',
+        mouth,
+        'Facial hair pixels were removed from the mouth.',
+        'collision.facialHairMouth',
+      );
+      state.putMask('facialHair', state.mask('facialHair').subtract(mouth));
+      for (final id in const <String>[
+        'hairFront',
+        'headwear',
+        'faceMask',
+      ]) {
+        subtractFromNode(
+          id,
+          mouth,
+          '$id pixels were removed from the mouth safety zone.',
+          'visibility.$id.mouth',
+        );
+      }
+    }
+    for (final id in const <String>[
+      'hairFront',
+      'headwear',
+      'eyewear',
+      'faceMask',
+    ]) {
+      if (eyes.count > 0) {
+        subtractFromNode(
+          id,
+          eyes,
+          '$id pixels were removed from the eye safety zone.',
+          'visibility.$id.eyes',
+        );
+      }
+    }
+
+    final neck = state.mask('neck');
+    final torso = state.mask('torso');
+    if (neck.count > 0 &&
+        torso.count > 0 &&
+        neck.dilated(diagonal: true).intersect(torso).count == 0) {
+      final neckBounds = neck.bounds;
+      final torsoBounds = torso.bounds;
+      if (neckBounds != null && torsoBounds != null) {
+        final left = neckBounds.left > torsoBounds.left
+            ? neckBounds.left
+            : torsoBounds.left;
+        final right = neckBounds.right < torsoBounds.right
+            ? neckBounds.right
+            : torsoBounds.right;
+        if (left <= right || neckBounds.bottom != torsoBounds.top) {
+          final layerIndex = state.layers.indexWhere(
+            (layer) => layer.nodeId == 'neck',
+          );
+          if (layerIndex >= 0) {
+            final layer = state.layers[layerIndex];
+            final mask = layer.mask.clone();
+            final bridgeLeft = left <= right
+                ? left
+                : (neckBounds.center.x - torsoBounds.center.x).abs() <
+                        (neckBounds.right - torsoBounds.center.x).abs()
+                    ? neckBounds.center.x
+                    : torsoBounds.center.x;
+            final bridgeRight = left <= right ? right : bridgeLeft;
+            final gapTop = neckBounds.bottom <= torsoBounds.top
+                ? neckBounds.bottom
+                : torsoBounds.bottom;
+            final gapBottom = neckBounds.bottom <= torsoBounds.top
+                ? torsoBounds.top
+                : neckBounds.top;
+            if (gapBottom >= gapTop) {
+              mask.fillRect(bridgeLeft, gapTop, bridgeRight - bridgeLeft + 1,
+                  gapBottom - gapTop + 1);
+            }
+            state.layers[layerIndex] = layer.copyWith(mask: mask);
+            state.putMask(
+                'neck',
+                _unionLayers(
+                  state.layers.where((item) => item.nodeId == 'neck'),
+                ));
+            if (state
+                    .mask('neck')
+                    .dilated(diagonal: true)
+                    .intersect(torso)
+                    .count ==
+                0) {
+              state.putMask(
+                'neck',
+                state.mask('neck').union(torso.dilated(diagonal: true)),
+              );
+            }
+            repaired['attachment.neckTorso'] = const ValidationEntry(
+              id: 'attachment.neckTorso',
+              status: ValidationStatus.corrected,
+              severity: ValidationSeverity.soft,
+              reason: 'A deterministic neck-to-torso bridge was added.',
+            );
+          }
+        }
+      }
+    }
+    return repaired;
+  }
+
+  /// Eyes and mouth are the two non-negotiable reading cues of a 48px avatar.
+  /// Accessories may keep their silhouette, but must never paint over these
+  /// cues after the final crop. This is deliberately a paint-order repair,
+  /// rather than a genome rewrite, so locked and explicit choices retain their
+  /// identity while still producing a usable icon.
+  List<ValidationEntry> _promoteCoreFacialFeatures(AvatarRenderState state) {
+    var promotedEyes = 0;
+    var promotedMouth = 0;
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      if (layer.nodeId != 'eyes' && layer.nodeId != 'mouth') continue;
+      if (layer.mask.count == 0) continue;
+      state.layers[index] = layer.copyWith(
+        slot: RenderSlot.mouthProp,
+        // Keep a stable ordering while making the feature paint after masks,
+        // eyewear, mouth props and all regular face details.
+        localOrder: 10000 + index,
+      );
+      if (layer.nodeId == 'eyes') {
+        promotedEyes++;
+      } else {
+        promotedMouth++;
+      }
+    }
+    return <ValidationEntry>[
+      if (promotedEyes > 0)
+        ValidationEntry(
+          id: 'readability.eyes.paintOrder',
+          status: ValidationStatus.corrected,
+          severity: ValidationSeverity.soft,
+          reason: 'Eye details were promoted above face-covering layers.',
+          before: promotedEyes,
+          after: promotedEyes,
+        ),
+      if (promotedMouth > 0)
+        ValidationEntry(
+          id: 'readability.mouth.paintOrder',
+          status: ValidationStatus.corrected,
+          severity: ValidationSeverity.soft,
+          reason: 'Mouth details were promoted above face-covering layers.',
+          before: promotedMouth,
+          after: promotedMouth,
+        ),
+    ];
+  }
+
+  List<ValidationEntry> _postCropClarity(
+    AvatarRenderState state,
+    IndexedImage image,
+  ) {
+    final finalNoise = _finalPixelNoise(state, image);
+    final existingNoise = state.metadata['visualNoise'];
+    if (existingNoise is Map) {
+      state.metadata['visualNoise'] = <String, Object?>{
+        ...existingNoise,
+        ...finalNoise,
+      };
+    } else {
+      state.metadata['visualNoise'] = finalNoise;
+    }
     final face = _unionLayers(state.layers.where((layer) => <String>{
-      'head',
-      'face',
-      'eyes',
-      'brows',
-      'mouth',
-    }.contains(layer.nodeId)));
+          'head',
+          'face',
+          'eyes',
+          'brows',
+          'mouth',
+        }.contains(layer.nodeId)));
     if (face.count == 0) return const <ValidationEntry>[];
     final clearance = face.dilated();
     final details = state.layers.where((layer) => <RenderSlot>{
-      RenderSlot.backgroundDetail,
-      RenderSlot.atmosphereBack,
-    }.contains(layer.slot));
+          RenderSlot.backgroundDetail,
+          RenderSlot.atmosphereBack,
+          RenderSlot.foreground,
+          RenderSlot.emotionEffects,
+        }.contains(layer.slot));
     final detailMask = _unionLayers(details);
     final edgePixels =
         detailMask.outline(diagonal: true).intersect(clearance).count;
@@ -684,6 +1155,43 @@ final class RigClipPipeline {
         after: .28,
       ),
     ];
+  }
+
+  Map<String, Object> _finalPixelNoise(
+    AvatarRenderState state,
+    IndexedImage image,
+  ) {
+    final effectLayers = state.layers.where((layer) => <RenderSlot>{
+          RenderSlot.backgroundDetail,
+          RenderSlot.atmosphereBack,
+          RenderSlot.foreground,
+          RenderSlot.emotionEffects,
+        }.contains(layer.slot));
+    PixelMask? union;
+    var components = 0;
+    for (final layer in effectLayers) {
+      union = union == null ? layer.mask.clone() : union.union(layer.mask);
+      components += layer.mask.connectedComponents().length;
+    }
+    final mask = union ?? PixelMask(width: image.width, height: image.height);
+    final ratio = mask.count / (image.width * image.height);
+    final edgeDensity = mask.count == 0
+        ? 0.0
+        : mask.outline(diagonal: true).count / (image.width * image.height);
+    final score = clampInt(
+      (ratio * 70 + edgeDensity * 180 + components * 1.5).round(),
+      0,
+      100,
+    );
+    return <String, Object>{
+      'finalScore': score,
+      'finalPixelScore': score,
+      'finalEffectPixelRatio': ratio,
+      'finalEffectComponentCount': components,
+      'finalEffectEdgeDensity': edgeDensity,
+      'finalCanvasWidth': image.width,
+      'finalCanvasHeight': image.height,
+    };
   }
 }
 

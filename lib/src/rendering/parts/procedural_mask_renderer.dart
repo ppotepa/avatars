@@ -1,7 +1,6 @@
 import '../../pixels/pixel_mask.dart';
 import '../../random/random_stream.dart';
 import '../../util/math_utils.dart';
-import '../render_helpers.dart';
 import '../render_model.dart';
 
 /// Adds deterministic, seed-level construction details to face masks.
@@ -76,8 +75,10 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
         variant: variant,
         asymmetry: asymmetry,
       );
-    } else if (style == 'theaterMask' || style == 'venetianMask' ||
-        style == 'ceremonialMask' || style == 'demonMask') {
+    } else if (style == 'theaterMask' ||
+        style == 'venetianMask' ||
+        style == 'ceremonialMask' ||
+        style == 'demonMask') {
       _ornamental(
         random,
         dark,
@@ -91,8 +92,10 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
         variant: variant,
         asymmetry: asymmetry,
       );
-    } else if (style == 'ninjaMask' || style == 'balaclava' ||
-        style == 'faceBandana' || style == 'scarfMask') {
+    } else if (style == 'ninjaMask' ||
+        style == 'balaclava' ||
+        style == 'faceBandana' ||
+        style == 'scarfMask') {
       _fabric(
         random,
         dark,
@@ -139,11 +142,14 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
     final clippedLight = light.intersect(mask);
     state
       ..addLayer('faceMask.procedural.dark', 184, clippedDark,
-          context.color('outline'), meta: const {'part': 'faceMask'})
+          context.color('outline'),
+          meta: const {'part': 'faceMask'})
       ..addLayer('faceMask.procedural.accent', 185, clippedAccent,
-          context.color('clothAccent'), meta: const {'part': 'faceMask'})
+          context.color('clothAccent'),
+          meta: const {'part': 'faceMask'})
       ..addLayer('faceMask.procedural.light', 186, clippedLight,
-          context.color('clothLight'), meta: const {'part': 'faceMask'});
+          context.color('clothLight'),
+          meta: const {'part': 'faceMask'});
   }
 
   void _hockey(
@@ -166,7 +172,11 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
       final y = top + 3 + row * spacingY;
       final offset = row.isOdd ? 1 : 0;
       if (pattern == 0) {
-        for (final x in <int>[centerX - 5 + offset, centerX, centerX + 5 - offset]) {
+        for (final x in <int>[
+          centerX - 5 + offset,
+          centerX,
+          centerX + 5 - offset
+        ]) {
           dark.fillEllipse(x, y, row.isEven ? 1 : 0, 1);
         }
       } else if (pattern == 1) {
@@ -174,11 +184,13 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
           dark.set(x, y);
         }
       } else if (pattern == 2) {
-        dark.set(centerX - 4 - row, y)
+        dark
+            .set(centerX - 4 - row, y)
             .set(centerX + 4 + row, y)
             .set(centerX, y + 1);
       } else {
-        dark.line(centerX - 6, y, centerX - 2, y + asymmetry)
+        dark
+            .line(centerX - 6, y, centerX - 2, y + asymmetry)
             .line(centerX + 2, y - asymmetry, centerX + 6, y);
       }
     }
@@ -226,7 +238,8 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
         dark.hLine(centerX - 3, centerX + 3, y);
       }
     } else {
-      accent.line(left + 2, top + 2, centerX, bottom - 2)
+      accent
+          .line(left + 2, top + 2, centerX, bottom - 2)
           .line(right - 2, top + 2, centerX, bottom - 2);
     }
   }
@@ -246,7 +259,8 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
   }) {
     final panelX = centerX + asymmetry * random.nextInt(2, 6);
     final panelWidth = 2 + variant % 4;
-    dark.fillRect(panelX - panelWidth ~/ 2, top + 2, panelWidth, bottom - top - 3);
+    dark.fillRect(
+        panelX - panelWidth ~/ 2, top + 2, panelWidth, bottom - top - 3);
     accent.hLine(left + 2, right - 2, top + 3 + variant % 3);
     if (variant.isEven) {
       accent.vLine(centerX, top + 1, bottom - 1);
@@ -283,10 +297,11 @@ final class ProceduralFaceMaskRenderer implements AvatarPartRenderer {
       );
     } else if (variant % 3 == 1) {
       accent.fillEllipse(centerX + asymmetry * 2, motifY + 2, spread, 2);
-      dark.fillEllipse(centerX + asymmetry * 2, motifY + 2,
-          clampInt(spread - 1, 0, 6), 1);
+      dark.fillEllipse(
+          centerX + asymmetry * 2, motifY + 2, clampInt(spread - 1, 0, 6), 1);
     } else {
-      accent.line(left + 2, motifY, centerX, bottom - 2)
+      accent
+          .line(left + 2, motifY, centerX, bottom - 2)
           .line(right - 2, motifY + asymmetry, centerX, bottom - 2);
     }
     for (var x = left + 2; x <= right - 2; x += random.nextInt(3, 5)) {

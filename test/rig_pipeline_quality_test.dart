@@ -14,7 +14,7 @@ void main() {
         'v4.animationAmplitude': 2,
         'body.armVisibility': 5,
         'hair.lengthStyle': 'belowShoulder',
-        'hair.length': 18,
+        'hair.length': 15,
         'hair.volumeBack': 3,
         'v4.neckJewelry': 'royalMedallion',
         'v4.earJewelry': 'dangling',
@@ -41,9 +41,7 @@ void main() {
 
     final clip = generator.pipeline.renderClip(request, frameCount: 16);
     expect(
-      clip.frames
-          .map((frame) => jsonEncode(frame.camera.toJson()))
-          .toSet(),
+      clip.frames.map((frame) => jsonEncode(frame.camera.toJson())).toSet(),
       hasLength(1),
     );
 
@@ -61,7 +59,8 @@ void main() {
       expect(nodeIds, contains('capeTipRight'));
       expect(frame.state.metadata['rigAnchors'], isA<Map>());
       expect(frame.state.metadata['rigConstraints'], isA<List>());
-      expect(frame.state.layers.any((layer) => layer.id.startsWith('particle.v2')),
+      expect(
+          frame.state.layers.any((layer) => layer.id.startsWith('particle.v2')),
           isFalse);
 
       final quality =

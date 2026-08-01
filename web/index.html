@@ -24,6 +24,31 @@
         <div id="avatar-status" class="avatar-status"></div>
       </section>
 
+      <section class="palette-deck" aria-labelledby="palette-title">
+        <div class="palette-deck-heading">
+          <div>
+            <p class="eyebrow">Kolorystyka</p>
+            <h2 id="palette-title">Paleta avatara</h2>
+          </div>
+          <output id="palette-size-value">16 kolorów</output>
+        </div>
+        <div class="palette-style-picker" role="group" aria-label="Styl palety">
+          <button type="button" data-palette-style="balanced"><i class="swatch balanced"></i>Balans</button>
+          <button type="button" data-palette-style="warm"><i class="swatch warm"></i>Ciepła</button>
+          <button type="button" data-palette-style="cool"><i class="swatch cool"></i>Zimna</button>
+          <button type="button" data-palette-style="vivid"><i class="swatch vivid"></i>Żywa</button>
+          <button type="button" data-palette-style="soft"><i class="swatch soft"></i>Miękka</button>
+          <button type="button" data-palette-style="highContrast"><i class="swatch contrast"></i>Kontrast</button>
+        </div>
+        <div class="palette-budget-picker" role="group" aria-label="Budżet kolorów">
+          <span>Budżet</span>
+          <button type="button" data-color-budget="4">4</button>
+          <button type="button" data-color-budget="8">8</button>
+          <button type="button" data-color-budget="16">16</button>
+          <button type="button" data-color-budget="32">32</button>
+        </div>
+      </section>
+
       <section class="media-deck" aria-labelledby="animation-player-title">
         <div class="deck-display">
           <div class="deck-track">
@@ -171,6 +196,7 @@
       <section class="toolbar compact-toolbar" aria-label="Akcje awatara">
         <button id="generate-button" type="button" class="primary">Generuj</button>
         <button id="new-seed-button" type="button">Nowy seed</button>
+        <button id="batch-open-button" type="button">Batch PNG</button>
       </section>
 
       <details class="utility-section">
@@ -251,6 +277,34 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="batch-dialog" class="batch-dialog" aria-labelledby="batch-title">
+    <form method="dialog" class="batch-dialog-header">
+      <div>
+        <p class="eyebrow">Eksport zbiorczy</p>
+        <h2 id="batch-title">Batch PNG</h2>
+      </div>
+      <button type="submit" class="batch-close" aria-label="Zamknij">Zamknij</button>
+    </form>
+    <div class="batch-layout">
+      <section class="batch-controls" aria-label="Ustawienia batcha">
+        <label><span>Kolumny</span><input id="batch-columns" type="number" min="1" max="256" value="16"></label>
+        <label><span>Wiersze</span><input id="batch-rows" type="number" min="1" max="256" value="16"></label>
+        <label class="batch-seed-field"><span>Seed bazowy</span><input id="batch-seed" type="text"></label>
+        <output id="batch-metrics" class="batch-metrics"></output>
+        <progress id="batch-progress" value="0" max="1"></progress>
+        <output id="batch-progress-label" class="batch-progress-label">Gotowe do generowania.</output>
+        <div class="batch-actions">
+          <button id="batch-generate-button" type="button" class="primary">Generuj PNG</button>
+          <button id="batch-download-button" type="button" disabled>Zapisz PNG</button>
+          <button id="batch-json-button" type="button" disabled>Zapisz JSON</button>
+          <button id="batch-zip-button" type="button" disabled>Zapisz ZIP (PNG + JSON)</button>
+        </div>
+      </section>
+      <section class="batch-preview" aria-label="Podgląd batcha">
+        <canvas id="batch-canvas" width="768" height="768"></canvas>
+      </section>
+    </div>
+  </dialog>
   <script>
     (() => {
       const nativeFetch = window.fetch.bind(window);

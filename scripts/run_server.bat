@@ -4,6 +4,7 @@ set "DART=dart"
 if exist "C:\tools\flutter\bin\cache\dart-sdk\bin\dart.exe" set "DART=C:\tools\flutter\bin\cache\dart-sdk\bin\dart.exe"
 echo Using Dart: %DART%
 echo Starting Avatar Genome Editor on http://127.0.0.1:8080
+echo Dart run will incrementally rebuild changed sources. Use scripts\rebuild.ps1 for a clean rebuild.
 set DART_SUPPRESS_ANALYTICS=true
 set CI=true
 "%DART%" pub get

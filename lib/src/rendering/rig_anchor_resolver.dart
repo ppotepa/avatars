@@ -18,9 +18,6 @@ final class RigAnchorResolver {
 
     final torsoBounds = torso.bounds;
     final headBounds = head.bounds;
-    final neckBounds = neck.bounds;
-    final earBounds = ears.bounds;
-    final hairBounds = hair.bounds;
 
     final shoulderY = _resolvedShoulderY(layout, torso);
     final shoulderRow = _rowExtents(torso, shoulderY) ??
@@ -116,7 +113,8 @@ final class RigAnchorResolver {
       RigAnchor(
         id: 'torso.center',
         nodeId: 'torso',
-        localPosition: torsoBounds?.center ?? PixelPoint(torsoCenterX, torsoTop),
+        localPosition:
+            torsoBounds?.center ?? PixelPoint(torsoCenterX, torsoTop),
       ),
       RigAnchor(
         id: 'torso.top',

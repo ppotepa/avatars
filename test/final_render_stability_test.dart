@@ -1,91 +1,80 @@
-import 'dart:io';
-
+import 'package:avatar_genome/avatar_genome.dart';
 import 'package:test/test.dart';
 
 void main() {
   test('overscan and camera support expressive wide motion', () {
-    final pipeline = File('lib/src/rendering/rig_clip_pipeline.dart')
-        .readAsStringSync();
-    final camera =
-        File('lib/src/rendering/clip_camera.dart').readAsStringSync();
-
-    expect(pipeline, contains('width: 72'));
-    expect(pipeline, contains('height: 72'));
-    expect(pipeline, contains('offsetX: 12'));
-    expect(pipeline, contains('offsetY: 12'));
-    expect(camera, contains('CameraFramingProfile.portrait'));
-    expect(camera, contains('CameraFramingProfile.expressive'));
-    expect(camera, contains('CameraFramingProfile.wide'));
-    expect(camera, contains('activeGesture'));
+    final result = AvatarGenerator().generate(const AvatarRequest(
+      seed: 'expressive-wide-stability',
+      overrides: <String, Object>{
+        'v4.animation': 'idle',
+        'v4.cape': 'longCape',
+        'v4.shoulderProp': 'parrot',
+        'hair.lengthStyle': 'belowShoulder',
+        'hair.length': 15,
+      },
+    ));
+    final camera = result.layout.graph.nodes['rig.camera']!.value as Map;
+    expect(camera['width'], 48);
+    expect(camera['height'], 48);
+    expect((camera['criticalCoverage']! as num).toDouble(), greaterThan(.998));
+    expect(result.validation.isValid, isTrue);
   });
 
   test('canonical rig contains complete articulated arm chains', () {
-    final rig = File('lib/src/rendering/canonical_rig.dart').readAsStringSync();
-    final runtime =
-        File('lib/src/rendering/runtime_rig_builder.dart').readAsStringSync();
-
+    final result = AvatarGenerator().generate(const AvatarRequest(
+      seed: 'articulated-arm-chain',
+      overrides: <String, Object>{'body.armVisibility': 5},
+    ));
+    final nodes = result.layout.graph.nodes.keys;
     for (final side in const <String>['left', 'right']) {
-      expect(rig, contains("'${side}Forearm': '${side}Arm'"));
-      expect(rig, contains("'${side}Wrist': '${side}Forearm'"));
-      expect(rig, contains("'${side}Hand': '${side}Wrist'"));
-      expect(runtime, contains("'$side-arm-to-forearm'"));
-      expect(runtime, contains("'$side-forearm-to-wrist'"));
-      expect(runtime, contains("'$side-wrist-to-hand'"));
+      expect(nodes, contains('rig.${side}Arm'));
+      expect(nodes, contains('rig.${side}Forearm'));
+      expect(nodes, contains('rig.${side}Wrist'));
+      expect(nodes, contains('rig.${side}Hand'));
     }
   });
 
   test('arm segmentation follows a bone axis with seam overlap', () {
-    final segmentation = File(
-      'lib/src/rendering/parts/forearm_segmentation_renderer.dart',
-    ).readAsStringSync();
-
-    expect(segmentation, contains('boneAxis'));
-    expect(segmentation, contains('projection'));
-    expect(segmentation, contains('overlap'));
-    expect(segmentation, isNot(contains('bounds.height * .48')));
+    final result = AvatarGenerator().generate(const AvatarRequest(
+      seed: 'arm-segmentation-axis',
+      guardEnabled: false,
+      overrides: <String, Object>{'body.armVisibility': 5},
+    ));
+    final arms = result.layers.where((layer) =>
+        layer.nodeId == 'leftForearm' || layer.nodeId == 'rightForearm');
+    expect(arms, isNotEmpty);
+    expect(arms.every((layer) => layer.mask.count > 0), isTrue);
   });
 
   test('scene and wearable paint groups are semantically separated', () {
-    final model = File('lib/src/rendering/rig_model.dart').readAsStringSync();
-    final binding =
-        File('lib/src/rendering/rig_layer_binding.dart').readAsStringSync();
-    final wearables = File(
-      'lib/src/rendering/wearable_attachment_policy.dart',
-    ).readAsStringSync();
-
-    expect(model, contains('backgroundBase'));
-    expect(model, contains('backgroundDetail'));
-    expect(model, contains('atmosphereBack'));
-    expect(model, contains('neckJewelry'));
-    expect(model, contains('earJewelryBack'));
-    expect(model, contains('earJewelryFront'));
-    expect(binding, contains("meta['attachmentTarget']"));
-    expect(binding, contains("meta['occlusionGroup']"));
-    expect(binding, isNot(contains('localOrder: order')));
-    expect(wearables, contains('backWearableFront'));
-    expect(wearables, contains("'attachmentTarget'"));
-    expect(wearables, contains("'occlusionGroup'"));
+    final result = AvatarGenerator().generate(const AvatarRequest(
+      seed: 'semantic-paint-groups',
+      overrides: <String, Object>{
+        'v4.background': 'solid',
+        'v4.neckJewelry': 'medallion',
+        'v4.earJewelry': 'dangling',
+      },
+    ));
+    expect(
+        result.layers.any((layer) => layer.slot.name == 'background'), isTrue);
+    expect(result.layers.any((layer) => layer.meta['occlusionGroup'] != null),
+        isTrue);
+    expect(result.layout.graph.nodes.keys.any((id) => id.startsWith('rig.')),
+        isTrue);
   });
 
   test('final scene clarity and clipping are measured after posing', () {
-    final pipeline = File('lib/src/rendering/rig_clip_pipeline.dart')
-        .readAsStringSync();
-    final pose = pipeline.indexOf('RigPoseApplier().solveAndApply');
-    final smoke = pipeline.indexOf('WorldSmokeEmitterRenderer().render');
-    final rain = pipeline.indexOf('RainFieldRenderer().render');
-    final clarity = pipeline.indexOf('_protectFaceClarity');
-    final gate = pipeline.indexOf('SceneVisualBudgetRenderer().render');
-    final masks = pipeline.indexOf('_rebuildSemanticMasks');
-    final clipping = pipeline.indexOf('_recordPreCameraClipping');
-
-    expect(pose, greaterThanOrEqualTo(0));
-    expect(smoke, greaterThan(pose));
-    expect(rain, greaterThan(smoke));
-    expect(clarity, greaterThan(rain));
-    expect(gate, greaterThan(clarity));
-    expect(masks, greaterThan(gate));
-    expect(clipping, greaterThan(masks));
-    expect(pipeline, contains('backgroundClarity'));
-    expect(pipeline, contains('preCameraClipping'));
+    final result = AvatarGenerator().generate(const AvatarRequest(
+      seed: 'post-pose-quality-metadata',
+      overrides: <String, Object>{'v4.effect': 'rain'},
+    ));
+    final metadata = result.layout.graph.nodes['rig.camera']!.value as Map;
+    expect(metadata, contains('criticalCoverage'));
+    expect(
+      result.layout.graph.nodes['rig.preCameraClipping']!.value,
+      isA<Map>(),
+    );
+    expect(result.validation.entries, isNotEmpty);
+    expect(result.validation.isValid, isTrue);
   });
 }

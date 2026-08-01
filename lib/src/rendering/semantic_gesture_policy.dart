@@ -1,4 +1,3 @@
-import '../util/math_utils.dart';
 import 'animation_controller.dart';
 import 'render_helpers.dart';
 import 'render_model.dart';
@@ -20,8 +19,7 @@ final class SemanticGesturePolicy {
     final variant = random.nextInt(0, 4);
     final pulse = cyclicOffset(phase, animationPeriod(3, slow: 18, fast: 8), 1);
 
-    void merge(String nodeId,
-        {int dx = 0, int dy = 0, int rotation = 0}) {
+    void merge(String nodeId, {int dx = 0, int dy = 0, int rotation = 0}) {
       final current = transforms[nodeId] ?? RigTransform.identity;
       transforms[nodeId] = RigTransform(
         dx: current.dx + dx,

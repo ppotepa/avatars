@@ -1,4 +1,4 @@
-// GENERATED FROM avatar-generator-v4.1.html. Do not edit manually.
+// GENERATED FROM tool/catalog_v41.json. Do not edit manually.
 const String kV41CatalogJson = r'''
 {
   "categories": [
@@ -4159,6 +4159,29 @@ const String kV41CatalogJson = r'''
             {
               "value": "vivid",
               "label": "vivid"
+            }
+          ]
+        },
+        {
+          "id": "colors.colorBudget",
+          "label": "Budżet kolorów",
+          "type": "select",
+          "options": [
+            {
+              "value": "4",
+              "label": "4 kolory"
+            },
+            {
+              "value": "8",
+              "label": "8 kolorów"
+            },
+            {
+              "value": "16",
+              "label": "16 kolorów"
+            },
+            {
+              "value": "32",
+              "label": "32 kolory"
             }
           ]
         },

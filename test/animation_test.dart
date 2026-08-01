@@ -26,7 +26,7 @@ void main() {
           'v4.animation': 'idle',
           'v4.animationAmplitude': 4,
           'hair.lengthStyle': 'belowShoulder',
-          'hair.length': 18,
+          'hair.length': 15,
           'v4.neckJewelry': 'medallion',
           'v4.shoulderProp': 'parrot',
         },
@@ -37,7 +37,8 @@ void main() {
         greaterThan(2));
     expect(
       animation.frames
-          .map((frame) => frame.layout.graph.nodes['rig.camera']?.value.toString())
+          .map((frame) =>
+              frame.layout.graph.nodes['rig.camera']?.value.toString())
           .toSet(),
       hasLength(1),
     );
@@ -64,7 +65,7 @@ void main() {
       if (track == 'hairWind') {
         overrides
           ..['hair.lengthStyle'] = 'belowShoulder'
-          ..['hair.length'] = 18;
+          ..['hair.length'] = 15;
       }
       if (track == 'jewelrySwing') {
         overrides['v4.neckJewelry'] = 'medallion';
@@ -73,7 +74,8 @@ void main() {
         overrides['v4.aura'] = 'magic';
       }
       if (track == 'particles') overrides['v4.effect'] = 'snow';
-      final request = AvatarRequest(seed: 'animation-$track', overrides: overrides);
+      final request =
+          AvatarRequest(seed: 'animation-$track', overrides: overrides);
       final animation =
           AvatarGenerator().generateAnimation(request, frameCount: 16);
       expect(animation.frames.map((frame) => frame.genome.seed).toSet(),

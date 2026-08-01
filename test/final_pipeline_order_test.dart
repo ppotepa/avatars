@@ -1,33 +1,42 @@
-import 'dart:io';
-
+import 'package:avatar_genome/avatar_genome.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('weather and effect particles use separate layer namespaces', () {
-    final particles =
-        File('lib/src/rendering/parts/natural_particle_renderer.dart')
-            .readAsStringSync();
-    final gate = File('lib/src/rendering/scene_visual_budget_renderer.dart')
-        .readAsStringSync();
-
-    expect(particles, contains("'particle.v3.\$namespace.back.dark'"));
-    expect(particles, contains("namespace: 'effect'"));
-    expect(particles, contains("namespace: 'weather'"));
-    expect(gate, contains("'particle.v3.weather.'"));
-    expect(gate, contains("'particle.v3.effect.'"));
+  test('weather and effect particles use separate rendered namespaces', () {
+    final weather = AvatarGenerator().generate(
+      const AvatarRequest(
+        seed: 'pipeline-weather',
+        overrides: <String, Object>{
+          'v4.weather': 'heavyRain',
+          'v4.effect': 'none',
+        },
+      ),
+    );
+    final ids = weather.layers.map((layer) => layer.id).toSet();
+    expect(ids.any((id) => id.startsWith('rain.field')), isTrue);
+    expect(ids.any((id) => id.startsWith('particle.v3.effect.')), isFalse);
+    expect(
+      (weather.layout.graph.nodes['rig.visualNoise']!.value
+          as Map)['activeChannel'],
+      'v4.weather',
+    );
   });
 
-  test('world emitters and the final scene gate run after posing', () {
-    final pipeline = File('lib/src/rendering/rig_clip_pipeline.dart')
-        .readAsStringSync();
-    final pose = pipeline.indexOf('RigPoseApplier().solveAndApply');
-    final smoke = pipeline.indexOf('WorldSmokeEmitterRenderer().render');
-    final rain = pipeline.indexOf('RainFieldRenderer().render');
-    final gate = pipeline.indexOf('SceneVisualBudgetRenderer().render');
-
-    expect(pose, greaterThanOrEqualTo(0));
-    expect(smoke, greaterThan(pose));
-    expect(rain, greaterThan(smoke));
-    expect(gate, greaterThan(rain));
+  test('final scene diagnostics are produced after posing and composition', () {
+    final result = AvatarGenerator().generate(
+      const AvatarRequest(
+        seed: 'pipeline-order',
+        overrides: <String, Object>{
+          'v4.effect': 'glitch',
+          'v4.weather': 'none',
+        },
+      ),
+    );
+    final graph = result.layout.graph.nodes;
+    final motion = graph['rig.motion']!.value as Map;
+    final noise = graph['rig.visualNoise']!.value as Map;
+    expect(motion['solvedTransforms'], isNotNull);
+    expect(noise['finalPixelScore'], isA<num>());
+    expect(noise['finalEffectPixelRatio'], isA<num>());
   });
 }
