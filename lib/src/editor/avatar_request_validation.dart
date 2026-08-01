@@ -55,7 +55,7 @@ final class AvatarRequestValidator {
           'Unknown category.',
         );
       }
-      final allowed = category!.fields.map((field) => field.id).toSet();
+      final allowed = category.fields.map((field) => field.id).toSet();
       for (final entry in categoryEntry.value.entries) {
         if (!allowed.contains(entry.key)) {
           _fail(
@@ -89,7 +89,7 @@ final class AvatarRequestValidator {
       if (field == null) {
         _fail('$path.${entry.key}', 'Unknown parameter id.');
       }
-      if (!field!.accepts(entry.value)) {
+      if (!field.accepts(entry.value)) {
         _fail(
           '$path.${entry.key}',
           'Value is not accepted by the catalog definition.',

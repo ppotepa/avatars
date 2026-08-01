@@ -40,42 +40,88 @@ final class V41PaletteFactory implements PaletteFactory {
   const V41PaletteFactory();
 
   static const Map<String, String> _skin = <String, String>{
-    'veryFair': '#f5d6c6', 'fair': '#e9bfa8', 'fairWarm': '#e7b08c',
-    'fairCool': '#d7b1aa', 'medium': '#c88762', 'olive': '#aa7d54',
-    'golden': '#bd7f42', 'brown': '#8b563a', 'darkBrown': '#623a2c',
-    'veryDark': '#38231f', 'fantasyBlue': '#568dc7',
-    'fantasyGreen': '#5c9a65', 'fantasyRed': '#b85b58',
-    'fantasyPurple': '#8a63a9', 'fantasyGray': '#858b93',
+    'veryFair': '#f5d6c6',
+    'fair': '#e9bfa8',
+    'fairWarm': '#e7b08c',
+    'fairCool': '#d7b1aa',
+    'medium': '#c88762',
+    'olive': '#aa7d54',
+    'golden': '#bd7f42',
+    'brown': '#8b563a',
+    'darkBrown': '#623a2c',
+    'veryDark': '#38231f',
+    'fantasyBlue': '#568dc7',
+    'fantasyGreen': '#5c9a65',
+    'fantasyRed': '#b85b58',
+    'fantasyPurple': '#8a63a9',
+    'fantasyGray': '#858b93',
   };
   static const Map<String, String> _hair = <String, String>{
-    'black': '#20232b', 'darkBrown': '#3a271f', 'brown': '#62412d',
-    'lightBrown': '#94643f', 'blond': '#d7b66d', 'platinum': '#e4dfcf',
-    'red': '#a7432c', 'auburn': '#793628', 'gray': '#777b83',
-    'white': '#d8d8d2', 'blue': '#345fa8', 'green': '#3a855b',
-    'pink': '#b85a91', 'purple': '#704a9d', 'multicolor': '#6c58aa',
+    'black': '#20232b',
+    'darkBrown': '#3a271f',
+    'brown': '#62412d',
+    'lightBrown': '#94643f',
+    'blond': '#d7b66d',
+    'platinum': '#e4dfcf',
+    'red': '#a7432c',
+    'auburn': '#793628',
+    'gray': '#777b83',
+    'white': '#d8d8d2',
+    'blue': '#345fa8',
+    'green': '#3a855b',
+    'pink': '#b85a91',
+    'purple': '#704a9d',
+    'multicolor': '#6c58aa',
   };
   static const Map<String, String> _iris = <String, String>{
-    'brown': '#6b432b', 'darkBrown': '#3b2a22', 'hazel': '#8a7437',
-    'green': '#4b8a5b', 'blue': '#4f80bc', 'gray': '#7b8b9b',
-    'amber': '#c18a32', 'violet': '#7654a8', 'red': '#b44145',
-    'black': '#20232b', 'glowCyan': '#5ee8e2', 'glowGold': '#f0cf57',
+    'brown': '#6b432b',
+    'darkBrown': '#3b2a22',
+    'hazel': '#8a7437',
+    'green': '#4b8a5b',
+    'blue': '#4f80bc',
+    'gray': '#7b8b9b',
+    'amber': '#c18a32',
+    'violet': '#7654a8',
+    'red': '#b44145',
+    'black': '#20232b',
+    'glowCyan': '#5ee8e2',
+    'glowGold': '#f0cf57',
   };
   static const Map<String, String> _mouth = <String, String>{
-    'skin': '#a65c55', 'softPink': '#c7737f', 'red': '#b8444d',
-    'brown': '#80504a', 'purple': '#86558f', 'black': '#30252c',
+    'skin': '#a65c55',
+    'softPink': '#c7737f',
+    'red': '#b8444d',
+    'brown': '#80504a',
+    'purple': '#86558f',
+    'black': '#30252c',
     'coral': '#d2695d',
   };
   static const Map<String, String> _cloth = <String, String>{
-    'blue': '#426db4', 'navy': '#273f70', 'teal': '#328888',
-    'green': '#43815a', 'olive': '#6f773c', 'red': '#a84449',
-    'rust': '#9a522d', 'orange': '#c27635', 'yellow': '#c2a83e',
-    'purple': '#684c9c', 'magenta': '#a54683', 'gray': '#626d7c',
-    'black': '#252a33', 'white': '#c9d0d8',
+    'blue': '#426db4',
+    'navy': '#273f70',
+    'teal': '#328888',
+    'green': '#43815a',
+    'olive': '#6f773c',
+    'red': '#a84449',
+    'rust': '#9a522d',
+    'orange': '#c27635',
+    'yellow': '#c2a83e',
+    'purple': '#684c9c',
+    'magenta': '#a54683',
+    'gray': '#626d7c',
+    'black': '#252a33',
+    'white': '#c9d0d8',
   };
   static const Map<String, String> _background = <String, String>{
-    'navy': '#111b2d', 'slate': '#263343', 'charcoal': '#171b22',
-    'cream': '#d8c9ad', 'sand': '#9d8060', 'forest': '#1e3b31',
-    'teal': '#174349', 'rust': '#512c26', 'deepPurple': '#2b1b3d',
+    'navy': '#111b2d',
+    'slate': '#263343',
+    'charcoal': '#171b22',
+    'cream': '#d8c9ad',
+    'sand': '#9d8060',
+    'forest': '#1e3b31',
+    'teal': '#174349',
+    'rust': '#512c26',
+    'deepPurple': '#2b1b3d',
     'black': '#080a0e',
   };
 
@@ -123,6 +169,10 @@ final class V41PaletteFactory implements PaletteFactory {
       cloth = _mix(cloth, '#ff49b6', 0.18);
       iris = _mix(iris, '#4ff5dc', 0.15);
     }
+    background =
+        _ensureReadableBackground(background, <String>[skin, hair, cloth]);
+    outline = _ensureReadableOutline(
+        outline, <String>[skin, hair, cloth, background]);
 
     final hex = <String>[
       outline,
@@ -158,9 +208,13 @@ final class V41PaletteFactory implements PaletteFactory {
       brow,
       '#f4f5f7',
     ];
+    final colorBudget = _supportedBudget(
+      int.tryParse(genome.string('colors.colorBudget', '16')) ?? 16,
+    );
+    final budgetedHex = _applyColorBudget(hex, colorBudget);
     return AvatarPalette(
-      id: '${AvatarGenomeVersion.palette}.$style',
-      colors: Uint32List.fromList(hex.map(_rgbaFromHex).toList()),
+      id: '${AvatarGenomeVersion.palette}.$style.$colorBudget',
+      colors: Uint32List.fromList(budgetedHex.map(_rgbaFromHex).toList()),
       roles: const <String, int>{
         'outline': 0, 'outlineSoft': 1,
         'skinDeep': 2, 'skinShadow': 3, 'skinBase': 4,
@@ -219,6 +273,86 @@ final class V41PaletteFactory implements PaletteFactory {
             _minimumLumaDistance(light, surfaces)
         ? dark
         : light;
+  }
+
+  static int _supportedBudget(int value) => switch (value) {
+        4 || 8 || 16 || 32 => value,
+        _ => 16,
+      };
+
+  /// Renderers keep their stable semantic role indices, while this pass aliases
+  /// those roles to a small, deterministic set of actual colors. Consequently
+  /// a genome can request 4/8/16/32 colors without any renderer-specific
+  /// branching or an external palette asset.
+  static List<String> _applyColorBudget(List<String> source, int budget) {
+    if (budget >= source.length) return List<String>.from(source);
+    const priority = <int>[
+      0, // outline
+      4, // skin base
+      12, // sclera / highlight
+      25, // background
+      9, // hair base
+      21, // cloth base
+      14, // iris
+      18, // mouth
+      30, // brows/detail
+      5,
+      10,
+      22,
+      26,
+      13,
+      17,
+      20,
+    ];
+    final selected = <String>[];
+    for (final index in priority) {
+      final color = source[index];
+      if (!selected.contains(color)) selected.add(color);
+      if (selected.length == budget) break;
+    }
+    for (final color in source) {
+      if (selected.length == budget) break;
+      if (!selected.contains(color)) selected.add(color);
+    }
+    return <String>[
+      for (final color in source) _nearestColor(color, selected),
+    ];
+  }
+
+  static String _nearestColor(String color, List<String> candidates) {
+    final rgb = _rgb(color);
+    String? best;
+    var bestDistance = double.infinity;
+    for (final candidate in candidates) {
+      final target = _rgb(candidate);
+      final distance = (rgb[0] - target[0]) * (rgb[0] - target[0]) * .2126 +
+          (rgb[1] - target[1]) * (rgb[1] - target[1]) * .7152 +
+          (rgb[2] - target[2]) * (rgb[2] - target[2]) * .0722;
+      if (distance < bestDistance) {
+        best = candidate;
+        bestDistance = distance;
+      }
+    }
+    return best!;
+  }
+
+  static String _ensureReadableBackground(
+    String background,
+    List<String> foreground,
+  ) {
+    if (_minimumLumaDistance(background, foreground) >= 48) return background;
+    final candidates = <String>[
+      background,
+      _adjust(background, -0.52),
+      _adjust(background, 0.52),
+      '#111827',
+      '#e7e2d6',
+    ];
+    return candidates.reduce((best, candidate) =>
+        _minimumLumaDistance(candidate, foreground) >
+                _minimumLumaDistance(best, foreground)
+            ? candidate
+            : best);
   }
 
   static double _minimumLumaDistance(String color, List<String> surfaces) {

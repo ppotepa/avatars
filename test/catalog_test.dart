@@ -7,7 +7,7 @@ void main() {
 
     test('contains the preserved V4.1 catalog and V4.2 extension', () {
       expect(catalog.categoryCount, 30);
-      expect(catalog.fieldCount, 274);
+      expect(catalog.fieldCount, 275);
       expect(catalog.wholePresets.length, 13);
       expect(catalog.categoryById, contains('expressionV42'));
       expect(catalog.categoryById, contains('adornmentV42'));

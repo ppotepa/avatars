@@ -3,6 +3,7 @@ import '../../util/math_utils.dart';
 import '../render_helpers.dart';
 import '../render_model.dart';
 import '../rig_anchor_resolver.dart';
+import '../rig_model.dart';
 
 /// Routes back wearables to rigid, cloth-chain or articulated-wing strategies.
 final class FlexibleBackRigRenderer implements AvatarPartRenderer {

@@ -12,23 +12,42 @@ final class RigLayerBinding {
   final int localOrder;
 
   static RigLayerBinding resolve(
-    String id,
-    int _legacyOrder,
-    Map<String, Object?> meta,
-  ) {
+      String id, int legacyOrder, Map<String, Object?> meta,
+      {String? existingNodeId}) {
     final explicitNode =
         meta['attachmentTarget']?.toString() ?? meta['nodeId']?.toString();
-    final node = explicitNode ?? _nodeFor(id, meta);
+    final node = explicitNode ?? _nodeFor(id, meta, existingNodeId);
     return RigLayerBinding(
       nodeId: node,
       slot: _slotFor(node, id, meta),
-      localOrder: _semanticOrder(node, id, meta),
+      localOrder: _semanticOrder(legacyOrder, meta),
     );
   }
 
-  static String _nodeFor(String id, Map<String, Object?> meta) {
+  static String _nodeFor(
+    String id,
+    Map<String, Object?> meta,
+    String? existingNodeId,
+  ) {
     final segment = meta['rigSegment']?.toString();
     if (segment != null) return segment;
+
+    if (id.startsWith('effect.back') || id.startsWith('eventMotion.v42')) {
+      return 'atmosphere';
+    }
+    if (id.startsWith('weather.v42.front') ||
+        id.startsWith('effect.front') ||
+        id.startsWith('particle.')) {
+      return 'foreground';
+    }
+    if (id.startsWith('halo.v42.back') || id.startsWith('halo.v42.glow')) {
+      return 'aura';
+    }
+    if (existingNodeId != null &&
+        existingNodeId != 'actor' &&
+        existingNodeId != 'actorEffects') {
+      return existingNodeId;
+    }
 
     if (id == 'background.base' || id == 'background.dark') {
       return 'background';
@@ -39,9 +58,6 @@ final class RigLayerBinding {
         id.startsWith('weather.v42.back') ||
         id.startsWith('flames.')) {
       return 'atmosphere';
-    }
-    if (id.startsWith('particle.') || id.startsWith('effect.front')) {
-      return 'foreground';
     }
     if (id.startsWith('aura.')) return 'aura';
     if (id.startsWith('halo.')) return 'halo';
@@ -184,7 +200,10 @@ final class RigLayerBinding {
         'torso' || 'chest' || 'clothing' => RenderSlot.torsoClothing,
         'armor' => RenderSlot.armor,
         'neck' => RenderSlot.neck,
-        'necklace' || 'necklaceLeft' || 'necklaceRight' || 'pendant' =>
+        'necklace' ||
+        'necklaceLeft' ||
+        'necklaceRight' ||
+        'pendant' =>
           RenderSlot.neckJewelry,
         'head' || 'ears' => RenderSlot.head,
         'face' ||
@@ -194,8 +213,7 @@ final class RigLayerBinding {
         'creatureTraits' =>
           RenderSlot.face,
         'facialHair' => RenderSlot.facialHair,
-        'leftEarJewelry' || 'rightEarJewelry' =>
-          RenderSlot.earJewelryFront,
+        'leftEarJewelry' || 'rightEarJewelry' => RenderSlot.earJewelryFront,
         'hairFront' ||
         'hairSideLeftRoot' ||
         'hairSideLeftTip' ||
@@ -208,6 +226,7 @@ final class RigLayerBinding {
         'eyewear' => RenderSlot.eyewear,
         'faceMask' => RenderSlot.faceMask,
         'shoulderCompanion' ||
+        'shoulderObject' ||
         'companionBody' ||
         'companionHead' ||
         'companionWings' ||
@@ -221,27 +240,9 @@ final class RigLayerBinding {
         _ => RenderSlot.emotionEffects,
       };
 
-  static int _semanticOrder(
-    String node,
-    String id,
-    Map<String, Object?> meta,
-  ) {
+  static int _semanticOrder(int legacyOrder, Map<String, Object?> meta) {
     final explicit = meta['localOrder'];
     if (explicit is num) return explicit.toInt();
-    final stableIdOrder = id.codeUnits.fold<int>(
-      0,
-      (value, unit) => (value * 31 + unit) & 0x7fffffff,
-    );
-    final base = switch (node) {
-      'background' => 0,
-      'atmosphere' => 100,
-      'leftArm' || 'rightArm' => 200,
-      'leftForearm' || 'rightForearm' => 300,
-      'leftHand' || 'rightHand' => 400,
-      'necklace' || 'necklaceLeft' || 'necklaceRight' || 'pendant' => 500,
-      'leftEarJewelry' || 'rightEarJewelry' => 600,
-      _ => 700,
-    };
-    return base + stableIdOrder % 90;
+    return legacyOrder;
   }
 }

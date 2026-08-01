@@ -35,6 +35,18 @@ final class AvatarPngCodec implements AvatarCodec<Uint8List> {
       palette,
       scale: safeScale,
     );
+    return encodeRgba(rgba, width: width, height: height);
+  }
+
+  /// Encodes a packed RGBA buffer into a PNG without constructing an avatar.
+  static Uint8List encodeRgba(
+    Uint8List rgba, {
+    required int width,
+    required int height,
+  }) {
+    if (width < 1 || height < 1 || rgba.length != width * height * 4) {
+      throw ArgumentError('RGBA buffer dimensions are invalid.');
+    }
     final raw = BytesBuilder(copy: false);
     final rowLength = width * 4;
     for (var y = 0; y < height; y++) {
@@ -50,7 +62,7 @@ final class AvatarPngCodec implements AvatarCodec<Uint8List> {
     return output.takeBytes();
   }
 
-  Uint8List _ihdr(int width, int height) {
+  static Uint8List _ihdr(int width, int height) {
     final data = ByteData(13)
       ..setUint32(0, width)
       ..setUint32(4, height)
@@ -62,7 +74,7 @@ final class AvatarPngCodec implements AvatarCodec<Uint8List> {
     return data.buffer.asUint8List();
   }
 
-  Uint8List _chunk(String type, Uint8List data) {
+  static Uint8List _chunk(String type, Uint8List data) {
     final typeBytes = ascii.encode(type);
     final bytes = BytesBuilder(copy: false)
       ..add(_uint32(data.length))
@@ -72,12 +84,12 @@ final class AvatarPngCodec implements AvatarCodec<Uint8List> {
     return bytes.takeBytes();
   }
 
-  Uint8List _uint32(int value) {
+  static Uint8List _uint32(int value) {
     final data = ByteData(4)..setUint32(0, value & 0xffffffff);
     return data.buffer.asUint8List();
   }
 
-  int _crc32(List<int> bytes) {
+  static int _crc32(List<int> bytes) {
     var crc = 0xffffffff;
     for (final byte in bytes) {
       crc ^= byte;

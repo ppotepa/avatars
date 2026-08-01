@@ -4161,6 +4161,29 @@
           ]
         },
         {
+          "id": "colors.colorBudget",
+          "label": "Budżet kolorów",
+          "type": "select",
+          "options": [
+            {
+              "value": "4",
+              "label": "4 kolory"
+            },
+            {
+              "value": "8",
+              "label": "8 kolorów"
+            },
+            {
+              "value": "16",
+              "label": "16 kolorów"
+            },
+            {
+              "value": "32",
+              "label": "32 kolory"
+            }
+          ]
+        },
+        {
           "id": "colors.hairColor",
           "label": "Kolor włosów",
           "type": "select",

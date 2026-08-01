@@ -9,6 +9,7 @@ final class BackgroundRenderer implements AvatarPartRenderer {
 
   @override
   void render(AvatarRenderContext context, AvatarRenderState state) {
+    final requestedBackground = context.string('v4.background');
     final background = _background(context);
     final aura = _aura(context);
     final backEffect = _effect(context, back: true);
@@ -19,22 +20,33 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       ..putMask('aura.back', aura.dark.union(aura.light))
       ..addLayer('background.base', 0, background.base, context.color('bg'),
           meta: const {'part': 'background'})
-      ..addLayer('background.dark', 1, background.dark,
-          context.color('bgDark'), meta: const {'part': 'background'})
-      ..addLayer('background.light', 2, background.light,
-          context.color('bgLight'), meta: const {'part': 'background'})
+      ..addLayer('background.dark', 1, background.dark, context.color('bgDark'),
+          meta: const {'part': 'background'})
+      ..addLayer(
+          'background.light', 2, background.light, context.color('bgLight'),
+          meta: const {'part': 'background'})
       ..addLayer('background.symbol', 3, background.accent,
-          context.color('clothAccent'), meta: const {'part': 'background'})
-      ..addLayer('aura.back.dark', 4, aura.dark,
-          context.color('fantasyDark'), meta: const {'part': 'aura'})
-      ..addLayer('aura.back', 5, aura.light,
-          context.color('fantasyBase'), meta: const {'part': 'aura'})
-      ..addLayer('effect.back.dark', 6, backEffect.dark,
-          context.color('bgDark'), meta: const {'part': 'effect'})
-      ..addLayer('effect.back', 7, backEffect.base,
-          context.color('fantasyBase'), meta: const {'part': 'effect'})
+          context.color('clothAccent'),
+          meta: const {'part': 'background'})
+      ..addLayer('aura.back.dark', 4, aura.dark, context.color('fantasyDark'),
+          meta: const {'part': 'aura'})
+      ..addLayer('aura.back', 5, aura.light, context.color('fantasyBase'),
+          meta: const {'part': 'aura'})
+      ..addLayer(
+          'effect.back.dark', 6, backEffect.dark, context.color('bgDark'),
+          meta: const {'part': 'effect'})
+      ..addLayer(
+          'effect.back', 7, backEffect.base, context.color('fantasyBase'),
+          meta: const {'part': 'effect'})
       ..addLayer('effect.back.light', 8, backEffect.light,
-          context.color('fantasyLight'), meta: const {'part': 'effect'});
+          context.color('fantasyLight'),
+          meta: const {'part': 'effect'});
+    state.metadata['backgroundPolicy'] = <String, Object>{
+      'requested': requestedBackground,
+      'effective': _effectiveBackgroundStyle(requestedBackground),
+      'patternSuppressed':
+          requestedBackground != _effectiveBackgroundStyle(requestedBackground),
+    };
   }
 
   _Background _background(AvatarRenderContext c) {
@@ -42,7 +54,7 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     final dark = PixelMask();
     final light = PixelMask();
     final accent = PixelMask();
-    final style = c.string('v4.background');
+    final style = _effectiveBackgroundStyle(c.string('v4.background'));
     final contrast = c.integer('v4.backgroundContrast');
     final phase = c.rendering.animateBackground
         ? (c.rendering.reducedMotion ? c.phase ~/ 2 : c.phase)
@@ -58,37 +70,40 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       light.fillRect(0, 0, 48, 24);
       dark.fillRect(0, 24, 48, 24);
     } else if (style == 'diagonalStripes') {
-      for (var offset = -48; offset < 96; offset += 8) {
-        dark.line(offset, 0, offset + 48, 47, thickness: 3);
+      for (var offset = -48; offset < 96; offset += 14) {
+        dark.line(offset, 0, offset + 48, 47);
       }
     } else if (style == 'checker') {
-      for (var y = 0; y < 48; y += 6) {
-        for (var x = 0; x < 48; x += 6) {
-          if (((x ~/ 6) + (y ~/ 6)).isEven) dark.fillRect(x, y, 6, 6);
+      for (var y = 0; y < 48; y += 8) {
+        for (var x = 0; x < 48; x += 8) {
+          if (((x ~/ 8) + (y ~/ 8)).isEven) dark.fillRect(x, y, 8, 8);
         }
       }
     } else if (style == 'dots') {
-      for (var y = 3; y < 48; y += 6) {
-        for (var x = 3; x < 48; x += 6) light.set(x, y);
+      for (var y = 4; y < 48; y += 9) {
+        for (var x = 4; x < 48; x += 9) light.set(x, y);
       }
     } else if (style == 'pixelNoise') {
       final rng = c.random('background.noise');
-      for (var i = 0; i < 30 + contrast * 8; i++) {
+      for (var i = 0; i < clampInt(6 + contrast * 2, 6, 12); i++) {
         final x = rng.nextInt(0, 47);
         final y = rng.nextInt(0, 47);
-        (i.isEven ? dark : light).fillRect(x, y, 2, 2);
+        (i.isEven ? dark : light).set(x, y);
       }
     } else if (style == 'sunset') {
       light.fillRect(0, 0, 48, 21);
       dark.fillRect(0, 30, 48, 18);
       accent.fillEllipse(35, 13, 5, 5);
-      for (var x = 0; x < 48; x += 6) dark.fillTriangle(
-          (x: x, y: 34), (x: x + 8, y: 34), (x: x + 4, y: 24));
+      for (var x = 0; x < 48; x += 6)
+        dark.fillTriangle((x: x, y: 34), (x: x + 8, y: 34), (x: x + 4, y: 24));
     } else if (style == 'night') {
       dark.fillRect(0, 0, 48, 48);
       final rng = c.random('background.stars');
-      for (var i = 0; i < 18; i++) light.set(rng.nextInt(1, 46), rng.nextInt(1, 26));
-      accent.fillEllipse(37, 8, 4, 4).subtract(PixelMask()..fillEllipse(39, 7, 4, 4));
+      for (var i = 0; i < 10; i++)
+        light.set(rng.nextInt(1, 46), rng.nextInt(1, 26));
+      accent
+          .fillEllipse(37, 8, 4, 4)
+          .subtract(PixelMask()..fillEllipse(39, 7, 4, 4));
       if (c.rendering.animateBackground) {
         final twinkleX = 3 + positiveMod(phase * 11, 40);
         final twinkleY = 3 + positiveMod(phase * 7, 20);
@@ -125,8 +140,9 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     } else if (style == 'space') {
       dark.fillRect(0, 0, 48, 48);
       final rng = c.random('background.space');
-      for (var i = 0; i < 26; i++) (i % 5 == 0 ? accent : light)
-          .set(rng.nextInt(0, 47), rng.nextInt(0, 47));
+      for (var i = 0; i < 12; i++)
+        (i % 5 == 0 ? accent : light)
+            .set(rng.nextInt(0, 47), rng.nextInt(0, 47));
       accent.fillEllipse(8, 38, 8, 3);
       if (c.rendering.animateBackground && positiveMod(phase, 32) < 8) {
         final cometX = 46 - positiveMod(phase, 32) * 5;
@@ -151,7 +167,8 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       light.fillRect(3, 4, 42, 35);
       dark.fillRect(5, 6, 38, 31);
       for (var x = 8; x < 43; x += 8) accent.set(x, 9).set(x, 34);
-      if (style == 'laboratory') accent.line(8, 30, 15, 20).line(15, 20, 22, 30);
+      if (style == 'laboratory')
+        accent.line(8, 30, 15, 20).line(15, 20, 22, 30);
       if (c.rendering.animateBackground) {
         final scanY = 8 + positiveMod(phase ~/ 2, 24);
         accent.hLine(7, 40, scanY);
@@ -160,8 +177,10 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       dark.fillRect(0, 0, 48, 48);
       for (var x = 0; x < 48; x += 5) {
         final tip = 22 + positiveMod(x * 5 + phase, 16);
-        accent.fillTriangle((x: x - 2, y: 48), (x: x + 4, y: 48), (x: x + 1, y: tip));
-        light.fillTriangle((x: x, y: 48), (x: x + 3, y: 48), (x: x + 1, y: tip + 7));
+        accent.fillTriangle(
+            (x: x - 2, y: 48), (x: x + 4, y: 48), (x: x + 1, y: tip));
+        light.fillTriangle(
+            (x: x, y: 48), (x: x + 3, y: 48), (x: x + 1, y: tip + 7));
       }
     } else if (style == 'snowField') {
       light.fillRect(0, 0, 48, 48);
@@ -171,11 +190,12 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       dark.fillRect(0, 0, 48, 48);
       accent.fillEllipse(24, 25, 20, 25);
       dark.fillEllipse(24, 25, 15, 20);
-      for (var i = 0; i < 8; i++) light.set(5 + positiveMod(i * 11, 38), 5 + positiveMod(i * 7, 32));
+      for (var i = 0; i < 8; i++)
+        light.set(5 + positiveMod(i * 11, 38), 5 + positiveMod(i * 7, 32));
     } else if (style == 'terminal') {
       dark.fillRect(0, 0, 48, 48);
-      for (var y = 3; y < 48; y += 4) {
-        light.hLine(2 + positiveMod(y, 5), 10 + positiveMod(y * 3, 30), y);
+      for (var y = 5; y < 48; y += 8) {
+        light.hLine(4 + positiveMod(y, 5), 12 + positiveMod(y * 2, 18), y);
       }
       accent.fillRect(2, 2, 2, 2);
     } else if (style == 'factionSymbol') {
@@ -196,6 +216,29 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     }
     return _Background(base, dark, light, accent);
   }
+
+  String _effectiveBackgroundStyle(String requested) => const <String>{
+        'diagonalStripes',
+        'checker',
+        'dots',
+        'pixelNoise',
+        'dungeon',
+        'laboratory',
+        'spaceship',
+        'terminal',
+        'factionSymbol',
+        'dataGrid',
+        'cathedralWindow',
+        'citySkyline',
+        'starshipBridge',
+        'spaceStation',
+        'castleWall',
+        'throneRoom',
+        'libraryShelves',
+        'neonCity',
+      }.contains(requested)
+          ? 'solid'
+          : requested;
 
   _Aura _aura(AvatarRenderContext c) {
     final style = c.string('v4.aura');
@@ -220,7 +263,8 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     final ring = PixelMask()..fillEllipse(24, 25, rx, ry);
     final inner = PixelMask()..fillEllipse(24, 25, rx - 3, ry - 3);
     dark.data.setAll(0, ring.subtract(inner).data);
-    if (<String>['holy', 'magic', 'holographic', 'runic', 'electric'].contains(style)) {
+    if (<String>['holy', 'magic', 'holographic', 'runic', 'electric']
+        .contains(style)) {
       for (var i = 0; i < 12; i++) {
         final x = 5 + positiveMod(i * 13 + c.phase, 38);
         final y = 4 + positiveMod(i * 7 - c.phase, 40);
@@ -228,18 +272,23 @@ final class BackgroundRenderer implements AvatarPartRenderer {
       }
     }
     if (style == 'fire') {
-      for (var x = 6; x < 43; x += 5) light.line(x, 44, x + 1, 36 - positiveMod(x, 7));
+      for (var x = 6; x < 43; x += 5)
+        light.line(x, 44, x + 1, 36 - positiveMod(x, 7));
     } else if (style == 'ice') {
       for (var x = 8; x < 41; x += 6) light.line(x, 44, x - 2, 37);
     } else if (style == 'runic') {
-      light.fillEllipse(24, 25, 20, 25).subtract(PixelMask()..fillEllipse(24, 25, 19, 24));
+      light
+          .fillEllipse(24, 25, 20, 25)
+          .subtract(PixelMask()..fillEllipse(24, 25, 19, 24));
     }
     return _Aura(dark, light);
   }
 
   _Effect _effect(AvatarRenderContext c, {required bool back}) {
     final style = c.string('v4.effect');
-    if (style == 'none') return _Effect(PixelMask(), PixelMask(), PixelMask());
+    if (style == 'none' || style == 'rain') {
+      return _Effect(PixelMask(), PixelMask(), PixelMask());
+    }
     final density = c.integer('v4.particleDensity');
     final phase = c.rendering.animateBackground
         ? (c.rendering.reducedMotion ? c.phase ~/ 2 : c.phase)
@@ -248,7 +297,7 @@ final class BackgroundRenderer implements AvatarPartRenderer {
     final dark = PixelMask();
     final base = PixelMask();
     final light = PixelMask();
-    final count = clampInt(3 + density * 2, 3, 18);
+    final count = clampInt(2 + density, 2, 8);
     for (var i = 0; i < count; i++) {
       var x = rng.nextInt(1, 46);
       var y = rng.nextInt(1, 46);
@@ -256,6 +305,8 @@ final class BackgroundRenderer implements AvatarPartRenderer {
           animationChannelEnabled(c.string('v4.animation'), 'particles')) {
         y = positiveMod(y + phase * (1 + i % 2), 48);
       }
+      final inFrame = x < 9 || x > 38 || y < 9 || y > 40;
+      if (!inFrame) continue;
       if (style == 'rain') {
         base.line(x, y, x - 1, y + 4);
       } else if (style == 'snow') {
@@ -290,8 +341,11 @@ final class ForegroundEffectsRenderer implements AvatarPartRenderer {
   void render(AvatarRenderContext context, AvatarRenderState state) {
     final helper = const BackgroundRenderer();
     final effect = helper._effect(context, back: false);
-    final silhouette = state.mask('head').union(state.mask('torso'))
-        .union(state.mask('hair.all')).dilated();
+    final silhouette = state
+        .mask('head')
+        .union(state.mask('torso'))
+        .union(state.mask('hair.all'))
+        .dilated();
     final clearCenter = maskFromPredicate((x, y) => x < 12 || x > 35 || y < 5);
     final dark = effect.dark.subtract(silhouette).intersect(clearCenter);
     final base = effect.base.subtract(silhouette).intersect(clearCenter);
@@ -301,7 +355,8 @@ final class ForegroundEffectsRenderer implements AvatarPartRenderer {
           meta: const {'part': 'effect'})
       ..addLayer('effect.front', 231, base, context.color('fantasyBase'),
           meta: const {'part': 'effect'})
-      ..addLayer('effect.front.light', 232, light, context.color('fantasyLight'),
+      ..addLayer(
+          'effect.front.light', 232, light, context.color('fantasyLight'),
           meta: const {'part': 'effect'});
   }
 }

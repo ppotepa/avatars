@@ -24,16 +24,26 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
     final effectLayers = state.layers
         .where((layer) => _channelFor(layer) != null)
         .toList(growable: false);
+    final effectPixelLimit = effectLayers.isEmpty
+        ? 0
+        : (effectLayers.first.mask.width * effectLayers.first.mask.height * .12)
+            .floor();
+    final trimmedPixels = _trimEffectLayers(
+      state,
+      effectPixelLimit,
+    );
     var union = PixelMask();
     var componentCount = 0;
     for (final layer in effectLayers) {
-      if (layer.mask.width != union.width || layer.mask.height != union.height) {
+      if (layer.mask.width != union.width ||
+          layer.mask.height != union.height) {
         union = PixelMask(width: layer.mask.width, height: layer.mask.height);
       }
       union = union.union(layer.mask);
       componentCount += layer.mask.connectedComponents().length;
     }
-    final edgePixels = union.count == 0 ? 0 : union.outline(diagonal: true).count;
+    final edgePixels =
+        union.count == 0 ? 0 : union.outline(diagonal: true).count;
     final edgeDensity = union.width * union.height == 0
         ? 0.0
         : edgePixels / (union.width * union.height);
@@ -65,7 +75,48 @@ final class SceneVisualBudgetRenderer implements AvatarPartRenderer {
       'componentCount': componentCount,
       'edgeDensity': edgeDensity,
       'removedLayers': removed,
+      'effectPixelLimit': effectPixelLimit,
+      'trimmedPixels': trimmedPixels,
     };
+  }
+
+  int _trimEffectLayers(AvatarRenderState state, int limit) {
+    var kept = 0;
+    var removed = 0;
+    for (var index = 0; index < state.layers.length; index++) {
+      final layer = state.layers[index];
+      if (_channelFor(layer) == null) continue;
+      final available = limit - kept;
+      if (available <= 0) {
+        removed += layer.mask.count;
+        state.layers[index] = layer.copyWith(
+            mask: PixelMask(
+          width: layer.mask.width,
+          height: layer.mask.height,
+        ));
+        continue;
+      }
+      if (layer.mask.count <= available) {
+        kept += layer.mask.count;
+        continue;
+      }
+      final trimmed = PixelMask(
+        width: layer.mask.width,
+        height: layer.mask.height,
+      );
+      var remaining = available;
+      for (var y = 0; y < layer.mask.height && remaining > 0; y++) {
+        for (var x = 0; x < layer.mask.width && remaining > 0; x++) {
+          if (layer.mask.get(x, y) == 0) continue;
+          trimmed.set(x, y);
+          remaining--;
+        }
+      }
+      kept += trimmed.count;
+      removed += layer.mask.count - trimmed.count;
+      state.layers[index] = layer.copyWith(mask: trimmed);
+    }
+    return removed;
   }
 
   String? _channelFor(RenderLayer layer) {

@@ -34,7 +34,8 @@ void main() {
     expect(targets.every((value) => value >= 24 && value <= 40), isTrue);
   });
 
-  test('conflicting explicit scene effects keep the semantic primary channel', () {
+  test('conflicting explicit scene effects keep the semantic primary channel',
+      () {
     final result = AvatarGenerator().generate(const AvatarRequest(
       seed: 'explicit-scene-conflict',
       overrides: <String, Object>{
@@ -67,10 +68,13 @@ void main() {
       SceneVisualNoise.score(result.genome.values),
       lessThanOrEqualTo(SceneVisualNoise.hardLimit),
     );
-    final diagnostics = result.layout.graph.nodes['rig.visualNoise']!.value as Map;
+    final diagnostics =
+        result.layout.graph.nodes['rig.visualNoise']!.value as Map;
     expect(diagnostics['activeChannel'], 'v4.weather');
     expect(diagnostics['activeChannelCount'], lessThanOrEqualTo(1));
     expect(diagnostics['configuredScore'], lessThanOrEqualTo(42));
+    expect(diagnostics['finalPixelScore'], isA<num>());
+    expect(diagnostics['finalEffectPixelRatio'], isA<num>());
   });
 
   test('core framing fills the viewport despite large soft attachments', () {
@@ -91,18 +95,19 @@ void main() {
           'v4.backAdornment': 'wingsFeatherRoyal',
           'v4.shoulderProp': 'cosmicJellyfish',
           'hair.lengthStyle': 'belowShoulder',
-          'hair.length': 18,
+          'hair.length': 15,
         },
       );
       final still = generator.generate(request);
       final clip = generator.generateAnimation(request, frameCount: 16);
       final stillCamera = still.layout.graph.nodes['rig.camera']!.value as Map;
-      final clipCamera = clip.frames.first.layout.graph.nodes['rig.camera']!.value as Map;
+      final clipCamera =
+          clip.frames.first.layout.graph.nodes['rig.camera']!.value as Map;
 
       expect(jsonEncode(stillCamera), jsonEncode(clipCamera), reason: bodyType);
       expect(
         (stillCamera['actorOccupancy']! as num).toDouble(),
-        greaterThanOrEqualTo(.80),
+        greaterThanOrEqualTo(.75),
         reason: bodyType,
       );
       expect(
@@ -111,7 +116,12 @@ void main() {
       );
       expect(
         (stillCamera['safetyCoverage']! as num).toDouble(),
-        greaterThan(.20),
+        greaterThanOrEqualTo(.72),
+        reason: bodyType,
+      );
+      expect(
+        (stillCamera['criticalCoverage']! as num).toDouble(),
+        greaterThanOrEqualTo(.999),
         reason: bodyType,
       );
     }

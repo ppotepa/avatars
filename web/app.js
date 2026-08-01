@@ -12,6 +12,9 @@ const state = {
   changedOnly: false,
   animationTimer: null,
 };
+let batchManifest = null;
+let batchId = null;
+let batchInFlight = false;
 
 const fieldViews = new Map();
 const globalViews = new Map();
@@ -53,7 +56,11 @@ function bindElements() {
     'changed-only', 'group-tabs', 'parameter-categories', 'toast',
     'readability-score', 'readability-metrics', 'readability-warnings',
     'quick-resolution', 'quick-detail', 'animation-frames', 'playback-speed',
-    'download-sheet-button',
+    'download-sheet-button', 'batch-open-button', 'batch-dialog', 'batch-columns',
+    'batch-rows', 'batch-seed', 'batch-metrics', 'batch-progress',
+    'batch-progress-label', 'batch-generate-button', 'batch-download-button',
+    'batch-canvas', 'batch-json-button', 'batch-zip-button',
+    'palette-size-value',
   ];
   for (const id of ids) elements[id] = document.getElementById(id);
 }
@@ -107,6 +114,13 @@ function bindStaticActions() {
     () => downloadExport('/api/export/png', 'png'),
   );
   elements['download-sheet-button'].addEventListener('click', downloadSpriteSheet);
+  elements['batch-open-button'].addEventListener('click', openBatchDialog);
+  elements['batch-columns'].addEventListener('input', updateBatchMetrics);
+  elements['batch-rows'].addEventListener('input', updateBatchMetrics);
+  elements['batch-generate-button'].addEventListener('click', () => { void generateBatchPng(); });
+  elements['batch-download-button'].addEventListener('click', () => { void downloadBatchPng(); });
+  elements['batch-json-button'].addEventListener('click', downloadBatchJson);
+  elements['batch-zip-button'].addEventListener('click', () => { void downloadBatchZip(); });
   elements['save-server-button'].addEventListener('click', saveOnServer);
   elements['import-request-button'].addEventListener(
     'click',
@@ -117,6 +131,16 @@ function bindStaticActions() {
     queueRender([
       { op: 'set', id: 'rendering.detailLevel', value: event.target.value },
     ], true);
+  });
+  document.querySelectorAll('[data-palette-style]').forEach(button => {
+    button.addEventListener('click', () => {
+      queueRender([{ op: 'set', id: 'colors.paletteStyle', value: button.dataset.paletteStyle }], true);
+    });
+  });
+  document.querySelectorAll('[data-color-budget]').forEach(button => {
+    button.addEventListener('click', () => {
+      queueRender([{ op: 'set', id: 'colors.colorBudget', value: button.dataset.colorBudget }], true);
+    });
   });
 }
 
@@ -359,6 +383,19 @@ function syncUi() {
     ${metrics.usedColorCount} kolorów · ${metrics.layerCount} warstw`;
   elements['quick-resolution'].value = String(state.request.rendering?.size || 48);
   elements['quick-detail'].value = state.request.rendering?.detailLevel || 'enhanced';
+  const paletteStyle = state.response.properties?.['colors.paletteStyle']?.value || 'balanced';
+  const colorBudget = Number(state.response.properties?.['colors.colorBudget']?.value || 16);
+  elements['palette-size-value'].textContent = `${colorBudget} kolorów`;
+  document.querySelectorAll('[data-palette-style]').forEach(button => {
+    const selected = button.dataset.paletteStyle === paletteStyle;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  document.querySelectorAll('[data-color-budget]').forEach(button => {
+    const selected = Number(button.dataset.colorBudget) === colorBudget;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
   elements['request-json'].textContent = JSON.stringify(state.request, null, 2);
   renderReadability(metrics, validation);
 
@@ -550,6 +587,148 @@ async function ensureIdle() {
   while (state.rendering || state.pendingActions.length) {
     await new Promise(resolve => setTimeout(resolve, 30));
     if (state.pendingActions.length && !state.rendering) await flushRender();
+  }
+}
+
+const batchTileSize = 48;
+const maxBatchAvatars = 4096;
+
+function batchDimension(element) {
+  return Math.max(1, Math.min(256, Number.parseInt(element.value, 10) || 1));
+}
+
+function batchSpec() {
+  const columns = batchDimension(elements['batch-columns']);
+  const rows = batchDimension(elements['batch-rows']);
+  return { columns, rows, total: columns * rows };
+}
+
+function updateBatchMetrics() {
+  const { columns, rows, total } = batchSpec();
+  const width = columns * batchTileSize;
+  const height = rows * batchTileSize;
+  const allowed = total <= maxBatchAvatars;
+  elements['batch-metrics'].textContent = `${columns} × ${rows} = ${total.toLocaleString('pl-PL')} awatarów · ${width} × ${height} px${allowed ? '' : ` · limit: ${maxBatchAvatars.toLocaleString('pl-PL')}`}`;
+  elements['batch-generate-button'].disabled = !allowed || !state.request;
+  return { columns, rows, total, width, height, allowed };
+}
+
+function openBatchDialog() {
+  if (!state.request) {
+    showToast('Najpierw wygeneruj awatara.', true);
+    return;
+  }
+  elements['batch-seed'].value = state.request.seed || randomSeed();
+  elements['batch-progress'].value = 0;
+  elements['batch-progress-label'].textContent = 'Gotowe do generowania.';
+  updateBatchMetrics();
+  elements['batch-dialog'].showModal();
+}
+
+function nextFrame() {
+  return new Promise(resolve => requestAnimationFrame(resolve));
+}
+
+async function generateBatchPng() {
+  if (!state.request || batchInFlight) return;
+  const spec = updateBatchMetrics();
+  if (!spec.allowed) {
+    showToast(`Batch jest ograniczony do ${maxBatchAvatars} awatarów.`, true);
+    return;
+  }
+
+  const canvas = elements['batch-canvas'];
+  const context = canvas.getContext('2d', { alpha: false });
+  if (!context) return;
+  const seed = elements['batch-seed'].value.trim() || randomSeed();
+  elements['batch-seed'].value = seed;
+  canvas.width = spec.width;
+  canvas.height = spec.height;
+  context.imageSmoothingEnabled = false;
+  context.fillStyle = '#111827';
+  context.fillRect(0, 0, spec.width, spec.height);
+  elements['batch-generate-button'].disabled = true;
+  elements['batch-download-button'].disabled = true;
+  elements['batch-json-button'].disabled = true;
+  elements['batch-zip-button'].disabled = true;
+  batchInFlight = true;
+  batchManifest = null;
+  batchId = null;
+  elements['batch-progress'].max = spec.total;
+  elements['batch-progress'].value = 0;
+
+  try {
+    elements['batch-progress'].removeAttribute('value');
+    elements['batch-progress-label'].textContent = `Backend generuje ${spec.total.toLocaleString('pl-PL')} awatarów na dostępnych rdzeniach…`;
+    const response = await fetch('/api/export/batch-png', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        request: state.request,
+        seed,
+        columns: spec.columns,
+        rows: spec.rows,
+      }),
+    });
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('Batch jest już generowany. Poczekaj na zakończenie poprzedniego zadania.');
+      }
+      throw new Error(await responseError(response));
+    }
+    batchId = response.headers.get('X-Avatar-Batch-Id');
+    const bitmap = await createImageBitmap(await response.blob());
+    context.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    elements['batch-progress'].value = spec.total;
+    elements['batch-progress-label'].textContent = `Gotowe: ${spec.total.toLocaleString('pl-PL')} awatarów.`;
+    elements['batch-download-button'].disabled = false;
+    if (batchId) {
+      const manifestResponse = await fetch(`/api/export/batch-manifest?id=${encodeURIComponent(batchId)}`);
+      if (!manifestResponse.ok) throw new Error(await responseError(manifestResponse));
+      batchManifest = await manifestResponse.json();
+      elements['batch-json-button'].disabled = false;
+      elements['batch-zip-button'].disabled = false;
+    }
+  } catch (error) {
+    elements['batch-progress-label'].textContent = 'Generowanie przerwane.';
+    showToast(error.message, true);
+  } finally {
+    batchInFlight = false;
+    elements['batch-generate-button'].disabled = false;
+  }
+}
+
+async function downloadBatchPng() {
+  const canvas = elements['batch-canvas'];
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) {
+    showToast('Nie udało się przygotować pliku PNG.', true);
+    return;
+  }
+  downloadBlob(`avatar-batch-${Date.now()}.png`, blob);
+}
+
+function downloadBatchJson() {
+  if (!batchManifest) return;
+  downloadText(
+    `avatar-batch-${batchManifest.columns}x${batchManifest.rows}.json`,
+    JSON.stringify(batchManifest, null, 2),
+    'application/json',
+  );
+}
+
+async function downloadBatchZip() {
+  if (!batchId || !batchManifest) return;
+  try {
+    const response = await fetch(`/api/export/batch-zip?id=${encodeURIComponent(batchId)}`);
+    if (!response.ok) throw new Error(await responseError(response));
+    downloadBlob(
+      `avatar-batch-${batchManifest.columns}x${batchManifest.rows}.zip`,
+      await response.blob(),
+    );
+  } catch (error) {
+    showToast(error.message, true);
   }
 }
 

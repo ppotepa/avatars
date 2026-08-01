@@ -96,8 +96,8 @@ def main() -> int:
         )
 
     required_nodes = {
-        "companionLeftWing",
-        "companionRightWing",
+        "CompanionNode.leftWing",
+        "CompanionNode.rightWing",
         "companionLeftArm",
         "companionRightArm",
         "companionLeftLeg",
@@ -124,8 +124,8 @@ def main() -> int:
 
     for expression in (
         "RigMatrix.rotationAround",
-        "companionLeftWing",
-        "companionRightWing",
+        "CompanionNode.leftWing",
+        "CompanionNode.rightWing",
         "runtimeAnchors",
         "companionRig",
     ):

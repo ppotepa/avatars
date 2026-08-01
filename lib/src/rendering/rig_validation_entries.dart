@@ -29,12 +29,12 @@ final class RigValidationEntries {
         after: .55,
       ));
     }
-    if (camera.criticalCoverage < .9) {
-      entries.add(_soft(
+    if (camera.criticalCoverage < .999) {
+      entries.add(_hard(
         'rig.camera.criticalCoverage',
-        'Active hands, face or companion root are partially outside the viewport.',
+        'Active hands, face or companion root are outside the viewport.',
         before: camera.criticalCoverage,
-        after: .9,
+        after: .999,
       ));
     }
 
@@ -208,7 +208,8 @@ final class RigValidationEntries {
     return output ?? PixelMask();
   }
 
-  bool _actorLayer(RenderLayer layer) => !<RenderSlot>{
+  bool _actorLayer(RenderLayer layer) =>
+      !<RenderSlot>{
         RenderSlot.background,
         RenderSlot.backgroundDetail,
         RenderSlot.atmosphereBack,
@@ -269,6 +270,21 @@ final class RigValidationEntries {
         id: id,
         status: ValidationStatus.violation,
         severity: ValidationSeverity.soft,
+        reason: reason,
+        before: before,
+        after: after,
+      );
+
+  ValidationEntry _hard(
+    String id,
+    String reason, {
+    Object? before,
+    Object? after,
+  }) =>
+      ValidationEntry(
+        id: id,
+        status: ValidationStatus.violation,
+        severity: ValidationSeverity.hard,
         reason: reason,
         before: before,
         after: after,

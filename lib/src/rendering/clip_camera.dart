@@ -194,7 +194,8 @@ abstract final class ClipCameraFitter {
     PixelRect? safety;
     PixelRect? critical;
     for (final frame in frames) {
-      if (frame.core != null) core = core == null ? frame.core : _union(core, frame.core!);
+      if (frame.core != null)
+        core = core == null ? frame.core : _union(core, frame.core!);
       if (frame.safety != null) {
         safety = safety == null ? frame.safety : _union(safety, frame.safety!);
       }
@@ -216,25 +217,28 @@ abstract final class ClipCameraFitter {
       ClipCameraProfile.portrait => (
           targetWidth: targetWidth,
           targetHeight: targetHeight,
-          minScale: .88,
+          minScale: .82,
           maxScale: 1.65,
           minimumSafety: .55,
+          minimumCritical: 1.0,
           maximumNudge: 5.0,
         ),
       ClipCameraProfile.expressive => (
           targetWidth: 44,
           targetHeight: 43,
-          minScale: .82,
+          minScale: .64,
           maxScale: 1.40,
           minimumSafety: .72,
+          minimumCritical: 1.0,
           maximumNudge: 8.0,
         ),
       ClipCameraProfile.wide => (
           targetWidth: 42,
           targetHeight: 41,
-          minScale: .70,
+          minScale: .60,
           maxScale: 1.20,
           minimumSafety: .82,
+          minimumCritical: 1.0,
           maximumNudge: 12.0,
         ),
     };
@@ -265,8 +269,8 @@ abstract final class ClipCameraFitter {
         x = _nudgeAxis(
           position: x,
           size: sourceWidth,
-          minimum: safety!.left.toDouble(),
-          maximum: safety!.right.toDouble(),
+          minimum: safety.left.toDouble(),
+          maximum: safety.right.toDouble(),
           lowerBound: 0,
           upperBound: maximumX,
           maximumNudge: settings.maximumNudge,
@@ -274,8 +278,8 @@ abstract final class ClipCameraFitter {
         y = _nudgeAxis(
           position: y,
           size: sourceHeight,
-          minimum: safety!.top.toDouble(),
-          maximum: safety!.bottom.toDouble(),
+          minimum: safety.top.toDouble(),
+          maximum: safety.bottom.toDouble(),
           lowerBound: 0,
           upperBound: maximumY,
           maximumNudge: settings.maximumNudge,
@@ -288,7 +292,7 @@ abstract final class ClipCameraFitter {
     var coverage = safety == null
         ? 1.0
         : _coverage(
-            safety!,
+            safety,
             x: position.x,
             y: position.y,
             width: position.sourceWidth,
@@ -300,7 +304,31 @@ abstract final class ClipCameraFitter {
       coverage = safety == null
           ? 1.0
           : _coverage(
-              safety!,
+              safety,
+              x: position.x,
+              y: position.y,
+              width: position.sourceWidth,
+              height: position.sourceHeight,
+            );
+    }
+
+    var criticalCoverage = critical == null
+        ? 1.0
+        : _coverage(
+            critical,
+            x: position.x,
+            y: position.y,
+            width: position.sourceWidth,
+            height: position.sourceHeight,
+          );
+    while (criticalCoverage < settings.minimumCritical &&
+        scale > settings.minScale) {
+      scale = clampDouble(scale - .04, settings.minScale, settings.maxScale);
+      position = positionFor(scale);
+      criticalCoverage = critical == null
+          ? 1.0
+          : _coverage(
+              critical,
               x: position.x,
               y: position.y,
               width: position.sourceWidth,
@@ -309,15 +337,6 @@ abstract final class ClipCameraFitter {
     }
 
     final occupancy = clampDouble(core.height * scale / viewportHeight, 0, 1);
-    final criticalCoverage = critical == null
-        ? 1.0
-        : _coverage(
-            critical!,
-            x: position.x,
-            y: position.y,
-            width: position.sourceWidth,
-            height: position.sourceHeight,
-          );
     return ClipCamera(
       x: position.x,
       y: position.y,
@@ -339,8 +358,10 @@ abstract final class ClipCameraFitter {
     for (final layer in layers) {
       final bounds = layer.mask.bounds;
       if (bounds == null) continue;
-      if (_isSafetyActor(layer)) safety = safety == null ? bounds : _union(safety, bounds);
-      if (_isCameraCore(layer)) core = core == null ? bounds : _union(core, bounds);
+      if (_isSafetyActor(layer))
+        safety = safety == null ? bounds : _union(safety, bounds);
+      if (_isCameraCore(layer))
+        core = core == null ? bounds : _union(core, bounds);
       if (_isCriticalActor(layer)) {
         critical = critical == null ? bounds : _union(critical, bounds);
       }
@@ -373,7 +394,8 @@ abstract final class ClipCameraFitter {
         'rightEar',
       }.contains(layer.nodeId);
 
-  static bool _isCriticalActor(RenderLayer layer) => <String>{
+  static bool _isCriticalActor(RenderLayer layer) =>
+      <String>{
         'head',
         'face',
         'eyes',
@@ -386,7 +408,8 @@ abstract final class ClipCameraFitter {
         'rightHand',
         'shoulderCompanion',
         'companionBody',
-      }.contains(layer.nodeId);
+      }.contains(layer.nodeId) ||
+      layer.nodeId.startsWith('companion');
 
   static bool _isSafetyActor(RenderLayer layer) {
     if (<RenderSlot>{
@@ -415,7 +438,8 @@ abstract final class ClipCameraFitter {
     PixelRect? critical,
   ) {
     if (safety != null &&
-        (safety.width > core.width * 1.45 || safety.height > core.height * 1.25)) {
+        (safety.width > core.width * 1.45 ||
+            safety.height > core.height * 1.25)) {
       return ClipCameraProfile.wide;
     }
     if (critical != null &&
@@ -455,8 +479,10 @@ abstract final class ClipCameraFitter {
     final top = bounds.top > y ? bounds.top.toDouble() : y;
     final rightLimit = x + width - 1;
     final bottomLimit = y + height - 1;
-    final right = bounds.right < rightLimit ? bounds.right.toDouble() : rightLimit;
-    final bottom = bounds.bottom < bottomLimit ? bounds.bottom.toDouble() : bottomLimit;
+    final right =
+        bounds.right < rightLimit ? bounds.right.toDouble() : rightLimit;
+    final bottom =
+        bounds.bottom < bottomLimit ? bounds.bottom.toDouble() : bottomLimit;
     if (right < left || bottom < top) return 0;
     final visibleArea = (right - left + 1) * (bottom - top + 1);
     final totalArea = bounds.width * bounds.height;

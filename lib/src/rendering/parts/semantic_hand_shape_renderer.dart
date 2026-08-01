@@ -11,7 +11,6 @@ final class SemanticHandShapeRenderer implements AvatarPartRenderer {
     final profile = _profile(context);
     final variant = context.random('rig.gesture.$profile').nextInt(0, 4);
     final shape = _shape(profile, variant, context.string('v4.mouthProp'));
-    if (shape == 'relaxed') return;
 
     for (final side in const <String>['left', 'right']) {
       final nodeId = '${side}Hand';
@@ -23,6 +22,11 @@ final class SemanticHandShapeRenderer implements AvatarPartRenderer {
       final cx = bounds.center.x;
       final cy = bounds.center.y;
       switch (shape) {
+        case 'relaxed':
+          shaped
+            ..fillRect(cx - 1, cy - 1, 3, 3)
+            ..set(cx + (left ? -2 : 2), cy + 1);
+          break;
         case 'fist':
           shaped.fillRect(cx - 1, cy - 1, 3, 3);
           break;

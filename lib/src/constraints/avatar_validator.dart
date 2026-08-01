@@ -44,13 +44,15 @@ final class V41AvatarValidator implements AvatarValidator {
       guard.violation('bounds.eyes', 'Eye pixels left the head mask.');
     }
     if (nose.intersect(eyes.dilated()).count > 0) {
-      guard.violation('collision.noseEyes', 'Nose overlaps the eye safety zone.');
+      guard.violation(
+          'collision.noseEyes', 'Nose overlaps the eye safety zone.');
     }
     if (brows.intersect(eyes).count > 0) {
       guard.violation('collision.browsEyes', 'Brows overlap eye pixels.');
     }
     if (facialHair.intersect(mouth).count > 0) {
-      guard.violation('collision.facialHairMouth', 'Facial hair covers the mouth.');
+      guard.violation(
+          'collision.facialHairMouth', 'Facial hair covers the mouth.');
     }
     if (hair.intersect(mouth.union(nose)).count > 0) {
       guard.violation(
@@ -60,24 +62,28 @@ final class V41AvatarValidator implements AvatarValidator {
       );
     }
     if (faceMask.count > 0 && state.mask('mouthProp').count > 0) {
-      guard.violation('conflict.maskMouthProp',
-          'A mouth prop is active with a face mask.');
+      guard.violation(
+          'conflict.maskMouthProp', 'A mouth prop is active with a face mask.');
     }
-    if (state.mask('headwear').count > 0 && eyewear.count > 0 &&
+    if (state.mask('headwear').count > 0 &&
+        eyewear.count > 0 &&
         countOverlap(state.mask('headwear'), eyewear) > eyewear.count * .65) {
-      guard.violation('collision.headwearEyewear',
-          'Headwear obscures most of the eyewear.',
+      guard.violation(
+          'collision.headwearEyewear', 'Headwear obscures most of the eyewear.',
           severity: ValidationSeverity.soft);
     }
     final renderedEyes = visibility.sourcePixels['eyes'] ?? 0;
     final visibleEyes = visibility.visiblePixels['eyes'] ?? 0;
-    if (renderedEyes > 0 && visibleEyes < 2) {
+    // A one-pixel eye is a legitimate tiny style; it cannot satisfy an
+    // absolute two-pixel visibility rule. Only flag real occlusion when the
+    // source offered enough detail to expose two pixels.
+    if (renderedEyes >= 2 && visibleEyes < 2) {
       guard.violation(
         'visibility.eyes',
         'Eye details are almost completely hidden in the final composition.',
         severity: ValidationSeverity.soft,
       );
-    } else if (renderedEyes > 0 && visibility.visibleRatio('eyes') < .35) {
+    } else if (renderedEyes >= 2 && visibility.visibleRatio('eyes') < .35) {
       guard.violation(
         'visibility.eyes',
         'Most eye details are obscured by later layers.',
@@ -85,7 +91,7 @@ final class V41AvatarValidator implements AvatarValidator {
       );
     }
     final renderedMouth = visibility.sourcePixels['mouth'] ?? 0;
-    if (renderedMouth > 0 && visibility.visibleRatio('mouth') < .3) {
+    if (renderedMouth >= 2 && visibility.visibleRatio('mouth') < .3) {
       guard.violation(
         'visibility.mouth',
         'Most mouth details are obscured in the final composition.',
@@ -98,10 +104,16 @@ final class V41AvatarValidator implements AvatarValidator {
     if (head.connectedComponents().length != 1) {
       guard.violation('topology.head', 'Head mask is not a single component.');
     }
-    for (final id in const <String>['hair.all', 'facialHair', 'headwear', 'armor']) {
+    for (final id in const <String>[
+      'hair.all',
+      'facialHair',
+      'headwear',
+      'armor'
+    ]) {
       final mask = state.mask(id);
       if (mask.count == 0) continue;
-      final tiny = mask.connectedComponents()
+      final tiny = mask
+          .connectedComponents()
           .where((component) => component.length == 1)
           .length;
       if (tiny > 5) {

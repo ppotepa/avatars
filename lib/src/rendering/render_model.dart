@@ -39,13 +39,14 @@ final class RenderLayer {
     RenderSlot? slot,
     int? localOrder,
     int? z,
+    int? colorIndex,
     Map<String, Object?>? meta,
   }) =>
       RenderLayer(
         id: id,
         z: z ?? this.z,
         mask: mask ?? this.mask,
-        colorIndex: colorIndex,
+        colorIndex: colorIndex ?? this.colorIndex,
         nodeId: nodeId ?? this.nodeId,
         slot: slot ?? this.slot,
         localOrder: localOrder ?? this.localOrder,
@@ -147,10 +148,7 @@ final class AvatarRenderState {
 
   Set<String> nodeAndDescendants(String nodeId) {
     final graph = buildRigGraph();
-    return graph
-        .descendantsOf(nodeId)
-        .map((node) => node.id)
-        .toSet();
+    return graph.descendantsOf(nodeId).map((node) => node.id).toSet();
   }
 
   void translateNode(String nodeId, {required int dx, required int dy}) {
@@ -182,9 +180,8 @@ final class AvatarRenderState {
     while (added) {
       added = false;
       for (final id in nodeIds.toList(growable: false)) {
-        final parent = nodeParents.containsKey(id)
-            ? nodeParents[id]
-            : _defaultParent(id);
+        final parent =
+            nodeParents.containsKey(id) ? nodeParents[id] : _defaultParent(id);
         if (parent != null && nodeIds.add(parent)) added = true;
       }
     }
@@ -300,7 +297,10 @@ String _maskNode(String id) {
     return (nodeId: 'neck', slot: RenderSlot.neck);
   }
   if (id.startsWith('head.') || id.startsWith('ears.')) {
-    return (nodeId: id.startsWith('ears.') ? 'ears' : 'head', slot: RenderSlot.head);
+    return (
+      nodeId: id.startsWith('ears.') ? 'ears' : 'head',
+      slot: RenderSlot.head
+    );
   }
   if (id.startsWith('face.') ||
       id.startsWith('expression.') ||
@@ -311,7 +311,8 @@ String _maskNode(String id) {
   if (id.startsWith('facialHair.')) {
     return (nodeId: 'facialHair', slot: RenderSlot.facialHair);
   }
-  if (id.startsWith('hair.front') || id.startsWith('hair.gray') ||
+  if (id.startsWith('hair.front') ||
+      id.startsWith('hair.gray') ||
       id.startsWith('hair.part')) {
     return (nodeId: 'hairFront', slot: RenderSlot.hairFront);
   }
@@ -379,7 +380,8 @@ String? _defaultParent(String id) => switch (id) {
     };
 
 RenderSlot _nodeSlot(String id, List<RenderLayer> layers) {
-  final own = layers.where((layer) => layer.nodeId == id).toList(growable: false);
+  final own =
+      layers.where((layer) => layer.nodeId == id).toList(growable: false);
   if (own.isNotEmpty) {
     own.sort((a, b) => a.slot.index.compareTo(b.slot.index));
     return own.first.slot;
@@ -430,8 +432,7 @@ final class RenderVisibility {
 }
 
 RenderVisibility analyzeRenderVisibility(List<RenderLayer> layers) {
-  final sorted = List<RenderLayer>.from(layers)
-    ..sort(_compareLayers);
+  final sorted = List<RenderLayer>.from(layers)..sort(_compareLayers);
   final width = sorted.isEmpty ? 48 : sorted.first.mask.width;
   final height = sorted.isEmpty ? 48 : sorted.first.mask.height;
   final sourceMasks = <String, PixelMask>{};
