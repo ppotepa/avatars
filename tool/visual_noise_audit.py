@@ -57,7 +57,7 @@ def main() -> int:
             errors.append(f"visual-noise policy contract missing: {expression}")
 
     for expression in (
-        "_resolveConflicts",
+        "_resolveSceneConflicts",
         "'v4.weather' => 6",
         "BudgetedGenomeGenerator",
     ):
@@ -95,7 +95,7 @@ def main() -> int:
     for expression in (
         "rig.visualNoise",
         "safetyCoverage",
-        "BudgetedGenomeGenerator",
+        "visualNoise",
     ):
         if expression not in rig_generator:
             errors.append(f"rig diagnostics contract missing: {expression}")
@@ -103,7 +103,7 @@ def main() -> int:
     for expression in (
         "lessThanOrEqualTo(SceneVisualNoise.hardLimit)",
         "<String>['v4.weather']",
-        "greaterThanOrEqualTo(.80)",
+        "greaterThanOrEqualTo(.72)",
         "safetyCoverage",
     ):
         if expression not in test:

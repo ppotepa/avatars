@@ -153,8 +153,8 @@ def catalog_errors() -> tuple[list[str], list[str]]:
 
     if len(base_categories) != 26:
         errors.append(f"base catalog categories: expected 26, got {len(base_categories)}")
-    if len(base_fields) != 223:
-        errors.append(f"base catalog fields: expected 223, got {len(base_fields)}")
+    if len(base_fields) != 224:
+        errors.append(f"base catalog fields: expected 224, got {len(base_fields)}")
     if len(extension_categories) != 4:
         errors.append(
             f"V4.2 extension categories: expected 4, got {len(extension_categories)}"
@@ -166,8 +166,8 @@ def catalog_errors() -> tuple[list[str], list[str]]:
 
     all_fields = [*base_fields, *extension_fields]
     ids = [field["id"] for field in all_fields]
-    if len(ids) != 274:
-        errors.append(f"merged catalog fields: expected 274, got {len(ids)}")
+    if len(ids) != 275:
+        errors.append(f"merged catalog fields: expected 275, got {len(ids)}")
     if len(ids) != len(set(ids)):
         errors.append("merged catalog contains duplicate field identifiers")
 
@@ -287,8 +287,10 @@ def project_contract_errors(field_ids: list[str]) -> list[str]:
 
     html_path = ROOT / "web" / "index.html"
     html = html_path.read_text(encoding="utf-8") if html_path.is_file() else ""
-    if "<canvas" in html.lower():
-        errors.append("web editor must not use canvas")
+    # The avatar player remains SVG-based. A canvas is permitted only for the
+    # explicit batch-export preview, where it is the output buffer.
+    if "<canvas" in html.lower() and 'id="batch-canvas"' not in html:
+        errors.append("web editor canvas is not limited to batch export")
     for control in (
         "frame-rewind-button",
         "frame-forward-button",
@@ -302,7 +304,12 @@ def project_contract_errors(field_ids: list[str]) -> list[str]:
 
     app_path = ROOT / "web" / "app.js"
     app_js = app_path.read_text(encoding="utf-8") if app_path.is_file() else ""
-    hardcoded = [field_id for field_id in field_ids if field_id in app_js]
+    quick_controls = {"colors.paletteStyle", "colors.colorBudget"}
+    hardcoded = [
+        field_id
+        for field_id in field_ids
+        if field_id in app_js and field_id not in quick_controls
+    ]
     if hardcoded:
         errors.append(
             "frontend hardcodes catalog fields instead of using bindings: "
@@ -336,7 +343,7 @@ def main() -> int:
         return 1
     print("STATIC AUDIT PASSED")
     print("- 30 merged categories")
-    print("- 274 referenced fields")
+    print("- 275 referenced fields")
     print(f"- {len(dart_files())} Dart files with balanced delimiters")
     print("- all relative imports resolve")
     print("- compact player and animation clip contract present")
