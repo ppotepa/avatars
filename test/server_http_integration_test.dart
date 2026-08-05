@@ -43,10 +43,10 @@ void main() {
           maxWorkers: 1,
         ),
       ),
-      config: const ServerConfig(
+      config: ServerConfig(
         enableSave: true,
         saveToken: _saveToken,
-        allowedOrigins: <String>{_allowedOrigin},
+        allowedOrigins: const <String>{_allowedOrigin},
       ),
       origins: OriginPolicy(
         allowedOrigins: const <String>{_allowedOrigin},
