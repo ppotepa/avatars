@@ -13,6 +13,7 @@ void main() {
   late Directory root;
   late HttpServer server;
   late StreamSubscription<HttpRequest> subscription;
+  late BatchHttpController batches;
   late Uri baseUri;
 
   setUpAll(() async {
@@ -30,19 +31,20 @@ void main() {
     }
 
     final service = AvatarEditorService();
+    batches = BatchHttpController(
+      service: service,
+      policy: const BatchResourcePolicy(
+        maxAvatarCount: 4,
+        maxSheetBytes: 4 * 48 * 48 * 4,
+        maxWorkers: 1,
+      ),
+    );
     final handler = ServerRequestHandler(
       application: AvatarEditorHttpApplication(
         projectRoot: root,
         service: service,
       ),
-      batches: BatchHttpController(
-        service: service,
-        policy: const BatchResourcePolicy(
-          maxAvatarCount: 4,
-          maxSheetBytes: 4 * 48 * 48 * 4,
-          maxWorkers: 1,
-        ),
-      ),
+      batches: batches,
       config: ServerConfig(
         enableSave: true,
         saveToken: _saveToken,
@@ -100,11 +102,33 @@ void main() {
     expect(payload['frames'], hasLength(2));
   });
 
-  test('origin policy rejects unknown and accepts configured origins', () async {
+  test('origin policy enforces scheme and configured allowlist', () async {
+    final sameOrigin = await _request(
+      baseUri.resolve('/api/avatar'),
+      method: 'POST',
+      headers: <String, String>{'origin': baseUri.origin},
+      json: <String, Object?>{
+        'request': AvatarRequest(seed: 'origin-same').toJson(),
+      },
+    );
+    expect(sameOrigin.status, HttpStatus.ok);
+
+    final wrongScheme = await _request(
+      baseUri.resolve('/api/avatar'),
+      method: 'POST',
+      headers: <String, String>{
+        'origin': 'https://${baseUri.host}:${baseUri.port}',
+      },
+      json: <String, Object?>{
+        'request': AvatarRequest(seed: 'origin-wrong-scheme').toJson(),
+      },
+    );
+    expect(wrongScheme.status, HttpStatus.forbidden);
+
     final forbidden = await _request(
       baseUri.resolve('/api/avatar'),
       method: 'POST',
-      headers: <String, String>{'origin': 'https://evil.example'},
+      headers: const <String, String>{'origin': 'https://evil.example'},
       json: <String, Object?>{
         'request': AvatarRequest(seed: 'origin-denied').toJson(),
       },
@@ -170,6 +194,37 @@ void main() {
     }
   });
 
+  test('second batch is rejected while the first body is still streaming', () async {
+    final firstClient = HttpClient();
+    try {
+      final first =
+          await firstClient.postUrl(baseUri.resolve('/api/export/batch-png'));
+      first.headers.contentType = ContentType.json;
+      first.write('{"request":');
+      await first.flush();
+      await _waitFor(() => batches.isActive);
+
+      final second = await _request(
+        baseUri.resolve('/api/export/batch-png'),
+        method: 'POST',
+        json: <String, Object?>{
+          'request': AvatarRequest(seed: 'batch-concurrent-second').toJson(),
+          'columns': 1,
+          'rows': 1,
+        },
+      );
+      expect(second.status, HttpStatus.tooManyRequests);
+
+      first.write(jsonEncode(AvatarRequest(seed: 'batch-concurrent-first').toJson()));
+      first.write(',"columns":1,"rows":1}');
+      final response = await first.close();
+      await response.drain<void>();
+      expect(response.statusCode, HttpStatus.ok);
+    } finally {
+      firstClient.close(force: true);
+    }
+  });
+
   test('batch endpoint retains manifest and zip artifacts', () async {
     final batch = await _request(
       baseUri.resolve('/api/export/batch-png'),
@@ -198,6 +253,14 @@ void main() {
     expect(zip.headers.contentType?.mimeType, 'application/zip');
     expect(zip.body, isNotEmpty);
   });
+}
+
+Future<void> _waitFor(bool Function() condition) async {
+  for (var attempt = 0; attempt < 100; attempt++) {
+    if (condition()) return;
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+  throw StateError('Condition was not reached before timeout.');
 }
 
 Future<_HttpResponse> _request(
