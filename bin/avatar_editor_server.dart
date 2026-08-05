@@ -3,8 +3,6 @@ import 'dart:io';
 
 import 'package:avatar_genome/avatar_genome_io.dart';
 import 'package:avatar_genome/avatar_genome_server.dart';
-import 'package:avatar_genome/src/server/legacy_http_application.dart'
-    as application;
 
 Future<void> main(List<String> arguments) async {
   if (arguments.contains('--help') || arguments.contains('-h')) {
@@ -30,12 +28,15 @@ Options:
   final config = ServerConfig.fromArguments(arguments);
   final root = _projectRoot(arguments);
   final service = AvatarEditorService();
-  final app = application.AvatarEditorHttpApplication(
-    projectRoot: root,
-    service: service,
+  final handler = ServerRequestHandler(
+    application: AvatarEditorHttpApplication(
+      projectRoot: root,
+      service: service,
+    ),
+    batches: BatchHttpController(service: service),
+    config: config,
+    origins: OriginPolicy(allowedOrigins: config.allowedOrigins),
   );
-  final batches = BatchHttpController(service: service);
-  final origins = OriginPolicy(allowedOrigins: config.allowedOrigins);
   final server = await HttpServer.bind(config.address, config.port);
 
   stdout.writeln('Avatar Genome Editor');
@@ -43,42 +44,8 @@ Options:
   stdout.writeln('Open http://${config.host}:${server.port}');
 
   await for (final request in server) {
-    unawaited(_handle(request, app, batches, config, origins));
+    unawaited(handler.call(request));
   }
-}
-
-Future<void> _handle(
-  HttpRequest request,
-  application.AvatarEditorHttpApplication app,
-  BatchHttpController batches,
-  ServerConfig config,
-  OriginPolicy origins,
-) async {
-  final origin = request.headers.value('origin');
-  if (!origins.allows(request)) {
-    request.response
-      ..statusCode = HttpStatus.forbidden
-      ..headers.contentType = ContentType.json
-      ..write('{"error":"Forbidden origin"}');
-    await request.response.close();
-    return;
-  }
-  origins.apply(request.response, origin);
-
-  if (request.uri.path == '/api/save' && !config.authorizesSave(request)) {
-    request.response
-      ..statusCode = HttpStatus.forbidden
-      ..headers.contentType = ContentType.json
-      ..write('{"error":"Disk writes are disabled or unauthorized"}');
-    await request.response.close();
-    return;
-  }
-
-  if (batches.handles(request)) {
-    await batches.handle(request);
-    return;
-  }
-  await app.handle(request);
 }
 
 Directory _projectRoot(List<String> arguments) {
