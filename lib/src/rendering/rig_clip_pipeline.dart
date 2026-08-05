@@ -17,6 +17,7 @@ import 'parts/accessories_renderer.dart';
 import 'parts/anatomy_renderer.dart';
 import 'parts/armor_renderer.dart';
 import 'parts/articulated_arm_renderer.dart';
+import 'parts/atmosphere/extended_atmosphere_renderer.dart';
 import 'parts/background_renderer.dart';
 import 'parts/constrained_jewelry_renderer.dart';
 import 'parts/face_renderer.dart';
@@ -120,7 +121,7 @@ final class RigClipPipeline {
   static List<AvatarPartRenderer> get defaultParts =>
       const <AvatarPartRenderer>[
         BackgroundRenderer(),
-        ExtendedAtmosphereRenderer(),
+        SplitExtendedAtmosphereRenderer(),
         ExtendedScenicLightRenderer(),
         ExtendedAuraRenderer(),
         AnatomyRenderer(),
