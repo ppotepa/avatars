@@ -36,7 +36,7 @@ void main() {
 
   test('conflicting explicit scene effects keep the semantic primary channel',
       () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'explicit-scene-conflict',
       overrides: <String, Object>{
         'v4.background': 'voidStatic',
