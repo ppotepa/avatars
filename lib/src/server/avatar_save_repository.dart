@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,19 +7,32 @@ import '../serialization/avatar_codec.dart';
 import '../serialization/avatar_png_codec.dart';
 
 final class AvatarSaveRepository {
-  const AvatarSaveRepository({required this.outputDirectory});
+  AvatarSaveRepository({required this.outputDirectory});
 
   final Directory outputDirectory;
+  final Map<String, Future<void>> _writeTails = <String, Future<void>>{};
 
   Future<Map<String, Object>> save(
     String id,
     AvatarEditorResponse response, {
     required int scale,
-  }) async {
+  }) {
     if (scale < 1 || scale > 64) {
       throw ArgumentError.value(scale, 'scale', 'Must be between 1 and 64.');
     }
     final safeId = sanitizeId(id);
+    return _serialize(safeId, () => _saveBundle(
+          safeId,
+          response,
+          scale: scale,
+        ));
+  }
+
+  Future<Map<String, Object>> _saveBundle(
+    String safeId,
+    AvatarEditorResponse response, {
+    required int scale,
+  }) async {
     final directory = Directory.fromUri(outputDirectory.uri.resolve('$safeId/'));
     await directory.create(recursive: true);
     final pretty = const JsonEncoder.withIndent('  ');
@@ -47,7 +61,7 @@ final class AvatarSaveRepository {
       'id': safeId,
       'imageHash': response.result.imageHash,
       'directory': 'output/avatars/$safeId',
-      'files': files.keys.toList(growable: false),
+      'files': List<String>.unmodifiable(files.keys),
     };
   }
 
@@ -59,6 +73,22 @@ final class AvatarSaveRepository {
         .replaceAll(RegExp(r'^[-.]+|[-.]+$'), '');
     if (normalized.isEmpty) return 'avatar';
     return normalized.length <= 80 ? normalized : normalized.substring(0, 80);
+  }
+
+  Future<T> _serialize<T>(String id, Future<T> Function() action) async {
+    final previous = _writeTails[id] ?? Future<void>.value();
+    final completed = Completer<void>();
+    final tail = completed.future;
+    _writeTails[id] = tail;
+    await previous;
+    try {
+      return await action();
+    } finally {
+      completed.complete();
+      if (identical(_writeTails[id], tail)) {
+        _writeTails.remove(id);
+      }
+    }
   }
 
   Future<void> _replaceFile(File target, List<int> bytes) async {
