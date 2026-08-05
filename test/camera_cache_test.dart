@@ -4,11 +4,11 @@ import 'package:test/test.dart';
 void main() {
   test('static phases reuse one clip-wide camera decision', () {
     final generator = AvatarGenerator();
-    final first = generator.generate(const AvatarRequest(
+    final first = generator.generate(AvatarRequest(
       seed: 'camera-cache-reuse',
       overrides: <String, Object>{'v4.animation': 'idle'},
     ));
-    final second = generator.generate(const AvatarRequest(
+    final second = generator.generate(AvatarRequest(
       seed: 'camera-cache-reuse',
       phase: 7,
       overrides: <String, Object>{'v4.animation': 'idle'},
