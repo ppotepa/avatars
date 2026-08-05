@@ -4,16 +4,19 @@ import 'package:test/test.dart';
 void main() {
   const policy = CameraSamplingPolicy();
 
-  test('reduced-motion phase zero uses one sample', () {
-    final plan = policy.plan(
-      AvatarRequest(
-        seed: 'camera-reduced-motion',
-        rendering: const AvatarRenderSettings(reducedMotion: true),
-      ),
-    );
+  test('reduced-motion requests use exactly the requested phase', () {
+    for (final phase in <int>[0, 7, 1000000]) {
+      final plan = policy.plan(
+        AvatarRequest(
+          seed: 'camera-reduced-motion-$phase',
+          phase: phase,
+          rendering: const AvatarRenderSettings(reducedMotion: true),
+        ),
+      );
 
-    expect(plan.phases, <int>[0]);
-    expect(plan.isSingleFrame, isTrue);
+      expect(plan.phases, <int>[phase]);
+      expect(plan.isSingleFrame, isTrue);
+    }
   });
 
   test('large exact phases keep a bounded camera envelope', () {
