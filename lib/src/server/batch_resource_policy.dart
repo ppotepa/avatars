@@ -6,7 +6,8 @@ final class BatchResourcePolicy {
     this.maxWorkers = 8,
   });
 
-  static const int estimatedDiagnosticsBytesPerAvatar = 16 * 1024;
+  static const int estimatedDiagnosticsBytesPerAvatar = 64 * 1024;
+  static const int estimatedBytesPerWorker = 4 * 1024 * 1024;
 
   final int maxAvatarCount;
   final int maxSheetBytes;
@@ -47,11 +48,17 @@ final class BatchResourcePolicy {
       );
     }
 
+    final workers = availableProcessors
+        .clamp(1, maxWorkers)
+        .clamp(1, count)
+        .toInt();
+
     // During assembly the process can hold the final RGBA sheet, all shard
-    // outputs and PNG compression buffers at the same time. Always reserve the
-    // full diagnostics allowance so enabling metadata cannot invalidate a plan.
+    // outputs and PNG compression buffers at the same time. Full diagnostics
+    // include a large genome/source map, and every isolate owns a separate heap.
     final metadataBytes = count * estimatedDiagnosticsBytesPerAvatar;
-    final estimatedWorkingBytes = rgbaBytes * 3 + metadataBytes;
+    final workerBytes = workers * estimatedBytesPerWorker;
+    final estimatedWorkingBytes = rgbaBytes * 3 + metadataBytes + workerBytes;
     if (estimatedWorkingBytes > maxWorkingBytes) {
       throw ArgumentError.value(
         estimatedWorkingBytes,
@@ -60,16 +67,13 @@ final class BatchResourcePolicy {
       );
     }
 
-    final workers = availableProcessors
-        .clamp(1, maxWorkers)
-        .clamp(1, count)
-        .toInt();
     return BatchPlan(
       avatarCount: count,
       sheetWidth: width,
       sheetHeight: height,
       rgbaBytes: rgbaBytes,
       estimatedMetadataBytes: metadataBytes,
+      estimatedWorkerBytes: workerBytes,
       estimatedWorkingBytes: estimatedWorkingBytes,
       workerCount: workers,
     );
@@ -83,6 +87,7 @@ final class BatchPlan {
     required this.sheetHeight,
     required this.rgbaBytes,
     required this.estimatedMetadataBytes,
+    required this.estimatedWorkerBytes,
     required this.estimatedWorkingBytes,
     required this.workerCount,
   });
@@ -92,6 +97,7 @@ final class BatchPlan {
   final int sheetHeight;
   final int rgbaBytes;
   final int estimatedMetadataBytes;
+  final int estimatedWorkerBytes;
   final int estimatedWorkingBytes;
   final int workerCount;
 
@@ -101,6 +107,7 @@ final class BatchPlan {
         'sheetHeight': sheetHeight,
         'rgbaBytes': rgbaBytes,
         'estimatedMetadataBytes': estimatedMetadataBytes,
+        'estimatedWorkerBytes': estimatedWorkerBytes,
         'estimatedWorkingBytes': estimatedWorkingBytes,
         'workerCount': workerCount,
       };
