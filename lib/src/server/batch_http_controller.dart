@@ -159,7 +159,7 @@ final class BatchHttpController {
       ..statusCode = HttpStatus.ok
       ..headers.contentType = ContentType('application', 'zip')
       ..headers.set(
-        HttpHeaders.contentDispositionHeader,
+        'content-disposition',
         'attachment; filename="$baseName.zip"',
       )
       ..contentLength = zip.length
