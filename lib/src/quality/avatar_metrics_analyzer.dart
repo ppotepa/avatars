@@ -4,6 +4,7 @@ import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import '../pixels/pixel_mask.dart';
 import '../rendering/render_model.dart';
+import '../rendering/rig_model.dart';
 import '../util/math_utils.dart';
 
 final class AvatarMetricsAnalyzer {
