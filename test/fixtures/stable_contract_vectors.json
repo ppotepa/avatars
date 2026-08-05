@@ -4,6 +4,7 @@
   "catalogVersion": "4.4",
   "requestSchema": 1,
   "resultSchema": 2,
+  "approved": false,
   "vectors": [
     {"name":"basic-48-a","request":{"schemaVersion":1,"seed":"contract-basic-a","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
     {"name":"basic-48-b","request":{"schemaVersion":1,"seed":"contract-basic-b","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
