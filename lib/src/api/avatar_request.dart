@@ -124,10 +124,11 @@ final class GenomeSettings {
       };
 }
 
-/// Immutable request describing one deterministic avatar generation.
+/// Request describing one deterministic avatar generation.
 ///
-/// The seed is the genome identity. Overrides and locks are persisted so an
-/// editor can reproduce exactly the same result on every supported platform.
+/// Constant requests are immutable when their collection arguments are constant.
+/// Use [AvatarRequest.frozen], [fromJson] or [frozenCopy] at runtime boundaries
+/// to defensively copy and deeply freeze caller-owned collections.
 final class AvatarRequest {
   const AvatarRequest({
     required this.seed,
@@ -141,12 +142,38 @@ final class AvatarRequest {
     this.guardEnabled = true,
   });
 
+  factory AvatarRequest.frozen({
+    required String seed,
+    GenomeSettings settings = const GenomeSettings(),
+    AvatarRenderSettings rendering = const AvatarRenderSettings(),
+    Map<String, Object> overrides = const <String, Object>{},
+    Map<String, Object> lockedParameters = const <String, Object>{},
+    Map<String, Map<String, Object>> lockedCategories =
+        const <String, Map<String, Object>>{},
+    Map<String, int> categoryNonces = const <String, int>{},
+    int phase = 0,
+    bool guardEnabled = true,
+  }) =>
+      AvatarRequest(
+        seed: seed,
+        settings: settings,
+        rendering: rendering,
+        overrides: _freezeObjectMap(overrides),
+        lockedParameters: _freezeObjectMap(lockedParameters),
+        lockedCategories: _freezeNestedObjectMap(lockedCategories),
+        categoryNonces: Map<String, int>.unmodifiable(
+          Map<String, int>.of(categoryNonces),
+        ),
+        phase: phase,
+        guardEnabled: guardEnabled,
+      );
+
   factory AvatarRequest.fromJson(Map<String, Object?> json) {
     final schema = (json['schemaVersion'] as num?)?.toInt() ?? 1;
     if (schema != AvatarGenomeVersion.requestSchema) {
       throw FormatException('Unsupported AvatarRequest schema: $schema.');
     }
-    return AvatarRequest(
+    return AvatarRequest.frozen(
       seed: json['seed']! as String,
       settings: GenomeSettings.fromJson(
         Map<String, Object?>.from(
@@ -173,22 +200,24 @@ final class AvatarRequest {
   final String seed;
   final GenomeSettings settings;
   final AvatarRenderSettings rendering;
-
-  /// Manual or preset values. These win over automatic generation.
   final Map<String, Object> overrides;
-
-  /// Fixed values with the highest source priority.
   final Map<String, Object> lockedParameters;
-
-  /// Category snapshots used by editors when a complete section is locked.
   final Map<String, Map<String, Object>> lockedCategories;
-
-  /// Per-category deterministic reroll counters.
   final Map<String, int> categoryNonces;
-
-  /// Deterministic animation phase. Static avatars normally use zero.
   final int phase;
   final bool guardEnabled;
+
+  AvatarRequest frozenCopy() => AvatarRequest.frozen(
+        seed: seed,
+        settings: settings,
+        rendering: rendering,
+        overrides: overrides,
+        lockedParameters: lockedParameters,
+        lockedCategories: lockedCategories,
+        categoryNonces: categoryNonces,
+        phase: phase,
+        guardEnabled: guardEnabled,
+      );
 
   AvatarRequest copyWith({
     String? seed,
@@ -201,7 +230,7 @@ final class AvatarRequest {
     int? phase,
     bool? guardEnabled,
   }) =>
-      AvatarRequest(
+      AvatarRequest.frozen(
         seed: seed ?? this.seed,
         settings: settings ?? this.settings,
         rendering: rendering ?? this.rendering,
@@ -251,6 +280,22 @@ final class AvatarRequest {
         entry.key.toString(): _canonicalObjectMap(entry.value),
     };
   }
+
+  static Map<String, Object> _freezeObjectMap(Map<String, Object> source) =>
+      Map<String, Object>.unmodifiable(<String, Object>{
+        for (final entry in source.entries)
+          entry.key: _canonicalValue(entry.key, entry.value),
+      });
+
+  static Map<String, Map<String, Object>> _freezeNestedObjectMap(
+    Map<String, Map<String, Object>> source,
+  ) =>
+      Map<String, Map<String, Object>>.unmodifiable(
+        <String, Map<String, Object>>{
+          for (final entry in source.entries)
+            entry.key: _freezeObjectMap(entry.value),
+        },
+      );
 
   static Object _canonicalValue(String id, Object value) {
     if (id == 'v4.faceAnimation' && value == 'laughing') return 'laugh';
