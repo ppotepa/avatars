@@ -23,7 +23,6 @@ final class AvatarGenerator {
     AvatarValidator? validator,
     RigClipPipeline? pipeline,
     AvatarRequestValidator? requestValidator,
-    Object? renderer,
   })  : _delegate = rig.AvatarGenerator(
           catalog: catalog,
           genomeService: genomeService,
