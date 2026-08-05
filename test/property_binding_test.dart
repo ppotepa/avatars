@@ -14,7 +14,7 @@ void main() {
 
   test('binder writes request properties and override values', () {
     final binder = AvatarRequestBinder();
-    var request = const AvatarRequest(seed: 'binding-test');
+    var request = AvatarRequest(seed: 'binding-test');
     request = binder.setValue(request, 'settings.age', 64);
     request = binder.setValue(request, 'hair.length', 7);
     request = binder.setValue(request, 'rendering.size', 96);
@@ -31,7 +31,7 @@ void main() {
   test('property state reports automatic and manual sources', () {
     final registry = AvatarPropertyRegistry();
     final generator = AvatarGenerator();
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'state-test',
       overrides: <String, Object>{'eyes.shape': 'almond'},
     );
