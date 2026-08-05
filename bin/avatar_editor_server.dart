@@ -54,7 +54,7 @@ Future<void> _handle(
   ServerConfig config,
   OriginPolicy origins,
 ) async {
-  final origin = request.headers.value(HttpHeaders.originHeader);
+  final origin = request.headers.value('origin');
   if (!origins.allows(request)) {
     request.response
       ..statusCode = HttpStatus.forbidden
