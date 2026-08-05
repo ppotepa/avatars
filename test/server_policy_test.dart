@@ -78,7 +78,7 @@ void main() {
     const policy = BatchResourcePolicy(
       maxAvatarCount: 4,
       maxSheetBytes: 1024,
-      maxWorkingBytes: 128 * 1024,
+      maxWorkingBytes: 16 * 1024 * 1024,
       maxWorkers: 2,
     );
     final plan = policy.plan(
@@ -92,7 +92,11 @@ void main() {
       plan.estimatedMetadataBytes,
       4 * BatchResourcePolicy.estimatedDiagnosticsBytesPerAvatar,
     );
-    expect(plan.estimatedWorkingBytes, lessThanOrEqualTo(128 * 1024));
+    expect(
+      plan.estimatedWorkerBytes,
+      2 * BatchResourcePolicy.estimatedBytesPerWorker,
+    );
+    expect(plan.estimatedWorkingBytes, lessThanOrEqualTo(16 * 1024 * 1024));
 
     expect(
       () => policy.plan(
@@ -107,7 +111,8 @@ void main() {
     const memoryBound = BatchResourcePolicy(
       maxAvatarCount: 4,
       maxSheetBytes: 1024 * 1024,
-      maxWorkingBytes: 32 * 1024,
+      maxWorkingBytes: 4 * 1024 * 1024,
+      maxWorkers: 1,
     );
     expect(
       () => memoryBound.plan(
