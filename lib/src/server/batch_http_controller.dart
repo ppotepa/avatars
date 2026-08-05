@@ -66,6 +66,10 @@ final class BatchHttpController {
       return;
     }
 
+    // Acquire before the first await. Dart can dispatch another request while
+    // this request body is being read, so delaying this assignment creates a
+    // race where two batches both observe an idle controller.
+    _active = true;
     try {
       final payload = await _readJson(request);
       final columns = _integer(
@@ -82,27 +86,20 @@ final class BatchHttpController {
         min: 1,
         max: 256,
       );
+      final includeDiagnostics = payload['includeDiagnostics'] == true;
       final plan = policy.plan(
         columns: columns,
         rows: rows,
         tileSize: 48,
         availableProcessors: Platform.numberOfProcessors,
       );
-      final includeDiagnostics = payload['includeDiagnostics'] == true;
-
-      _active = true;
-      late final _BatchResponse batch;
-      try {
-        batch = await _render(
-          payload,
-          columns: columns,
-          rows: rows,
-          plan: plan,
-          includeDiagnostics: includeDiagnostics,
-        );
-      } finally {
-        _active = false;
-      }
+      final batch = await _render(
+        payload,
+        columns: columns,
+        rows: rows,
+        plan: plan,
+        includeDiagnostics: includeDiagnostics,
+      );
 
       final id = artifactStore.put(
         png: batch.png,
@@ -117,10 +114,8 @@ final class BatchHttpController {
         ..add(batch.png);
       await request.response.close();
     } on FormatException catch (error) {
-      _active = false;
       await _error(request, HttpStatus.badRequest, 'Invalid JSON', error.message);
     } on ArgumentError catch (error) {
-      _active = false;
       await _error(
         request,
         HttpStatus.badRequest,
@@ -128,7 +123,6 @@ final class BatchHttpController {
         error.message?.toString() ?? 'The batch request is invalid.',
       );
     } catch (error, stackTrace) {
-      _active = false;
       stderr.writeln('Unhandled batch error: $error\n$stackTrace');
       await _error(
         request,
@@ -136,6 +130,8 @@ final class BatchHttpController {
         'Internal server error',
         'The batch request could not be completed.',
       );
+    } finally {
+      _active = false;
     }
   }
 
