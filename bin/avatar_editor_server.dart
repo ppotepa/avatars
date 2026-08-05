@@ -42,10 +42,35 @@ Options:
 
   stdout.writeln('Avatar Genome Editor');
   stdout.writeln('Project root: ${root.path}');
-  stdout.writeln('Open http://${config.host}:${server.port}');
+  final displayHost = config.host.contains(':')
+      ? '[${config.host}]'
+      : config.host;
+  stdout.writeln('Open http://$displayHost:${server.port}');
 
   await for (final request in server) {
-    unawaited(handler.call(request));
+    unawaited(_dispatch(handler, request));
+  }
+}
+
+Future<void> _dispatch(
+  ServerRequestHandler handler,
+  HttpRequest request,
+) async {
+  try {
+    await handler.call(request);
+  } catch (error, stackTrace) {
+    stderr.writeln('Unhandled server dispatch error: $error\n$stackTrace');
+    try {
+      if (!request.response.headers.contentType.toString().contains('json')) {
+        request.response.headers.contentType = ContentType.json;
+      }
+      request.response
+        ..statusCode = HttpStatus.internalServerError
+        ..write('{"error":"Internal server error"}');
+      await request.response.close();
+    } catch (_) {
+      // The response may already have been committed or closed.
+    }
   }
 }
 
