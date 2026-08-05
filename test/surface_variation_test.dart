@@ -34,7 +34,7 @@ void main() {
   });
 
   test('hockey and headwear surface signatures remain deterministic', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'surface-deterministic',
       overrides: <String, Object>{
         'v4.headwear': 'tacticalHelmet',
