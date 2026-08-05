@@ -1,7 +1,8 @@
 import 'dart:io';
 
 final class OriginPolicy {
-  const OriginPolicy({this.allowedOrigins = const <String>{}});
+  OriginPolicy({Set<String> allowedOrigins = const <String>{}})
+      : allowedOrigins = Set<String>.unmodifiable(allowedOrigins);
 
   final Set<String> allowedOrigins;
 
