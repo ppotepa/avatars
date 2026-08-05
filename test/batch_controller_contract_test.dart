@@ -29,11 +29,12 @@ void main() {
     );
   });
 
-  test('default server routes all batch artifact endpoints to controller', () {
-    final source = File('bin/avatar_editor_server.dart').readAsStringSync();
+  test('request handler routes all batch artifact endpoints to controller', () {
+    final handler =
+        File('lib/src/server/server_request_handler.dart').readAsStringSync();
     final controller =
         File('lib/src/server/batch_http_controller.dart').readAsStringSync();
-    expect(source, contains('batches.handles(request)'));
+    expect(handler, contains('batches.handles(request)'));
     expect(controller, contains("'/api/export/batch-png'"));
     expect(controller, contains("'/api/export/batch-manifest'"));
     expect(controller, contains("'/api/export/batch-zip'"));
