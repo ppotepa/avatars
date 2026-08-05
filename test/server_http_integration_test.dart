@@ -6,6 +6,9 @@ import 'package:avatar_genome/avatar_genome.dart';
 import 'package:avatar_genome/avatar_genome_server.dart';
 import 'package:test/test.dart';
 
+const _saveToken = '0123456789abcdef';
+const _allowedOrigin = 'https://editor.example';
+
 void main() {
   late Directory root;
   late HttpServer server;
@@ -40,8 +43,14 @@ void main() {
           maxWorkers: 1,
         ),
       ),
-      config: const ServerConfig(),
-      origins: OriginPolicy(),
+      config: const ServerConfig(
+        enableSave: true,
+        saveToken: _saveToken,
+        allowedOrigins: <String>{_allowedOrigin},
+      ),
+      origins: OriginPolicy(
+        allowedOrigins: const <String>{_allowedOrigin},
+      ),
     );
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     subscription = server.listen((request) {
@@ -67,7 +76,7 @@ void main() {
   });
 
   test('avatar and animation endpoints generate results', () async {
-    final request = AvatarRequest.frozen(seed: 'http-integration').toJson();
+    final request = AvatarRequest(seed: 'http-integration').toJson();
     final avatar = await _request(
       baseUri.resolve('/api/avatar'),
       method: 'POST',
@@ -91,25 +100,74 @@ void main() {
     expect(payload['frames'], hasLength(2));
   });
 
-  test('origin and save policies reject unauthorized requests', () async {
-    final forbiddenOrigin = await _request(
+  test('origin policy rejects unknown and accepts configured origins', () async {
+    final forbidden = await _request(
       baseUri.resolve('/api/avatar'),
       method: 'POST',
       headers: <String, String>{'origin': 'https://evil.example'},
       json: <String, Object?>{
-        'request': AvatarRequest.frozen(seed: 'origin-test').toJson(),
+        'request': AvatarRequest(seed: 'origin-denied').toJson(),
       },
     );
-    expect(forbiddenOrigin.status, HttpStatus.forbidden);
+    expect(forbidden.status, HttpStatus.forbidden);
 
-    final save = await _request(
+    final allowed = await _request(
+      baseUri.resolve('/api/avatar'),
+      method: 'POST',
+      headers: const <String, String>{'origin': _allowedOrigin},
+      json: <String, Object?>{
+        'request': AvatarRequest(seed: 'origin-allowed').toJson(),
+      },
+    );
+    expect(allowed.status, HttpStatus.ok);
+    expect(
+      allowed.headers.value('access-control-allow-origin'),
+      _allowedOrigin,
+    );
+  });
+
+  test('save endpoint requires and accepts the configured token', () async {
+    final payload = <String, Object?>{
+      'id': 'http-save',
+      'request': AvatarRequest(seed: 'save-test').toJson(),
+    };
+    final forbidden = await _request(
       baseUri.resolve('/api/save'),
       method: 'POST',
-      json: <String, Object?>{
-        'request': AvatarRequest.frozen(seed: 'save-test').toJson(),
-      },
+      json: payload,
     );
-    expect(save.status, HttpStatus.forbidden);
+    expect(forbidden.status, HttpStatus.forbidden);
+
+    final saved = await _request(
+      baseUri.resolve('/api/save'),
+      method: 'POST',
+      headers: const <String, String>{
+        'x-avatar-save-token': _saveToken,
+      },
+      json: payload,
+    );
+    expect(saved.status, HttpStatus.ok);
+    expect(
+      File.fromUri(root.uri.resolve('output/avatars/http-save/avatar.png'))
+          .existsSync(),
+      isTrue,
+    );
+  });
+
+  test('invalid JSON is rejected without internal details', () async {
+    final client = HttpClient();
+    try {
+      final request = await client.postUrl(baseUri.resolve('/api/avatar'));
+      request.headers.contentType = ContentType.json;
+      request.write('{invalid');
+      final response = await request.close();
+      final body = await utf8.decoder.bind(response).join();
+      expect(response.statusCode, HttpStatus.badRequest);
+      expect(body, contains('Invalid JSON'));
+      expect(body, isNot(contains('StackTrace')));
+    } finally {
+      client.close(force: true);
+    }
   });
 
   test('batch endpoint retains manifest and zip artifacts', () async {
@@ -117,7 +175,7 @@ void main() {
       baseUri.resolve('/api/export/batch-png'),
       method: 'POST',
       json: <String, Object?>{
-        'request': AvatarRequest.frozen(seed: 'batch-http').toJson(),
+        'request': AvatarRequest(seed: 'batch-http').toJson(),
         'columns': 1,
         'rows': 1,
       },
