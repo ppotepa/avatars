@@ -56,10 +56,8 @@ final class GeneratorDependencies {
       );
     }
 
-    final resolvedGenome = genomeService ??
-        DesignIntentGenomeGenerator(
-          BudgetedGenomeGenerator(catalog: resolvedCatalog),
-        );
+    final resolvedGenome =
+        genomeService ?? _defaultGenomeGenerator(resolvedCatalog);
     final resolvedLayout = layoutResolver ?? const V41LayoutResolver();
     final resolvedPalette = paletteFactory ?? const V41PaletteFactory();
     final resolvedCompositor = compositor ?? const IndexedAvatarCompositor();
@@ -85,4 +83,11 @@ final class GeneratorDependencies {
       pipeline: resolvedPipeline,
     );
   }
+
+  static GenomeGenerator _defaultGenomeGenerator(
+    ParameterCatalog catalog,
+  ) =>
+      DesignIntentGenomeGenerator(
+        BudgetedGenomeGenerator(catalog: catalog),
+      );
 }

@@ -1,6 +1,5 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
-import '../genome/budgeted_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
@@ -25,10 +24,7 @@ final class AvatarGenerator {
     Object? renderer,
   }) : _delegate = rig.AvatarGenerator(
           catalog: catalog,
-          genomeService: genomeService ??
-              BudgetedGenomeGenerator(
-                catalog: catalog ?? ParameterCatalog.v41,
-              ),
+          genomeService: genomeService,
           layoutResolver: layoutResolver,
           paletteFactory: paletteFactory,
           compositor: compositor,
