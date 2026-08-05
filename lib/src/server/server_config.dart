@@ -30,7 +30,7 @@ final class ServerConfig {
       port: port,
       allowRemote: arguments.contains('--allow-remote'),
       enableSave: arguments.contains('--enable-save'),
-      allowedOrigins: Set.unmodifiable(origins),
+      allowedOrigins: Set<String>.unmodifiable(origins),
       saveToken: value('--save-token'),
     );
     config.validate();
@@ -44,7 +44,12 @@ final class ServerConfig {
   final Set<String> allowedOrigins;
   final String? saveToken;
 
-  InternetAddress get address => InternetAddress(host);
+  /// `HttpServer.bind` accepts either an address object or a hostname string.
+  Object get address => switch (host) {
+        'localhost' => InternetAddress.loopbackIPv4,
+        '::1' => InternetAddress.loopbackIPv6,
+        _ => host,
+      };
 
   bool get isLoopbackHost => <String>{
         '127.0.0.1',
