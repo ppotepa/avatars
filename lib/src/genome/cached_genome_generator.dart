@@ -1,33 +1,46 @@
-import 'dart:convert';
-
 import '../api/avatar_request.dart';
 import '../api/avatar_version.dart';
 import '../constraints/validation.dart';
+import '../util/stable_fingerprint.dart';
 import 'avatar_genome_model.dart';
 import 'genome_generator.dart';
 
 final class CachedGenomeGenerator implements GenomeGenerator {
-  CachedGenomeGenerator({required this.delegate, this.capacity = 32})
-      : assert(capacity >= 0);
+  CachedGenomeGenerator({required this.delegate, this.capacity = 32}) {
+    if (capacity < 0) {
+      throw ArgumentError.value(capacity, 'capacity', 'Must not be negative.');
+    }
+  }
 
   final GenomeGenerator delegate;
   final int capacity;
   final Map<String, _GenomeCacheEntry> _cache =
       <String, _GenomeCacheEntry>{};
+  int _hits = 0;
+  int _misses = 0;
 
   int get length => _cache.length;
-  void clear() => _cache.clear();
+  int get hits => _hits;
+  int get misses => _misses;
+
+  void clear() {
+    _cache.clear();
+    _hits = 0;
+    _misses = 0;
+  }
 
   @override
   AvatarGenome generate(AvatarRequest request, ConstraintEngine guard) {
     final key = _key(request);
     final cached = _cache.remove(key);
     if (cached != null) {
+      _hits++;
       _cache[key] = cached;
       guard.recordAll(cached.entries);
       return cached.genome;
     }
 
+    _misses++;
     final localGuard = ConstraintEngine();
     final genome = delegate.generate(request, localGuard);
     final entry = _GenomeCacheEntry(
@@ -49,8 +62,9 @@ final class CachedGenomeGenerator implements GenomeGenerator {
       ..remove('rendering')
       ..remove('phase')
       ..remove('guardEnabled');
-    return jsonEncode(<String, Object>{
+    return stableFingerprint(<String, Object>{
       'generatorVersion': AvatarGenomeVersion.generator,
+      'catalogVersion': AvatarGenomeVersion.catalog,
       'request': json,
     });
   }
