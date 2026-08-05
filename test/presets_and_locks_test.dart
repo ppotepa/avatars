@@ -8,7 +8,7 @@ void main() {
 
   test('whole avatar preset applies settings and values', () {
     final request = presets.applyWholePreset(
-      const AvatarRequest(seed: 'preset'),
+      AvatarRequest(seed: 'preset'),
       'cyberpunk',
     );
     final result = generator.generate(request);
@@ -20,7 +20,7 @@ void main() {
   });
 
   test('parameter lock survives a new seed', () {
-    const originalRequest = AvatarRequest(seed: 'lock-a');
+    final originalRequest = AvatarRequest(seed: 'lock-a');
     final original = generator.generate(originalRequest);
     final locked = locks.lockParameter(
       originalRequest,
@@ -32,7 +32,7 @@ void main() {
   });
 
   test('category lock survives a new seed', () {
-    const originalRequest = AvatarRequest(seed: 'category-lock-a');
+    final originalRequest = AvatarRequest(seed: 'category-lock-a');
     final original = generator.generate(originalRequest);
     final locked = locks.lockCategory(
       originalRequest,
@@ -51,7 +51,7 @@ void main() {
 
   test('request JSON round-trip preserves generation', () {
     var request = presets.applyCategoryPreset(
-      const AvatarRequest(seed: 'request-json'),
+      AvatarRequest(seed: 'request-json'),
       'eyes',
       'robotic',
     );
