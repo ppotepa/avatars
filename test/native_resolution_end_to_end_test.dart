@@ -7,7 +7,7 @@ void main() {
     () {
       final generator = AvatarGenerator();
       const seed = 'native-resolution-e2e';
-      const base = AvatarRequest(seed: seed);
+      final base = AvatarRequest(seed: seed);
 
       final result48 = generator.generate(base);
       final result64 = generator.generate(AvatarRequest(
