@@ -1,4 +1,5 @@
 import 'package:avatar_genome/avatar_genome.dart';
+import 'package:avatar_genome/avatar_genome_editor.dart';
 import 'package:test/test.dart';
 
 void main() {
