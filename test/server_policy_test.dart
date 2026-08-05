@@ -42,12 +42,12 @@ void main() {
   });
 
   test('server config and origin policy own immutable allowlists', () {
-    final configured = <String>{'https://editor.example'};
+    final configured = <String>{'https://EDITOR.example/'};
     final config = ServerConfig(allowedOrigins: configured);
     final policy = OriginPolicy(allowedOrigins: configured);
     configured.clear();
 
-    expect(config.allowedOrigins, contains('https://editor.example'));
+    expect(config.allowedOrigins, contains('https://EDITOR.example/'));
     expect(policy.allowedOrigins, contains('https://editor.example'));
     expect(
       () => config.allowedOrigins.add('https://other.example'),
@@ -57,6 +57,21 @@ void main() {
       () => policy.allowedOrigins.add('https://other.example'),
       throwsUnsupportedError,
     );
+  });
+
+  test('origin policy rejects non-origin URLs', () {
+    for (final value in <String>[
+      'ftp://editor.example',
+      'https://editor.example/path',
+      'https://user@editor.example',
+      'not a uri',
+    ]) {
+      expect(
+        () => OriginPolicy(allowedOrigins: <String>{value}),
+        throwsArgumentError,
+        reason: value,
+      );
+    }
   });
 
   test('batch policy limits count, rgba and total working memory', () {
