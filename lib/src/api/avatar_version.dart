@@ -7,6 +7,6 @@ abstract final class AvatarGenomeVersion {
   static const int requestSchema = 1;
   static const int resultSchema = 2;
   static const String catalog = '4.4';
-  static const String generator = '4.6.0-dart.2';
+  static const String generator = '4.7.0-dart.1';
   static const String palette = 'p32.dynamic.1';
 }
