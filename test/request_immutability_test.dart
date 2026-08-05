@@ -19,14 +19,12 @@ void main() {
     categories.clear();
     nonces['hair'] = 3;
 
+    final frozenHair = request.lockedCategories['hair']!;
     expect(request.overrides['eyes.width'], 4);
-    expect(request.lockedCategories['hair']?['hair.length'], 5);
+    expect(frozenHair['hair.length'], 5);
     expect(request.categoryNonces['hair'], 1);
     expect(() => request.overrides['eyes.width'] = 8, throwsUnsupportedError);
-    expect(
-      () => request.lockedCategories['hair']?['hair.length'] = 8,
-      throwsUnsupportedError,
-    );
+    expect(() => frozenHair['hair.length'] = 8, throwsUnsupportedError);
   });
 
   test('generator freezes legacy const-compatible requests at its boundary', () {
