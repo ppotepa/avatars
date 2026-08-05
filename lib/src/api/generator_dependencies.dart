@@ -12,7 +12,6 @@ import '../rendering/parts/v42_features_renderer.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
-import '../rendering/visual_correction_pipeline.dart';
 
 /// One resolved dependency graph shared by the public fields and clip pipeline.
 final class GeneratorDependencies {
@@ -95,7 +94,6 @@ final class GeneratorDependencies {
           const SplitExtendedAtmosphereRenderer()
         else
           part,
-      const VisualCorrectionPipeline(),
     ];
     final resolvedParts = List<AvatarPartRenderer>.unmodifiable(
       parts ?? defaults,
