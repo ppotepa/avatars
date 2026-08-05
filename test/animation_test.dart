@@ -8,6 +8,29 @@ void main() {
     expect(animationPeriod(6, slow: 20, fast: 10), 10);
   });
 
+  test('public animation API validates count and frame duration', () {
+    final generator = AvatarGenerator();
+    final request = AvatarRequest(seed: 'animation-bounds');
+
+    for (final count in <int>[0, AvatarGenerator.maxAnimationFrames + 1]) {
+      expect(
+        () => generator.generateAnimation(request, frameCount: count),
+        throwsArgumentError,
+        reason: 'frameCount=$count',
+      );
+    }
+    for (final duration in <Duration>[
+      Duration.zero,
+      const Duration(microseconds: -1),
+    ]) {
+      expect(
+        () => generator.generateAnimation(request, frameDuration: duration),
+        throwsArgumentError,
+        reason: 'frameDuration=$duration',
+      );
+    }
+  });
+
   test('idle composes local and rig motion channels', () {
     for (final channel in <String>[
       'blink',
