@@ -49,7 +49,7 @@ void main() {
   });
 
   test('procedural mask details remain deterministic', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'hockey-deterministic',
       overrides: <String, Object>{
         'v4.faceMask': 'hockeyMask',
@@ -64,7 +64,7 @@ void main() {
   });
 
   test('natural particles replace legacy weather and effect layers', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'natural-particle-replacement',
       overrides: <String, Object>{
         'v4.weather': 'heavyRain',
@@ -84,7 +84,7 @@ void main() {
   });
 
   test('particle motion is deterministic and changes across phases', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'natural-particle-motion',
       overrides: <String, Object>{
         'v4.weather': 'snow',
@@ -102,7 +102,7 @@ void main() {
   });
 
   test('fog uses patches rather than full-width scan lines', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'natural-fog-patches',
       overrides: <String, Object>{
         'v4.weather': 'fog',
