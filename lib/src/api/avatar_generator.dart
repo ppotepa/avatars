@@ -13,9 +13,9 @@ import '../rendering/rig_clip_pipeline.dart';
 import 'avatar_request.dart';
 import 'avatar_result.dart';
 import 'avatar_version.dart';
-import 'rig_avatar_generator.dart' as rig;
+import 'rig_avatar_generator.dart';
 
-/// Compatibility entry point delegating to the hierarchical rig generator.
+/// Stable public entry point for deterministic avatar generation.
 final class AvatarGenerator {
   AvatarGenerator({
     ParameterCatalog? catalog,
@@ -31,7 +31,7 @@ final class AvatarGenerator {
     this.cameraSamplingPolicy = const CameraSamplingPolicy(),
     this.cacheCapacity = 32,
   })  : assert(cacheCapacity >= 0),
-        _delegate = rig.AvatarGenerator(
+        _delegate = RigAvatarGenerator(
           catalog: catalog,
           genomeService: genomeService,
           layoutResolver: layoutResolver,
@@ -45,7 +45,7 @@ final class AvatarGenerator {
         requestValidator = requestValidator ??
             AvatarRequestValidator(catalog: catalog ?? ParameterCatalog.current);
 
-  final rig.AvatarGenerator _delegate;
+  final RigAvatarGenerator _delegate;
   final AvatarRequestValidator requestValidator;
   final CameraSamplingPolicy cameraSamplingPolicy;
   final int cacheCapacity;
