@@ -46,6 +46,7 @@ import 'rig_validation_entries.dart';
 import 'runtime_rig_builder.dart';
 import 'scene_visual_budget_renderer.dart';
 import 'semantic_gesture_policy.dart';
+import 'visual_correction_pipeline.dart';
 import 'wearable_attachment_policy.dart';
 
 final class RigPreparedAvatar {
@@ -143,6 +144,7 @@ final class RigClipPipeline {
         RigSeamBridgeRenderer(),
         ForegroundEffectsRenderer(),
         NaturalParticleFieldRenderer(),
+        VisualCorrectionPipeline(),
       ];
 
   RigPreparedAvatar prepare(AvatarRequest request) {
@@ -167,8 +169,9 @@ final class RigClipPipeline {
     }
     final prepared = prepare(request);
     final workingCanvas = _canvasFor(prepared.genome);
+    final phases = List<int>.generate(frameCount, (index) => index);
     final raw = <_RawRigFrame>[
-      for (var phase = 0; phase < frameCount; phase++)
+      for (final phase in phases)
         _renderRaw(prepared, request.rendering, phase, workingCanvas),
     ];
     final camera = ClipCameraFitter.fitFrames(
@@ -180,13 +183,15 @@ final class RigClipPipeline {
     final key = cameraCache.key(
       genome: prepared.genome,
       rendering: request.rendering,
-      sampleCount: frameCount,
+      sampleCount: phases.length,
+      phases: phases,
     );
     cameraCache.put(key, camera);
     for (final frame in raw) {
       frame.state.metadata['cameraCache'] = <String, Object>{
         'hit': false,
-        'sampleCount': frameCount,
+        'sampleCount': phases.length,
+        'samplePhases': phases,
         'entries': cameraCache.length,
       };
     }
@@ -201,13 +206,20 @@ final class RigClipPipeline {
   }
 
   RigPipelineClip renderSingle(AvatarRequest request) {
-    const cameraSampleCount = 16;
+    final samplePhases = request.rendering.reducedMotion
+        ? <int>[request.phase]
+        : (<int>{
+            for (var phase = 0; phase < 16; phase++) phase,
+            request.phase,
+          }.toList()
+          ..sort());
     final prepared = prepare(request);
     final workingCanvas = _canvasFor(prepared.genome);
     final key = cameraCache.key(
       genome: prepared.genome,
       rendering: request.rendering,
-      sampleCount: cameraSampleCount,
+      sampleCount: samplePhases.length,
+      phases: samplePhases,
     );
     final cached = cameraCache.get(key);
     late final ClipCamera camera;
@@ -218,17 +230,18 @@ final class RigClipPipeline {
       selected = _renderRaw(
         prepared,
         request.rendering,
-        request.phase % cameraSampleCount,
+        request.phase,
         workingCanvas,
       );
       selected.state.metadata['cameraCache'] = <String, Object>{
         'hit': true,
-        'sampleCount': cameraSampleCount,
+        'sampleCount': samplePhases.length,
+        'samplePhases': samplePhases,
         'entries': cameraCache.length,
       };
     } else {
       final raw = <_RawRigFrame>[
-        for (var phase = 0; phase < cameraSampleCount; phase++)
+        for (final phase in samplePhases)
           _renderRaw(prepared, request.rendering, phase, workingCanvas),
       ];
       camera = ClipCameraFitter.fitFrames(
@@ -238,10 +251,11 @@ final class RigClipPipeline {
         baseline: workingCanvas.offsetY + 47,
       );
       cameraCache.put(key, camera);
-      selected = raw[request.phase % cameraSampleCount];
+      selected = raw[samplePhases.indexOf(request.phase)];
       selected.state.metadata['cameraCache'] = <String, Object>{
         'hit': false,
-        'sampleCount': cameraSampleCount,
+        'sampleCount': samplePhases.length,
+        'samplePhases': samplePhases,
         'entries': cameraCache.length,
       };
     }
@@ -272,11 +286,6 @@ final class RigClipPipeline {
     );
     final state = AvatarRenderState();
     for (final part in parts) part.render(context, state);
-    _ensureBackgroundContrast(context, state);
-    _simplifyHighFrequencyBackground(context, state);
-    _simplifyFaceMaskPattern(context, state);
-    _reduceInternalOutlines(state);
-    _reduceMicroFaceDetails(state);
     _bindRig(context, state, workingCanvas);
     final image = compositor.compose(state.layers);
     return _RawRigFrame(
@@ -285,156 +294,6 @@ final class RigClipPipeline {
       image: image,
       guard: guard,
     );
-  }
-
-  void _reduceInternalOutlines(AvatarRenderState state) {
-    const structuralParts = <String>{
-      'torso',
-      'neck',
-      'head',
-      'hair',
-      'cape',
-      'armor',
-      'headwear',
-      'fantasy',
-      'companion',
-    };
-    var removed = 0;
-    state.layers.removeWhere((layer) {
-      if (!layer.id.endsWith('.outline')) return false;
-      final part = layer.meta['part']?.toString() ?? layer.id.split('.').first;
-      final remove = !structuralParts.contains(part);
-      if (remove) removed++;
-      return remove;
-    });
-    state.metadata['outlineBudget'] = <String, Object>{
-      'removedInternalOutlines': removed,
-      'structuralParts': structuralParts.toList(growable: false),
-    };
-  }
-
-  void _simplifyHighFrequencyBackground(
-    AvatarRenderContext context,
-    AvatarRenderState state,
-  ) {
-    const noisyBackgrounds = <String>{
-      'checker',
-      'diagonalStripes',
-      'pixelNoise',
-      'warpTunnel',
-      'voidStatic',
-      'factionSymbol',
-      'dataGrid',
-      'cathedralWindow',
-      'citySkyline',
-      'starshipBridge',
-      'spaceStation',
-      'castleWall',
-      'throneRoom',
-      'libraryShelves',
-      'neonCity',
-      'laboratory',
-      'terminal',
-    };
-    final background = context.string('v4.background');
-    if (!noisyBackgrounds.contains(background)) return;
-    var removed = 0;
-    state.layers.removeWhere((layer) {
-      if (!layer.id.startsWith('background.') ||
-          layer.id == 'background.base') {
-        return false;
-      }
-      removed++;
-      return true;
-    });
-    state.metadata['backgroundClarityBudget'] = <String, Object>{
-      'background': background,
-      'removedHighFrequencyLayers': removed,
-      'reason': 'highFrequencyPattern',
-    };
-  }
-
-  void _simplifyFaceMaskPattern(
-    AvatarRenderContext context,
-    AvatarRenderState state,
-  ) {
-    // robotMask's procedural cross/grid reads as an accidental face overlay
-    // at 48px. Keep the mask silhouette, but remove the full-surface pattern.
-    if (context.string('v4.faceMask') != 'robotMask') return;
-    var removed = 0;
-    state.layers.removeWhere((layer) {
-      if (!layer.id.startsWith('faceMask.procedural.')) return false;
-      removed++;
-      return true;
-    });
-    state.metadata['faceMaskClarityBudget'] = <String, Object>{
-      'style': 'robotMask',
-      'removedProceduralPatternLayers': removed,
-      'reason': 'fullSurfaceGridAtSmallResolution',
-    };
-  }
-
-  void _ensureBackgroundContrast(
-    AvatarRenderContext context,
-    AvatarRenderState state,
-  ) {
-    final candidates = <int>[
-      context.color('bg'),
-      context.color('bgDark'),
-      context.color('bgLight'),
-    ];
-    final actorColors = <int>[
-      context.color('skinBase'),
-      context.color('clothBase'),
-      context.color('hairBase'),
-    ];
-    double luma(int rgba) {
-      final red = (rgba >> 24) & 0xff;
-      final green = (rgba >> 16) & 0xff;
-      final blue = (rgba >> 8) & 0xff;
-      return red * .2126 + green * .7152 + blue * .0722;
-    }
-
-    final actorLuma = actorColors.map((color) => luma(color)).toList();
-    int score(int background) => actorLuma
-        .map((actor) => (luma(background) - actor).abs().round())
-        .reduce((a, b) => a < b ? a : b);
-    final selected = candidates.reduce(
-      (a, b) => score(a) >= score(b) ? a : b,
-    );
-    final original = context.color('bg');
-    if (selected == original) return;
-    var adjusted = 0;
-    for (var index = 0; index < state.layers.length; index++) {
-      final layer = state.layers[index];
-      if (layer.id != 'background.base') continue;
-      state.layers[index] = layer.copyWith(colorIndex: selected);
-      adjusted++;
-    }
-    state.metadata['backgroundContrast'] = <String, Object>{
-      'originalColorIndex': original,
-      'selectedColorIndex': selected,
-      'minimumActorLumaDistance': score(selected),
-      'adjustedLayerCount': adjusted,
-    };
-  }
-
-  void _reduceMicroFaceDetails(AvatarRenderState state) {
-    final head = state.mask('head');
-    if (head.count == 0 || head.count >= 360) return;
-    const optionalParts = <String>{'skinDetails', 'cheeks'};
-    var removed = 0;
-    state.layers.removeWhere((layer) {
-      final part = layer.meta['part']?.toString();
-      if (!optionalParts.contains(part)) return false;
-      removed++;
-      return true;
-    });
-    state.metadata['faceDetailBudget'] = <String, Object>{
-      'headPixels': head.count,
-      'removedMicroDetailLayers': removed,
-      'reason': 'smallFaceRegion',
-    };
   }
 
   void _bindRig(
@@ -695,9 +554,6 @@ final class RigClipPipeline {
     final effects = state.layers.where(isEffect).toList(growable: false);
     if (effects.isEmpty) return;
     final first = effects.first;
-    // At icon size a scene can support atmosphere, but it must not compete
-    // with the actor silhouette. The former 30% allowance could turn a 48px
-    // portrait into texture; 12% retains a readable accent.
     final limit = (first.mask.width * first.mask.height * .12).floor();
     var kept = 0;
     var removed = 0;
@@ -843,9 +699,6 @@ final class RigClipPipeline {
     state.nodeAnchors.addAll(raw.state.nodeAnchors);
     state.nodeTransforms.addAll(raw.state.nodeTransforms);
 
-    // The earlier scene pass runs on the overscan canvas. Cropping can make a
-    // perfectly valid overscan ratio too dense in the delivered 48px image,
-    // so enforce the same cap on the actual output canvas as well.
     _capFinalSceneEffects(state);
     _protectFaceClarity(state);
     _rebuildSemanticMasks(state);
@@ -862,16 +715,18 @@ final class RigClipPipeline {
       state: state,
       image: image,
       camera: camera,
-      validation: ValidationReport(<ValidationEntry>[
-        ...prepared.baseValidation,
-        for (final entry in raw.guard.entries)
-          if (!repaired.containsKey(entry.id)) entry,
-        ...repaired.values,
-        ...featurePromotion,
-        ...validationGuard.entries,
-        ...runtimeQuality,
-        ...clarityEntries,
-      ]),
+      validation: ValidationReport(List<ValidationEntry>.unmodifiable(
+        <ValidationEntry>[
+          ...prepared.baseValidation,
+          for (final entry in raw.guard.entries)
+            if (!repaired.containsKey(entry.id)) entry,
+          ...repaired.values,
+          ...featurePromotion,
+          ...validationGuard.entries,
+          ...runtimeQuality,
+          ...clarityEntries,
+        ],
+      )),
     );
   }
 
@@ -1053,11 +908,6 @@ final class RigClipPipeline {
     return repaired;
   }
 
-  /// Eyes and mouth are the two non-negotiable reading cues of a 48px avatar.
-  /// Accessories may keep their silhouette, but must never paint over these
-  /// cues after the final crop. This is deliberately a paint-order repair,
-  /// rather than a genome rewrite, so locked and explicit choices retain their
-  /// identity while still producing a usable icon.
   List<ValidationEntry> _promoteCoreFacialFeatures(AvatarRenderState state) {
     var promotedEyes = 0;
     var promotedMouth = 0;
@@ -1067,8 +917,6 @@ final class RigClipPipeline {
       if (layer.mask.count == 0) continue;
       state.layers[index] = layer.copyWith(
         slot: RenderSlot.mouthProp,
-        // Keep a stable ordering while making the feature paint after masks,
-        // eyewear, mouth props and all regular face details.
         localOrder: 10000 + index,
       );
       if (layer.nodeId == 'eyes') {
