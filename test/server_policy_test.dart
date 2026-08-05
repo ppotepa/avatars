@@ -59,27 +59,47 @@ void main() {
     );
   });
 
-  test('batch policy limits count and rgba memory', () {
+  test('batch policy limits count, rgba and total working memory', () {
     const policy = BatchResourcePolicy(
       maxAvatarCount: 4,
       maxSheetBytes: 1024,
+      maxWorkingBytes: 128 * 1024,
       maxWorkers: 2,
     );
-    expect(
-      policy.plan(
-        columns: 2,
-        rows: 2,
-        tileSize: 8,
-        availableProcessors: 8,
-      ).workerCount,
-      2,
+    final plan = policy.plan(
+      columns: 2,
+      rows: 2,
+      tileSize: 8,
+      availableProcessors: 8,
     );
+    expect(plan.workerCount, 2);
+    expect(
+      plan.estimatedMetadataBytes,
+      4 * BatchResourcePolicy.estimatedDiagnosticsBytesPerAvatar,
+    );
+    expect(plan.estimatedWorkingBytes, lessThanOrEqualTo(128 * 1024));
+
     expect(
       () => policy.plan(
         columns: 3,
         rows: 2,
         tileSize: 8,
         availableProcessors: 8,
+      ),
+      throwsArgumentError,
+    );
+
+    const memoryBound = BatchResourcePolicy(
+      maxAvatarCount: 4,
+      maxSheetBytes: 1024 * 1024,
+      maxWorkingBytes: 32 * 1024,
+    );
+    expect(
+      () => memoryBound.plan(
+        columns: 2,
+        rows: 2,
+        tileSize: 8,
+        availableProcessors: 1,
       ),
       throwsArgumentError,
     );
