@@ -7,7 +7,7 @@ void main() {
   test('public generator rejects unknown overrides', () {
     expect(
       () => generator.generate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'unknown-override',
           overrides: <String, Object>{'unknown.field': 1},
         ),
@@ -19,7 +19,7 @@ void main() {
   test('public generator rejects unknown locked parameters', () {
     expect(
       () => generator.generate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'unknown-lock',
           lockedParameters: <String, Object>{'unknown.field': 1},
         ),
@@ -31,18 +31,18 @@ void main() {
   test('public generator rejects invalid request settings', () {
     expect(
       () => generator.generate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'invalid-age',
-          settings: GenomeSettings(age: 101),
+          settings: const GenomeSettings(age: 101),
         ),
       ),
       throwsA(isA<AvatarRequestValidationException>()),
     );
     expect(
       () => generator.generate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'invalid-bias',
-          settings: GenomeSettings(bias: -101),
+          settings: const GenomeSettings(bias: -101),
         ),
       ),
       throwsA(isA<AvatarRequestValidationException>()),
@@ -52,7 +52,7 @@ void main() {
   test('public generator rejects unknown category nonces', () {
     expect(
       () => generator.generate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'unknown-category',
           categoryNonces: <String, int>{'unknown': 1},
         ),
