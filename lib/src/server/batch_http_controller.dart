@@ -15,18 +15,36 @@ final class BatchHttpController {
     required this.service,
     this.policy = const BatchResourcePolicy(),
     this.maxBodyBytes = 2 * 1024 * 1024,
+    this.artifactTtl = const Duration(minutes: 10),
+    this.maxArtifacts = 2,
   });
 
   final AvatarEditorService service;
   final BatchResourcePolicy policy;
   final int maxBodyBytes;
+  final Duration artifactTtl;
+  final int maxArtifacts;
+  final Map<String, _StoredBatch> _artifacts = <String, _StoredBatch>{};
   bool _active = false;
 
-  bool handles(HttpRequest request) =>
-      request.method == 'POST' &&
-      request.uri.path == '/api/export/batch-png';
+  bool handles(HttpRequest request) {
+    final path = request.uri.path;
+    return (request.method == 'POST' && path == '/api/export/batch-png') ||
+        (request.method == 'GET' &&
+            (path == '/api/export/batch-manifest' ||
+                path == '/api/export/batch-zip'));
+  }
 
   Future<void> handle(HttpRequest request) async {
+    _purgeExpired();
+    if (request.method == 'GET') {
+      await _handleArtifactRead(request);
+      return;
+    }
+    await _handleRender(request);
+  }
+
+  Future<void> _handleRender(HttpRequest request) async {
     if (_active) {
       await _error(
         request,
@@ -63,14 +81,21 @@ final class BatchHttpController {
         _active = false;
       }
 
+      final id = '${DateTime.now().microsecondsSinceEpoch}-${columns}x$rows';
+      _artifacts[id] = _StoredBatch(
+        png: batch.png,
+        manifest: batch.manifest,
+        createdAt: DateTime.now().toUtc(),
+      );
+      while (_artifacts.length > maxArtifacts) {
+        _artifacts.remove(_artifacts.keys.first);
+      }
+
       request.response
         ..statusCode = HttpStatus.ok
         ..headers.contentType = ContentType('image', 'png')
+        ..headers.set('X-Avatar-Batch-Id', id)
         ..headers.set('X-Avatar-Batch-Plan', jsonEncode(plan.toJson()))
-        ..headers.set(
-          'X-Avatar-Batch-Manifest',
-          base64Url.encode(utf8.encode(jsonEncode(batch.manifest))),
-        )
         ..contentLength = batch.png.length
         ..add(batch.png);
       await request.response.close();
@@ -94,6 +119,62 @@ final class BatchHttpController {
         'Internal server error',
         'The batch request could not be completed.',
       );
+    }
+  }
+
+  Future<void> _handleArtifactRead(HttpRequest request) async {
+    final id = request.uri.queryParameters['id'];
+    final artifact = id == null ? null : _artifacts[id];
+    if (id == null || artifact == null) {
+      await _error(
+        request,
+        HttpStatus.notFound,
+        'Batch artifact not found',
+        'The batch id is missing, expired, or unknown.',
+      );
+      return;
+    }
+
+    if (request.uri.path == '/api/export/batch-manifest') {
+      request.response
+        ..statusCode = HttpStatus.ok
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode(artifact.manifest));
+      await request.response.close();
+      return;
+    }
+
+    final columns = artifact.manifest['columns'] as int;
+    final rows = artifact.manifest['rows'] as int;
+    final baseName = 'avatar-batch-${columns}x$rows';
+    final zip = _StoredZipEncoder.encode(<String, Uint8List>{
+      '$baseName.png': artifact.png,
+      '$baseName.json': Uint8List.fromList(
+        utf8.encode(
+          const JsonEncoder.withIndent(' ').convert(artifact.manifest),
+        ),
+      ),
+    });
+    request.response
+      ..statusCode = HttpStatus.ok
+      ..headers.contentType = ContentType('application', 'zip')
+      ..headers.set(
+        HttpHeaders.contentDispositionHeader,
+        'attachment; filename="$baseName.zip"',
+      )
+      ..contentLength = zip.length
+      ..add(zip);
+    await request.response.close();
+  }
+
+  void _purgeExpired() {
+    final now = DateTime.now().toUtc();
+    final expired = <String>[
+      for (final entry in _artifacts.entries)
+        if (now.difference(entry.value.createdAt) > artifactTtl) entry.key,
+    ];
+    for (final id in expired) {
+      _artifacts.remove(id);
     }
   }
 
@@ -162,6 +243,7 @@ final class BatchHttpController {
       ),
       manifest: <String, Object?>{
         'schemaVersion': 2,
+        'generatedAt': DateTime.now().toUtc().toIso8601String(),
         'generatorVersion': AvatarGenomeVersion.generator,
         'baseSeed': baseSeed,
         'tileSize': 48,
@@ -235,6 +317,18 @@ final class _BatchResponse {
   final Map<String, Object?> manifest;
 }
 
+final class _StoredBatch {
+  const _StoredBatch({
+    required this.png,
+    required this.manifest,
+    required this.createdAt,
+  });
+
+  final Uint8List png;
+  final Map<String, Object?> manifest;
+  final DateTime createdAt;
+}
+
 final class _BatchShard {
   const _BatchShard({
     required this.start,
@@ -294,4 +388,89 @@ _BatchShard _renderShard(Map<String, Object?> job) {
     pixels: TransferableTypedData.fromList(<Uint8List>[output]),
     metadata: metadata,
   );
+}
+
+final class _StoredZipEncoder {
+  static Uint8List encode(Map<String, Uint8List> files) {
+    final output = BytesBuilder(copy: false);
+    final central = BytesBuilder(copy: false);
+    var offset = 0;
+    for (final entry in files.entries) {
+      final name = Uint8List.fromList(utf8.encode(entry.key));
+      final data = entry.value;
+      final crc = _crc32(data);
+      final local = BytesBuilder(copy: false)
+        ..add(_u32(0x04034b50))
+        ..add(_u16(20))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u32(crc))
+        ..add(_u32(data.length))
+        ..add(_u32(data.length))
+        ..add(_u16(name.length))
+        ..add(_u16(0))
+        ..add(name)
+        ..add(data);
+      final localBytes = local.takeBytes();
+      output.add(localBytes);
+
+      central
+        ..add(_u32(0x02014b50))
+        ..add(_u16(20))
+        ..add(_u16(20))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u32(crc))
+        ..add(_u32(data.length))
+        ..add(_u32(data.length))
+        ..add(_u16(name.length))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u16(0))
+        ..add(_u32(0))
+        ..add(_u32(offset))
+        ..add(name);
+      offset += localBytes.length;
+    }
+    final centralBytes = central.takeBytes();
+    output
+      ..add(centralBytes)
+      ..add(_u32(0x06054b50))
+      ..add(_u16(0))
+      ..add(_u16(0))
+      ..add(_u16(files.length))
+      ..add(_u16(files.length))
+      ..add(_u32(centralBytes.length))
+      ..add(_u32(offset))
+      ..add(_u16(0));
+    return output.takeBytes();
+  }
+
+  static Uint8List _u16(int value) {
+    final bytes = Uint8List(2);
+    ByteData.sublistView(bytes).setUint16(0, value, Endian.little);
+    return bytes;
+  }
+
+  static Uint8List _u32(int value) {
+    final bytes = Uint8List(4);
+    ByteData.sublistView(bytes).setUint32(0, value, Endian.little);
+    return bytes;
+  }
+
+  static int _crc32(Uint8List bytes) {
+    var crc = 0xffffffff;
+    for (final byte in bytes) {
+      crc ^= byte;
+      for (var bit = 0; bit < 8; bit++) {
+        crc = (crc & 1) == 0 ? crc >>> 1 : (crc >>> 1) ^ 0xedb88320;
+      }
+    }
+    return (crc ^ 0xffffffff) & 0xffffffff;
+  }
 }
