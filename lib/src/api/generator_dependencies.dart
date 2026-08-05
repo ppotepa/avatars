@@ -8,6 +8,7 @@ import '../palette/avatar_palette.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
+import '../rendering/visual_correction_pipeline.dart';
 
 /// One resolved dependency graph shared by the public fields and clip pipeline.
 final class GeneratorDependencies {
@@ -40,6 +41,7 @@ final class GeneratorDependencies {
     ResolutionAwareRenderer? resolutionRenderer,
     AvatarValidator? validator,
     RigClipPipeline? pipeline,
+    List<AvatarPartRenderer>? parts,
   }) {
     final resolvedCatalog = catalog ?? ParameterCatalog.current;
     if (pipeline != null) {
@@ -49,6 +51,7 @@ final class GeneratorDependencies {
         if (paletteFactory != null) 'paletteFactory',
         if (compositor != null) 'compositor',
         if (validator != null) 'validator',
+        if (parts != null) 'parts',
       ];
       if (conflicting.isNotEmpty) {
         throw ArgumentError(
@@ -77,12 +80,20 @@ final class GeneratorDependencies {
     final resolvedValidator = validator ?? const V41AvatarValidator();
     final resolvedResolution =
         resolutionRenderer ?? const ResolutionAwareRenderer();
+    final resolvedParts = List<AvatarPartRenderer>.unmodifiable(
+      parts ??
+          <AvatarPartRenderer>[
+            ...RigClipPipeline.defaultParts,
+            const VisualCorrectionPipeline(),
+          ],
+    );
     final resolvedPipeline = RigClipPipeline(
       genomeGenerator: resolvedGenome,
       layoutResolver: resolvedLayout,
       paletteFactory: resolvedPalette,
       compositor: resolvedCompositor,
       validator: resolvedValidator,
+      parts: resolvedParts,
     );
 
     return GeneratorDependencies._(
