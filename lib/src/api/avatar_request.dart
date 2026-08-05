@@ -6,9 +6,6 @@ enum AvatarDetailLevel { basic, enhanced, rich }
 enum AvatarLightingDirection { upperLeft, frontal, upperRight }
 
 /// Presentation-only rendering controls.
-///
-/// These settings do not change the generated genome, so the same seed keeps
-/// the same identity at every supported canvas size.
 final class AvatarRenderSettings {
   const AvatarRenderSettings({
     this.size = 48,
@@ -124,24 +121,29 @@ final class GenomeSettings {
       };
 }
 
-/// Request describing one deterministic avatar generation.
+/// Immutable request describing one deterministic avatar generation.
 ///
-/// Constant requests are immutable when their collection arguments are constant.
-/// Use [AvatarRequest.frozen], [fromJson] or [frozenCopy] at runtime boundaries
-/// to defensively copy and deeply freeze caller-owned collections.
+/// Every constructor invocation owns deeply frozen copies of all collections.
 final class AvatarRequest {
-  const AvatarRequest({
+  AvatarRequest({
     required this.seed,
     this.settings = const GenomeSettings(),
     this.rendering = const AvatarRenderSettings(),
-    this.overrides = const <String, Object>{},
-    this.lockedParameters = const <String, Object>{},
-    this.lockedCategories = const <String, Map<String, Object>>{},
-    this.categoryNonces = const <String, int>{},
+    Map<String, Object> overrides = const <String, Object>{},
+    Map<String, Object> lockedParameters = const <String, Object>{},
+    Map<String, Map<String, Object>> lockedCategories =
+        const <String, Map<String, Object>>{},
+    Map<String, int> categoryNonces = const <String, int>{},
     this.phase = 0,
     this.guardEnabled = true,
-  });
+  })  : overrides = _freezeObjectMap(overrides),
+        lockedParameters = _freezeObjectMap(lockedParameters),
+        lockedCategories = _freezeNestedObjectMap(lockedCategories),
+        categoryNonces = Map<String, int>.unmodifiable(
+          Map<String, int>.of(categoryNonces),
+        );
 
+  /// Compatibility alias retained for code that explicitly requested freezing.
   factory AvatarRequest.frozen({
     required String seed,
     GenomeSettings settings = const GenomeSettings(),
@@ -158,12 +160,10 @@ final class AvatarRequest {
         seed: seed,
         settings: settings,
         rendering: rendering,
-        overrides: _freezeObjectMap(overrides),
-        lockedParameters: _freezeObjectMap(lockedParameters),
-        lockedCategories: _freezeNestedObjectMap(lockedCategories),
-        categoryNonces: Map<String, int>.unmodifiable(
-          Map<String, int>.of(categoryNonces),
-        ),
+        overrides: overrides,
+        lockedParameters: lockedParameters,
+        lockedCategories: lockedCategories,
+        categoryNonces: categoryNonces,
         phase: phase,
         guardEnabled: guardEnabled,
       );
@@ -173,7 +173,7 @@ final class AvatarRequest {
     if (schema != AvatarGenomeVersion.requestSchema) {
       throw FormatException('Unsupported AvatarRequest schema: $schema.');
     }
-    return AvatarRequest.frozen(
+    return AvatarRequest(
       seed: json['seed']! as String,
       settings: GenomeSettings.fromJson(
         Map<String, Object?>.from(
@@ -207,17 +207,7 @@ final class AvatarRequest {
   final int phase;
   final bool guardEnabled;
 
-  AvatarRequest frozenCopy() => AvatarRequest.frozen(
-        seed: seed,
-        settings: settings,
-        rendering: rendering,
-        overrides: overrides,
-        lockedParameters: lockedParameters,
-        lockedCategories: lockedCategories,
-        categoryNonces: categoryNonces,
-        phase: phase,
-        guardEnabled: guardEnabled,
-      );
+  AvatarRequest frozenCopy() => this;
 
   AvatarRequest copyWith({
     String? seed,
@@ -230,7 +220,7 @@ final class AvatarRequest {
     int? phase,
     bool? guardEnabled,
   }) =>
-      AvatarRequest.frozen(
+      AvatarRequest(
         seed: seed ?? this.seed,
         settings: settings ?? this.settings,
         rendering: rendering ?? this.rendering,
@@ -284,7 +274,7 @@ final class AvatarRequest {
   static Map<String, Object> _freezeObjectMap(Map<String, Object> source) =>
       Map<String, Object>.unmodifiable(<String, Object>{
         for (final entry in source.entries)
-          entry.key: _canonicalValue(entry.key, entry.value),
+          entry.key: _freezeValue(_canonicalValue(entry.key, entry.value)),
       });
 
   static Map<String, Map<String, Object>> _freezeNestedObjectMap(
@@ -299,6 +289,30 @@ final class AvatarRequest {
 
   static Object _canonicalValue(String id, Object value) {
     if (id == 'v4.faceAnimation' && value == 'laughing') return 'laugh';
+    return value;
+  }
+
+  static Object _freezeValue(Object value) {
+    if (value is Map) {
+      return Map<String, Object?>.unmodifiable(<String, Object?>{
+        for (final entry in value.entries)
+          entry.key.toString(): entry.value == null
+              ? null
+              : _freezeValue(entry.value as Object),
+      });
+    }
+    if (value is List) {
+      return List<Object?>.unmodifiable(<Object?>[
+        for (final item in value)
+          item == null ? null : _freezeValue(item as Object),
+      ]);
+    }
+    if (value is Set) {
+      return Set<Object?>.unmodifiable(<Object?>{
+        for (final item in value)
+          item == null ? null : _freezeValue(item as Object),
+      });
+    }
     return value;
   }
 }
