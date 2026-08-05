@@ -20,4 +20,27 @@ void main() {
 
     expect(single.imageHash, clip.frames[16].imageHash);
   });
+
+  test('rig pipeline renderSingle renders the requested phase exactly', () {
+    final generator = AvatarGenerator(cacheCapacity: 0);
+    final request = AvatarRequest(
+      seed: 'pipeline-phase-contract',
+      phase: 19,
+      overrides: const <String, Object>{
+        'v4.animation': 'idle',
+        'v4.animationAmplitude': 4,
+      },
+    );
+
+    final single = generator.pipeline.renderSingle(request);
+    final clip = generator.pipeline.renderClip(request, frameCount: 20);
+    final singleFrame = single.frames.single;
+    final clipFrame = clip.frames[19];
+
+    expect(singleFrame.phase, 19);
+    expect(
+      singleFrame.image.hashWithPalette(single.prepared.palette.colors),
+      clipFrame.image.hashWithPalette(clip.prepared.palette.colors),
+    );
+  });
 }
