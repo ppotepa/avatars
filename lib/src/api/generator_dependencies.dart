@@ -1,9 +1,11 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
 import '../genome/budgeted_genome_generator.dart';
+import '../genome/cached_genome_generator.dart';
 import '../genome/design_intent_genome_generator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
+import '../geometry/cached_layout_resolver.dart';
 import '../palette/avatar_palette.dart';
 import '../rendering/parts/atmosphere/extended_atmosphere_renderer.dart';
 import '../rendering/parts/v42_features_renderer.dart';
@@ -74,9 +76,14 @@ final class GeneratorDependencies {
       );
     }
 
-    final resolvedGenome =
-        genomeService ?? _defaultGenomeGenerator(resolvedCatalog);
-    final resolvedLayout = layoutResolver ?? const V41LayoutResolver();
+    final rawGenome = genomeService ?? _defaultGenomeGenerator(resolvedCatalog);
+    final rawLayout = layoutResolver ?? const V41LayoutResolver();
+    final resolvedGenome = rawGenome is CachedGenomeGenerator
+        ? rawGenome
+        : CachedGenomeGenerator(delegate: rawGenome);
+    final resolvedLayout = rawLayout is CachedLayoutResolver
+        ? rawLayout
+        : CachedLayoutResolver(delegate: rawLayout);
     final resolvedPalette = paletteFactory ?? const V41PaletteFactory();
     final resolvedCompositor = compositor ?? const IndexedAvatarCompositor();
     final resolvedValidator = validator ?? const V41AvatarValidator();
