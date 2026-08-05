@@ -103,8 +103,7 @@ final class AvatarEditorService {
   final AvatarPresetService presetService;
   final AvatarLockService lockService;
 
-  AvatarRequest get defaultRequest =>
-      const AvatarRequest(seed: 'avatar-default');
+  AvatarRequest get defaultRequest => AvatarRequest(seed: 'avatar-default');
 
   Map<String, Object?> schemaToJson() => <String, Object?>{
         ...registry.schemaToJson(),
