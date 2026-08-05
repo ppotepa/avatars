@@ -5,16 +5,17 @@ import '../genome/avatar_genome_model.dart';
 import '../util/math_utils.dart';
 
 final class AvatarPalette {
-  const AvatarPalette({
+  AvatarPalette({
     required this.id,
-    required this.colors,
-    required this.roles,
-  });
+    required Iterable<int> colors,
+    required Map<String, int> roles,
+  })  : colors = List<int>.unmodifiable(colors),
+        roles = Map<String, int>.unmodifiable(roles);
 
   final String id;
 
-  /// 32 RGBA colors encoded as 0xRRGGBBAA.
-  final Uint32List colors;
+  /// RGBA colors encoded as 0xRRGGBBAA.
+  final List<int> colors;
   final Map<String, int> roles;
 
   int role(String name) => roles[name] ?? 0;
@@ -216,21 +217,40 @@ final class V41PaletteFactory implements PaletteFactory {
       id: '${AvatarGenomeVersion.palette}.$style.$colorBudget',
       colors: Uint32List.fromList(budgetedHex.map(_rgbaFromHex).toList()),
       roles: const <String, int>{
-        'outline': 0, 'outlineSoft': 1,
-        'skinDeep': 2, 'skinShadow': 3, 'skinBase': 4,
-        'skinLight': 5, 'skinAccent': 6,
-        'hairDeep': 7, 'hairShadow': 8, 'hairBase': 9,
-        'hairLight': 10, 'hairGray': 11,
-        'sclera': 12, 'irisDark': 13, 'irisBase': 14,
-        'irisLight': 15, 'pupil': 16,
-        'mouthDark': 17, 'mouthBase': 18, 'mouthLight': 19,
-        'clothDark': 20, 'clothBase': 21, 'clothLight': 22,
-        'clothAccent': 23, 'facialIndependent': 23,
-        'bgDark': 24, 'bg': 25, 'bgLight': 26,
-        'fantasyDark': 27, 'fantasyBase': 28, 'fantasyLight': 29,
-        'browIndependent': 30, 'detail': 30, 'white': 31,
-        // Semantic weather roles deliberately alias the stable 32-color
-        // palette. Weather renderers no longer need to borrow fantasy names.
+        'outline': 0,
+        'outlineSoft': 1,
+        'skinDeep': 2,
+        'skinShadow': 3,
+        'skinBase': 4,
+        'skinLight': 5,
+        'skinAccent': 6,
+        'hairDeep': 7,
+        'hairShadow': 8,
+        'hairBase': 9,
+        'hairLight': 10,
+        'hairGray': 11,
+        'sclera': 12,
+        'irisDark': 13,
+        'irisBase': 14,
+        'irisLight': 15,
+        'pupil': 16,
+        'mouthDark': 17,
+        'mouthBase': 18,
+        'mouthLight': 19,
+        'clothDark': 20,
+        'clothBase': 21,
+        'clothLight': 22,
+        'clothAccent': 23,
+        'facialIndependent': 23,
+        'bgDark': 24,
+        'bg': 25,
+        'bgLight': 26,
+        'fantasyDark': 27,
+        'fantasyBase': 28,
+        'fantasyLight': 29,
+        'browIndependent': 30,
+        'detail': 30,
+        'white': 31,
         'weatherRainDark': 26,
         'weatherRainBase': 28,
         'weatherRainLight': 29,
@@ -280,22 +300,18 @@ final class V41PaletteFactory implements PaletteFactory {
         _ => 16,
       };
 
-  /// Renderers keep their stable semantic role indices, while this pass aliases
-  /// those roles to a small, deterministic set of actual colors. Consequently
-  /// a genome can request 4/8/16/32 colors without any renderer-specific
-  /// branching or an external palette asset.
   static List<String> _applyColorBudget(List<String> source, int budget) {
     if (budget >= source.length) return List<String>.from(source);
     const priority = <int>[
-      0, // outline
-      4, // skin base
-      12, // sclera / highlight
-      25, // background
-      9, // hair base
-      21, // cloth base
-      14, // iris
-      18, // mouth
-      30, // brows/detail
+      0,
+      4,
+      12,
+      25,
+      9,
+      21,
+      14,
+      18,
+      30,
       5,
       10,
       22,
