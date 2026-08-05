@@ -18,8 +18,16 @@ void main() {
   final manifest = File('PROJECT_MANIFEST.md').readAsStringSync();
   final coreEntryPoint = File('lib/avatar_genome.dart').readAsStringSync();
   final ioEntryPoint = File('lib/avatar_genome_io.dart').readAsStringSync();
+  final advancedEntryPoint =
+      File('lib/avatar_genome_advanced.dart').readAsStringSync();
+  final serverEntryPoint =
+      File('lib/avatar_genome_server.dart').readAsStringSync();
   final serverApplication =
       File('lib/src/server/legacy_http_application.dart').readAsStringSync();
+  final pipelineSource =
+      File('lib/src/rendering/rig_clip_pipeline.dart').readAsStringSync();
+  final dependencySource =
+      File('lib/src/api/generator_dependencies.dart').readAsStringSync();
   final vectors = Map<String, Object?>.from(
     jsonDecode(
       File('test/fixtures/stable_contract_vectors.json').readAsStringSync(),
@@ -112,6 +120,17 @@ void main() {
   if (!ioEntryPoint.contains('avatar_genome.dart')) {
     failures.add('IO entry point must re-export the core API.');
   }
+  if (advancedEntryPoint.contains('exact_phase_pipeline.dart')) {
+    failures.add('Advanced entry point exports the deleted exact-phase shim.');
+  }
+  if (!advancedEntryPoint.contains('extended_atmosphere_renderer.dart')) {
+    failures.add('Advanced entry point does not expose the split atmosphere.');
+  }
+  if (!serverEntryPoint.contains('batch_artifact_store.dart') ||
+      !serverEntryPoint.contains('stored_zip_encoder.dart')) {
+    failures.add('Server entry point misses batch artifact components.');
+  }
+
   for (final path in const <String>[
     'lib/avatar_genome_advanced.dart',
     'lib/avatar_genome_editor.dart',
@@ -120,9 +139,22 @@ void main() {
     'docs/RELEASE_CHECKLIST.md',
     'lib/src/server/server_request_handler.dart',
     'lib/src/server/avatar_save_repository.dart',
+    'lib/src/server/batch_artifact_store.dart',
+    'lib/src/server/stored_zip_encoder.dart',
+    'lib/src/util/deep_freeze.dart',
     'tool/update_contract_vectors.dart',
   ]) {
     if (!File(path).existsSync()) failures.add('$path is missing.');
+  }
+
+  for (final entryPoint in const <String>[
+    'lib/avatar_genome.dart',
+    'lib/avatar_genome_advanced.dart',
+    'lib/avatar_genome_editor.dart',
+    'lib/avatar_genome_io.dart',
+    'lib/avatar_genome_server.dart',
+  ]) {
+    failures.addAll(_checkEntryPointExports(entryPoint));
   }
 
   if (serverApplication.contains('Access-Control-Allow-Origin')) {
@@ -137,6 +169,15 @@ void main() {
   }
   if (File('lib/src/rendering/exact_phase_pipeline.dart').existsSync()) {
     failures.add('Legacy exact-phase workaround must be removed.');
+  }
+  if (!pipelineSource.contains('SplitExtendedAtmosphereRenderer(),')) {
+    failures.add('RigClipPipeline does not own the split atmosphere default.');
+  }
+  if (pipelineSource.contains('\n        ExtendedAtmosphereRenderer(),')) {
+    failures.add('RigClipPipeline still defaults to legacy atmosphere.');
+  }
+  if (dependencySource.contains('part is ExtendedAtmosphereRenderer')) {
+    failures.add('GeneratorDependencies still rewrites default renderer parts.');
   }
 
   final sourceViolations = _scanSources();
@@ -158,6 +199,21 @@ void main() {
 
   stdout.writeln(const JsonEncoder.withIndent('  ').convert(contract));
   if (failures.isNotEmpty) exitCode = 1;
+}
+
+List<String> _checkEntryPointExports(String path) {
+  final failures = <String>[];
+  final file = File(path);
+  final source = file.readAsStringSync();
+  final expression = RegExp("export\\s+'([^']+)'");
+  for (final match in expression.allMatches(source)) {
+    final target = match.group(1)!;
+    final exported = File.fromUri(file.parent.uri.resolve(target));
+    if (!exported.existsSync()) {
+      failures.add('$path exports missing file $target.');
+    }
+  }
+  return failures;
 }
 
 List<String> _scanSources() {
