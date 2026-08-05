@@ -10,7 +10,40 @@ final class AvatarPalette {
     required Iterable<int> colors,
     required Map<String, int> roles,
   })  : colors = List<int>.unmodifiable(colors),
-        roles = Map<String, int>.unmodifiable(roles);
+        roles = Map<String, int>.unmodifiable(roles) {
+    if (id.trim().isEmpty) {
+      throw ArgumentError.value(id, 'id', 'Must not be empty.');
+    }
+    if (this.colors.isEmpty || this.colors.length > 256) {
+      throw ArgumentError.value(
+        this.colors.length,
+        'colors',
+        'Palette must contain between 1 and 256 colors.',
+      );
+    }
+    for (var index = 0; index < this.colors.length; index++) {
+      final color = this.colors[index];
+      if (color < 0 || color > 0xffffffff) {
+        throw ArgumentError.value(
+          color,
+          'colors[$index]',
+          'RGBA values must fit in 32 unsigned bits.',
+        );
+      }
+    }
+    for (final entry in this.roles.entries) {
+      if (entry.key.trim().isEmpty) {
+        throw ArgumentError.value(entry.key, 'roles', 'Role names must not be empty.');
+      }
+      if (entry.value < 0 || entry.value >= this.colors.length) {
+        throw ArgumentError.value(
+          entry.value,
+          'roles[${entry.key}]',
+          'Role index is outside the palette.',
+        );
+      }
+    }
+  }
 
   final String id;
 
@@ -217,40 +250,19 @@ final class V41PaletteFactory implements PaletteFactory {
       id: '${AvatarGenomeVersion.palette}.$style.$colorBudget',
       colors: Uint32List.fromList(budgetedHex.map(_rgbaFromHex).toList()),
       roles: const <String, int>{
-        'outline': 0,
-        'outlineSoft': 1,
-        'skinDeep': 2,
-        'skinShadow': 3,
-        'skinBase': 4,
-        'skinLight': 5,
-        'skinAccent': 6,
-        'hairDeep': 7,
-        'hairShadow': 8,
-        'hairBase': 9,
-        'hairLight': 10,
-        'hairGray': 11,
-        'sclera': 12,
-        'irisDark': 13,
-        'irisBase': 14,
-        'irisLight': 15,
-        'pupil': 16,
-        'mouthDark': 17,
-        'mouthBase': 18,
-        'mouthLight': 19,
-        'clothDark': 20,
-        'clothBase': 21,
-        'clothLight': 22,
-        'clothAccent': 23,
-        'facialIndependent': 23,
-        'bgDark': 24,
-        'bg': 25,
-        'bgLight': 26,
-        'fantasyDark': 27,
-        'fantasyBase': 28,
-        'fantasyLight': 29,
-        'browIndependent': 30,
-        'detail': 30,
-        'white': 31,
+        'outline': 0, 'outlineSoft': 1,
+        'skinDeep': 2, 'skinShadow': 3, 'skinBase': 4,
+        'skinLight': 5, 'skinAccent': 6,
+        'hairDeep': 7, 'hairShadow': 8, 'hairBase': 9,
+        'hairLight': 10, 'hairGray': 11,
+        'sclera': 12, 'irisDark': 13, 'irisBase': 14,
+        'irisLight': 15, 'pupil': 16,
+        'mouthDark': 17, 'mouthBase': 18, 'mouthLight': 19,
+        'clothDark': 20, 'clothBase': 21, 'clothLight': 22,
+        'clothAccent': 23, 'facialIndependent': 23,
+        'bgDark': 24, 'bg': 25, 'bgLight': 26,
+        'fantasyDark': 27, 'fantasyBase': 28, 'fantasyLight': 29,
+        'browIndependent': 30, 'detail': 30, 'white': 31,
         'weatherRainDark': 26,
         'weatherRainBase': 28,
         'weatherRainLight': 29,
@@ -303,22 +315,7 @@ final class V41PaletteFactory implements PaletteFactory {
   static List<String> _applyColorBudget(List<String> source, int budget) {
     if (budget >= source.length) return List<String>.from(source);
     const priority = <int>[
-      0,
-      4,
-      12,
-      25,
-      9,
-      21,
-      14,
-      18,
-      30,
-      5,
-      10,
-      22,
-      26,
-      13,
-      17,
-      20,
+      0, 4, 12, 25, 9, 21, 14, 18, 30, 5, 10, 22, 26, 13, 17, 20,
     ];
     final selected = <String>[];
     for (final index in priority) {
