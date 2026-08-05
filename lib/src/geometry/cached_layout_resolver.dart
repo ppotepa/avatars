@@ -1,33 +1,48 @@
-import 'dart:convert';
-
 import '../constraints/validation.dart';
 import '../genome/avatar_genome_model.dart';
+import '../util/stable_fingerprint.dart';
 import 'avatar_layout.dart';
+import 'avatar_layout_snapshot.dart';
 
 final class CachedLayoutResolver implements LayoutResolver {
-  CachedLayoutResolver({required this.delegate, this.capacity = 32})
-      : assert(capacity >= 0);
+  CachedLayoutResolver({required this.delegate, this.capacity = 32}) {
+    if (capacity < 0) {
+      throw ArgumentError.value(capacity, 'capacity', 'Must not be negative.');
+    }
+  }
 
   final LayoutResolver delegate;
   final int capacity;
   final Map<String, _LayoutCacheEntry> _cache =
       <String, _LayoutCacheEntry>{};
+  int _hits = 0;
+  int _misses = 0;
 
   int get length => _cache.length;
-  void clear() => _cache.clear();
+  int get hits => _hits;
+  int get misses => _misses;
+
+  void clear() {
+    _cache.clear();
+    _hits = 0;
+    _misses = 0;
+  }
 
   @override
   AvatarLayout resolve(AvatarGenome genome, ConstraintEngine guard) {
-    final key = jsonEncode(genome.toJson());
+    final key = stableFingerprint(genome.toJson());
     final cached = _cache.remove(key);
     if (cached != null) {
+      _hits++;
       _cache[key] = cached;
       guard.recordAll(cached.entries);
-      return cached.layout;
+      return snapshotAvatarLayout(cached.layout);
     }
 
+    _misses++;
     final localGuard = ConstraintEngine();
-    final layout = delegate.resolve(genome, localGuard);
+    final resolved = delegate.resolve(genome, localGuard);
+    final layout = snapshotAvatarLayout(resolved);
     final entry = _LayoutCacheEntry(
       layout: layout,
       entries: List<ValidationEntry>.unmodifiable(localGuard.entries),
@@ -39,7 +54,7 @@ final class CachedLayoutResolver implements LayoutResolver {
         _cache.remove(_cache.keys.first);
       }
     }
-    return layout;
+    return snapshotAvatarLayout(layout);
   }
 }
 
