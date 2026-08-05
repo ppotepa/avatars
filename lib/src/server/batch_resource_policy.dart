@@ -1,0 +1,75 @@
+final class BatchResourcePolicy {
+  const BatchResourcePolicy({
+    this.maxAvatarCount = 1024,
+    this.maxSheetBytes = 64 * 1024 * 1024,
+    this.maxWorkers = 8,
+  });
+
+  final int maxAvatarCount;
+  final int maxSheetBytes;
+  final int maxWorkers;
+
+  BatchPlan plan({
+    required int columns,
+    required int rows,
+    required int tileSize,
+    required int availableProcessors,
+  }) {
+    if (columns < 1 || rows < 1 || tileSize < 1) {
+      throw ArgumentError('Batch dimensions and tile size must be positive.');
+    }
+    final count = columns * rows;
+    if (count > maxAvatarCount) {
+      throw ArgumentError.value(
+        count,
+        'columns/rows',
+        'Batch limit is $maxAvatarCount avatars.',
+      );
+    }
+    final width = columns * tileSize;
+    final height = rows * tileSize;
+    final rgbaBytes = width * height * 4;
+    if (rgbaBytes > maxSheetBytes) {
+      throw ArgumentError.value(
+        rgbaBytes,
+        'sheetBytes',
+        'Batch sheet exceeds the $maxSheetBytes byte memory budget.',
+      );
+    }
+    final workers = availableProcessors
+        .clamp(1, maxWorkers)
+        .clamp(1, count)
+        .toInt();
+    return BatchPlan(
+      avatarCount: count,
+      sheetWidth: width,
+      sheetHeight: height,
+      rgbaBytes: rgbaBytes,
+      workerCount: workers,
+    );
+  }
+}
+
+final class BatchPlan {
+  const BatchPlan({
+    required this.avatarCount,
+    required this.sheetWidth,
+    required this.sheetHeight,
+    required this.rgbaBytes,
+    required this.workerCount,
+  });
+
+  final int avatarCount;
+  final int sheetWidth;
+  final int sheetHeight;
+  final int rgbaBytes;
+  final int workerCount;
+
+  Map<String, int> toJson() => <String, int>{
+        'avatarCount': avatarCount,
+        'sheetWidth': sheetWidth,
+        'sheetHeight': sheetHeight,
+        'rgbaBytes': rgbaBytes,
+        'workerCount': workerCount,
+      };
+}
