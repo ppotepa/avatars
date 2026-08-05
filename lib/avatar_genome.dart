@@ -22,6 +22,7 @@ export 'src/pixels/indexed_image.dart';
 export 'src/pixels/pixel_mask.dart';
 export 'src/random/random_stream.dart';
 export 'src/rendering/animation_controller.dart';
+export 'src/rendering/camera_sampling_policy.dart';
 export 'src/rendering/canonical_rig.dart';
 export 'src/rendering/clip_camera.dart';
 export 'src/rendering/native_geometry_renderer.dart';
