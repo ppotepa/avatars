@@ -1,3 +1,4 @@
+import '../api/avatar_request.dart';
 import '../api/avatar_result.dart';
 import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
