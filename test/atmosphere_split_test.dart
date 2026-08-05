@@ -6,11 +6,11 @@ void main() {
     final legacy = AvatarGenerator(parts: RigClipPipeline.defaultParts);
     final split = AvatarGenerator();
     final requests = <AvatarRequest>[
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'atmosphere-scenic',
         overrides: <String, Object>{'v4.background': 'runeCircle'},
       ),
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'atmosphere-weather',
         overrides: <String, Object>{
           'v4.weather': 'heavyRain',
@@ -18,14 +18,14 @@ void main() {
           'v4.weatherDepth': 3,
         },
       ),
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'atmosphere-cosmic',
         overrides: <String, Object>{
           'v4.cosmicLayer': 'blackHole',
           'v4.cosmicDensity': 4,
         },
       ),
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'atmosphere-event',
         phase: 1,
         overrides: <String, Object>{
