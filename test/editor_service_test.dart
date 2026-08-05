@@ -1,4 +1,4 @@
-import 'package:avatar_genome/avatar_genome.dart';
+import 'package:avatar_genome/avatar_genome_editor.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -22,6 +22,16 @@ void main() {
     );
   });
 
+  test('editor response deeply freezes property state', () {
+    final response = AvatarEditorService().generate(
+      AvatarRequest(seed: 'editor-response-immutable'),
+    );
+    final eyes = response.propertyState['eyes.shape']! as Map;
+
+    expect(() => response.propertyState.clear(), throwsUnsupportedError);
+    expect(() => eyes['value'] = 'mutated', throwsUnsupportedError);
+  });
+
   test('phase binding exposes animation frames to the web editor', () {
     final service = AvatarEditorService();
     final response = service.generate(
@@ -35,6 +45,32 @@ void main() {
     );
     expect(response.request.phase, 5);
     expect(response.toJson()['result'], isNotNull);
+  });
+
+  test('editor service rejects invalid SVG scales', () {
+    final service = AvatarEditorService();
+    for (final scale in <int>[0, 65]) {
+      expect(
+        () => service.generate(
+          AvatarRequest(seed: 'invalid-svg-scale-$scale'),
+          svgScale: scale,
+        ),
+        throwsArgumentError,
+      );
+    }
+  });
+
+  test('editor service rejects conflicting registry and binder graphs', () {
+    final registry = AvatarPropertyRegistry();
+    final otherRegistry = AvatarPropertyRegistry();
+
+    expect(
+      () => AvatarEditorService(
+        registry: registry,
+        binder: AvatarRequestBinder(registry: otherRegistry),
+      ),
+      throwsArgumentError,
+    );
   });
 
   test('unknown override is rejected', () {
