@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   final palette = AvatarGenerator()
-      .generate(const AvatarRequest(seed: 'resolution-test-palette'))
+      .generate(AvatarRequest(seed: 'resolution-test-palette'))
       .palette;
   const renderer = ResolutionAwareRenderer();
 
