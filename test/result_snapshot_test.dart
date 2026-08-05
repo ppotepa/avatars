@@ -29,6 +29,29 @@ void main() {
     expect(copiedMask.count, 0);
   });
 
+  test('palette layout graph and validation cannot mutate the result', () {
+    final result = AvatarGenerator().generate(
+      const AvatarRequest(seed: 'result-model-snapshot'),
+    );
+    final originalHash = result.imageHash;
+    final originalJson = result.toJson(includePixels: false);
+
+    final palette = result.palette;
+    palette.colors[0] = 0;
+
+    final layout = result.layout;
+    expect(
+      () => layout.values['external.mutation'] = 1,
+      throwsUnsupportedError,
+    );
+    layout.graph.nodes.clear();
+    layout.graph.edges.clear();
+
+    expect(() => result.validation.entries.clear(), throwsUnsupportedError);
+    expect(result.imageHash, originalHash);
+    expect(result.toJson(includePixels: false), originalJson);
+  });
+
   test('animation frames are exposed through an immutable list', () {
     final animation = AvatarGenerator().generateAnimation(
       const AvatarRequest(seed: 'animation-snapshot'),
