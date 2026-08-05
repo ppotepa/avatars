@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 void main() {
   test('rig clip preserves anchors, fills frame and renders coherent rain', () {
     final generator = AvatarGenerator();
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'quality-rig-rain',
       overrides: <String, Object>{
         'v4.animation': 'idle',
@@ -96,7 +96,7 @@ void main() {
 
   test('rigid shoulder objects do not become artificial companions', () {
     final generator = AvatarGenerator();
-    final frame = generator.generate(const AvatarRequest(
+    final frame = generator.generate(AvatarRequest(
       seed: 'rigid-shoulder-object',
       overrides: <String, Object>{
         'v4.animation': 'idle',
@@ -112,7 +112,7 @@ void main() {
 
   test('mouth smoke is emitted in world space after actor posing', () {
     final generator = AvatarGenerator();
-    final frame = generator.generate(const AvatarRequest(
+    final frame = generator.generate(AvatarRequest(
       seed: 'world-smoke-emitter',
       overrides: <String, Object>{
         'v4.animation': 'smoke',
