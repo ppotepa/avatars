@@ -51,10 +51,31 @@ void main() {
       () => layout.graph.nodes.values.first.value = 0,
       throwsStateError,
     );
+    final camera = layout.graph.nodes['rig.camera']!.value as Map;
+    expect(() => camera['x'] = 0, throwsUnsupportedError);
 
     expect(() => result.validation.entries.clear(), throwsUnsupportedError);
     expect(result.imageHash, originalHash);
     expect(result.toJson(includePixels: false), originalJson);
+  });
+
+  test('genome deeply owns nested resolved values', () {
+    final nested = <String, Object>{
+      'value': <String, Object>{'items': <Object>[1, 2]},
+    };
+    final genome = AvatarGenome(
+      seed: 'nested-genome',
+      generatorVersion: AvatarGenomeVersion.generator,
+      profile: 'test',
+      values: nested,
+      sources: const <String, GenomeValueSource>{},
+    );
+
+    (nested['value']! as Map<String, Object>)['items'] = <Object>[9];
+    final stored = genome.values['value']! as Map;
+    expect(stored['items'], <Object>[1, 2]);
+    expect(() => stored['items'] = <Object>[], throwsUnsupportedError);
+    expect(() => (stored['items']! as List).clear(), throwsUnsupportedError);
   });
 
   test('animation frames are exposed through an immutable list', () {
