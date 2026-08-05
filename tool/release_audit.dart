@@ -170,6 +170,22 @@ List<String> _scanSources() {
       message: 'AvatarRequest must use its immutable runtime constructor.',
     ),
     (
+      pattern: RegExp(r'\bconst\s+AvatarPalette\s*\('),
+      message: 'AvatarPalette copies runtime color storage and is not const.',
+    ),
+    (
+      pattern: RegExp(r'\bconst\s+ValidationReport\s*\('),
+      message: 'ValidationReport owns an immutable runtime list and is not const.',
+    ),
+    (
+      pattern: RegExp(r'\bconst\s+OriginPolicy\s*\('),
+      message: 'OriginPolicy owns an immutable runtime allowlist and is not const.',
+    ),
+    (
+      pattern: RegExp(r'\bconst\s+ServerConfig\s*\('),
+      message: 'ServerConfig owns an immutable runtime allowlist and is not const.',
+    ),
+    (
       pattern: RegExp(r'\brig\.AvatarGenerator\s*\('),
       message: 'Use RigAvatarGenerator after the internal API rename.',
     ),
