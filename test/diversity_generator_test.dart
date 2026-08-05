@@ -24,7 +24,7 @@ void main() {
   });
 
   test('zero complexity permits an avatar without optional V4 features', () {
-    final result = generator.generate(const AvatarRequest(
+    final result = generator.generate(AvatarRequest(
       seed: 'minimal-complexity-contract',
       overrides: <String, Object>{
         'v4.complexity': 0,
@@ -32,10 +32,21 @@ void main() {
       },
     ));
     for (final id in const <String>{
-      'v4.headwear', 'v4.eyewear', 'v4.faceMask', 'v4.earJewelry',
-      'v4.facePiercing', 'v4.neckJewelry', 'v4.armor', 'v4.cape',
-      'v4.mouthProp', 'v4.shoulderProp', 'v4.cybernetics', 'v4.scar',
-      'v4.marking', 'v4.effect', 'v4.aura',
+      'v4.headwear',
+      'v4.eyewear',
+      'v4.faceMask',
+      'v4.earJewelry',
+      'v4.facePiercing',
+      'v4.neckJewelry',
+      'v4.armor',
+      'v4.cape',
+      'v4.mouthProp',
+      'v4.shoulderProp',
+      'v4.cybernetics',
+      'v4.scar',
+      'v4.marking',
+      'v4.effect',
+      'v4.aura',
     }) {
       expect(result.genome.string(id), 'none', reason: id);
     }
