@@ -63,7 +63,7 @@ final class AvatarGenerator {
   int get cachedResultCount => _resultCache.length;
 
   AvatarResult generate(AvatarRequest request) {
-    final snapshot = _snapshot(request);
+    final snapshot = request.frozenCopy();
     requestValidator.validate(snapshot);
     final plan = cameraSamplingPolicy.plan(snapshot);
     final key = _cacheKey(snapshot, plan);
@@ -105,7 +105,7 @@ final class AvatarGenerator {
     Duration frameDuration = const Duration(milliseconds: 120),
     bool loop = true,
   }) {
-    final snapshot = _snapshot(request);
+    final snapshot = request.frozenCopy();
     requestValidator.validate(snapshot);
     return _delegate.generateAnimation(
       snapshot,
@@ -116,9 +116,6 @@ final class AvatarGenerator {
   }
 
   void clearCache() => _resultCache.clear();
-
-  AvatarRequest _snapshot(AvatarRequest request) =>
-      AvatarRequest.fromJson(request.toJson());
 
   String _cacheKey(AvatarRequest request, CameraSamplePlan plan) =>
       jsonEncode(<String, Object?>{
