@@ -10,10 +10,10 @@ void main() {
     expect(generator.layoutResolver, isA<CachedLayoutResolver>());
 
     final first = generator.generate(
-      const AvatarRequest(seed: 'prepared-cache'),
+      AvatarRequest(seed: 'prepared-cache'),
     );
     final second = generator.generate(
-      const AvatarRequest(seed: 'prepared-cache'),
+      AvatarRequest(seed: 'prepared-cache'),
     );
 
     expect(second.imageHash, first.imageHash);
