@@ -5,7 +5,7 @@ void main() {
   test('editor service applies binding actions and returns SVG', () {
     final service = AvatarEditorService();
     final response = service.generate(
-      const AvatarRequest(seed: 'server-test'),
+      AvatarRequest(seed: 'server-test'),
       actions: const <AvatarEditorAction>[
         AvatarEditorAction(operation: 'set', id: 'settings.age', value: 55),
         AvatarEditorAction(operation: 'set', id: 'eyes.shape', value: 'almond'),
@@ -25,7 +25,7 @@ void main() {
   test('phase binding exposes animation frames to the web editor', () {
     final service = AvatarEditorService();
     final response = service.generate(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'editor-animation',
         overrides: <String, Object>{'v4.animation': 'idle'},
       ),
@@ -41,7 +41,7 @@ void main() {
     final validator = AvatarRequestValidator();
     expect(
       () => validator.validate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'invalid',
           overrides: <String, Object>{'unknown.field': 1},
         ),
@@ -53,7 +53,7 @@ void main() {
   test('category reroll updates nonce', () {
     final service = AvatarEditorService();
     final response = service.generate(
-      const AvatarRequest(seed: 'reroll-test'),
+      AvatarRequest(seed: 'reroll-test'),
       actions: const <AvatarEditorAction>[
         AvatarEditorAction(operation: 'rerollCategory', category: 'hair'),
       ],
