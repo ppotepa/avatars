@@ -2,7 +2,6 @@ import '../constraints/validation.dart';
 import '../genome/avatar_genome_model.dart';
 import '../util/stable_fingerprint.dart';
 import 'avatar_layout.dart';
-import 'avatar_layout_snapshot.dart';
 
 final class CachedLayoutResolver implements LayoutResolver {
   CachedLayoutResolver({required this.delegate, this.capacity = 32}) {
@@ -36,13 +35,12 @@ final class CachedLayoutResolver implements LayoutResolver {
       _hits++;
       _cache[key] = cached;
       guard.recordAll(cached.entries);
-      return snapshotAvatarLayout(cached.layout);
+      return cached.layout;
     }
 
     _misses++;
     final localGuard = ConstraintEngine();
-    final resolved = delegate.resolve(genome, localGuard);
-    final layout = snapshotAvatarLayout(resolved);
+    final layout = delegate.resolve(genome, localGuard);
     final entry = _LayoutCacheEntry(
       layout: layout,
       entries: List<ValidationEntry>.unmodifiable(localGuard.entries),
@@ -54,7 +52,7 @@ final class CachedLayoutResolver implements LayoutResolver {
         _cache.remove(_cache.keys.first);
       }
     }
-    return snapshotAvatarLayout(layout);
+    return layout;
   }
 }
 
