@@ -25,7 +25,7 @@ void main() {
       ],
     );
     final result = generator.generate(
-      const AvatarRequest(seed: 'custom-renderer'),
+      AvatarRequest(seed: 'custom-renderer'),
     );
 
     expect(result.layers.any((layer) => layer.id == 'test.badge'), isTrue);
