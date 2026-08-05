@@ -1,4 +1,3 @@
-import 'package:avatar_genome/avatar_genome.dart';
 import 'package:avatar_genome/avatar_genome_editor.dart';
 import 'package:test/test.dart';
 
@@ -11,6 +10,17 @@ void main() {
     expect(registry.bindingById['hair.length'], isNotNull);
     expect(registry.bindingById['settings.age'], isNotNull);
     expect(registry.bindingById['rendering.size'], isNotNull);
+  });
+
+  test('registry metadata cannot be mutated by callers', () {
+    final registry = AvatarPropertyRegistry();
+    final catalogOptions = registry.bindingById['eyes.shape']!.options;
+
+    expect(() => registry.requestBindings.clear(), throwsUnsupportedError);
+    expect(() => registry.catalogBindings.clear(), throwsUnsupportedError);
+    expect(() => registry.bindings.clear(), throwsUnsupportedError);
+    expect(() => registry.bindingById.clear(), throwsUnsupportedError);
+    expect(() => catalogOptions.clear(), throwsUnsupportedError);
   });
 
   test('binder writes request properties and override values', () {
