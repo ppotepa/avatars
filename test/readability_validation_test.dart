@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('generated avatar exposes readability validation without hard failure',
       () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'readability-validation',
       overrides: <String, Object>{
         'v4.background': 'solid',
@@ -26,7 +26,7 @@ void main() {
   });
 
   test('face cues stay visible above an intentionally crowded composition', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'readability-crowded-face',
       overrides: <String, Object>{
         'v4.headwear': 'robotHelmet',
