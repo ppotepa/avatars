@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('actor metrics exclude an opaque full-canvas background', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'actor-metrics-background',
       overrides: <String, Object>{
         'v4.background': 'solid',

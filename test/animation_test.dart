@@ -20,7 +20,7 @@ void main() {
       expect(animationChannelEnabled('idle', channel), isTrue, reason: channel);
     }
     final animation = AvatarGenerator().generateAnimation(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'rig-idle-motion',
         overrides: <String, Object>{
           'v4.animation': 'idle',
