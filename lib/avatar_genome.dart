@@ -33,6 +33,3 @@ export 'src/rendering/rig_anchor_resolver.dart';
 export 'src/rendering/rig_clip_pipeline.dart';
 export 'src/rendering/rig_model.dart';
 export 'src/serialization/avatar_codec.dart';
-export 'src/editor/avatar_editor_service.dart';
-export 'src/editor/avatar_property_binding.dart';
-export 'src/editor/avatar_request_validation.dart';
