@@ -5,7 +5,7 @@ void main() {
   final generator = AvatarGenerator();
 
   test('the same request produces the same genome and image', () {
-    const request = AvatarRequest(seed: 'deterministic-user-1');
+    final request = AvatarRequest(seed: 'deterministic-user-1');
     final first = generator.generate(request);
     final second = generator.generate(request);
 
@@ -24,7 +24,7 @@ void main() {
   });
 
   test('result uses a 48x48 indexed buffer and at most 32 colors', () {
-    final result = generator.generate(const AvatarRequest(seed: 'dimensions'));
+    final result = generator.generate(AvatarRequest(seed: 'dimensions'));
     expect(result.image.width, 48);
     expect(result.image.height, 48);
     expect(result.image.indices.length, 48 * 48);
@@ -38,7 +38,7 @@ void main() {
   });
 
   test('result reports final semantic visibility', () {
-    final result = generator.generate(const AvatarRequest(
+    final result = generator.generate(AvatarRequest(
       seed: 'visibility-contract',
       overrides: <String, Object>{
         'eyes.shape': 'round',
@@ -74,16 +74,16 @@ void main() {
   });
 
   test('enhanced 96x96 render adds deterministic detail over basic scaling', () {
-    const basic = AvatarRequest(
+    final basic = AvatarRequest(
       seed: 'detail-profile',
-      rendering: AvatarRenderSettings(
+      rendering: const AvatarRenderSettings(
         size: 96,
         detailLevel: AvatarDetailLevel.basic,
       ),
     );
-    const rich = AvatarRequest(
+    final rich = AvatarRequest(
       seed: 'detail-profile',
-      rendering: AvatarRenderSettings(
+      rendering: const AvatarRenderSettings(
         size: 96,
         detailLevel: AvatarDetailLevel.rich,
         shadingStrength: 3,
@@ -97,10 +97,10 @@ void main() {
   });
 
   test('48x48 compatibility render ignores presentation-only detail controls', () {
-    const base = AvatarRequest(seed: 'legacy-48');
-    const rich = AvatarRequest(
+    final base = AvatarRequest(seed: 'legacy-48');
+    final rich = AvatarRequest(
       seed: 'legacy-48',
-      rendering: AvatarRenderSettings(
+      rendering: const AvatarRenderSettings(
         detailLevel: AvatarDetailLevel.rich,
         lightingDirection: AvatarLightingDirection.upperRight,
         shadingStrength: 3,
@@ -115,9 +115,9 @@ void main() {
   test('unsupported render sizes fail explicitly', () {
     expect(
       () => generator.generate(
-        const AvatarRequest(
+        AvatarRequest(
           seed: 'invalid-size',
-          rendering: AvatarRenderSettings(size: 72),
+          rendering: const AvatarRenderSettings(size: 72),
         ),
       ),
       throwsArgumentError,
@@ -125,7 +125,7 @@ void main() {
   });
 
   test('category nonce rerolls only the requested category at genome level', () {
-    const request = AvatarRequest(seed: 'category-reroll');
+    final request = AvatarRequest(seed: 'category-reroll');
     final base = generator.generate(request);
     final rerolled = generator.generate(
       AvatarPresetService().rerollCategory(request, 'hair'),
