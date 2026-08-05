@@ -1,19 +1,23 @@
 # Project manifest
 
 - Package: `avatar_genome`
-- Package version: `1.1.0`
-- Generator version: `4.1.0-dart.1`
-- Request/result schemas: `1` / `1`
-- Catalog version: `4.1`
+- Package version: `2.0.0-rc.1`
+- Generator version: `4.7.0-dart.1`
+- Request/result schemas: `1` / `2`
+- Catalog version: `4.4`
 - Palette version: `p32.dynamic.1`
 - Native canvases: `48 × 48`, `64 × 64`, `80 × 80`, `96 × 96`
 - Palette limit: `32` colors
-- Catalog: `26` categories / `223` fields
+- Catalog: `30` categories / `275` fields
 - Runtime dependencies: none
 - Local editor: dependency-free `dart:io` HTTP server + vanilla HTML/CSS/JavaScript
-- Editor bindings: 14 request/settings/rendering fields + 223 catalog fields
+- Secure server entry point: origin allowlist, remote-bind opt-in, token-gated disk writes
+- Editor bindings: `14` request/settings/rendering fields + `275` catalog fields
 - Core platform dependencies: none (`dart:ui`, Flutter and DOM are not imported)
 - Optional IO entry point: PNG and sprite-sheet encoding through `dart:io`
+- Optional server entry point: `avatar_genome_server.dart`
+- Result cache: bounded deterministic LRU, disabled with `cacheCapacity: 0`
+- Camera policy: animation-safe envelope plus reduced-motion single-frame path
 
 ## Included capabilities
 
@@ -30,7 +34,9 @@
 - resolution-aware detail, material highlights, directional shading and dithering;
 - layered animated background accents and reduced-motion playback;
 - constraint reporting and quality metrics;
-- tests, benchmark, CLI tool and catalog-generation tool;
+- immutable catalog and generated result snapshots;
+- split result assembly, metric analysis, rig layout snapshots and atmosphere rendering;
+- tests, benchmark, CLI tool, release audit and catalog-generation tool;
 - local API, dynamic property editor, import/export and save bundle scripts.
 
-See `docs/VALIDATION.md` for the exact verification status of this archive.
+See `docs/RELEASE_CHECKLIST.md` for local verification before tagging.
