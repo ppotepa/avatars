@@ -56,7 +56,7 @@ void main() {
 
   test('clearCache resets result, prepared and camera caches', () {
     final generator = AvatarGenerator(cacheCapacity: 2);
-    generator.generate(const AvatarRequest(seed: 'cache-clear'));
+    generator.generate(AvatarRequest(seed: 'cache-clear'));
 
     expect(generator.cachedResultCount, greaterThan(0));
     expect((generator.genomeService as CachedGenomeGenerator).length, greaterThan(0));
