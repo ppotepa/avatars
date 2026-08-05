@@ -6,22 +6,40 @@
 
 - Made every `AvatarRequest` constructor deeply immutable and removed constant
   request construction from executable sources.
-- Made palettes, layouts, graphs and validation reports own immutable data.
-- Made `AvatarResult` isolate every mutable dependency from callers.
+- Made palettes, layouts, graphs, nested genome values, validation reports,
+  layer metadata and effective adjustments own immutable data.
+- Made `AvatarResult` isolate every mutable dependency from callers while
+  retaining zero-copy getters for already immutable domain models.
 - Added canonical fingerprints and hit/miss metrics to result, genome, layout and
   camera caches, plus one public cache-clearing operation.
 - Moved exact phase handling into `RigClipPipeline.renderSingle`; high phases no
   longer allocate every preceding animation frame or use modulo 16.
+- Bounded camera plans to at most the 16-phase envelope plus the requested phase,
+  and aligned reduced-motion cache plans with the pipeline.
 - Removed the duplicate visual-correction pass and its obsolete exact-phase
   extension.
+- Made the split scenic/cosmic/weather atmosphere the default owned directly by
+  `RigClipPipeline`, with a regression comparison against the legacy renderer.
 - Replaced the legacy HTTP monolith with a focused editor application, reusable
   request handler, bounded batch controller and atomic save repository.
-- Removed wildcard CORS and internal exception text from HTTP responses.
-- Added bounded concurrent request handling, allowed-origin tests, token-gated
-  save tests and real HTTP integration coverage on an ephemeral port.
-- Separated property registry/binder exports into `avatar_genome_editor.dart`.
+- Removed wildcard CORS and internal exception text from HTTP responses; origin
+  matching now enforces scheme, host and effective port.
+- Added bounded concurrent request handling, an atomic pre-read batch lock,
+  allowed-origin tests, token-gated save tests and real HTTP integration coverage
+  on an ephemeral port.
+- Added a deterministic TTL artifact store, standalone ZIP encoder and defensive
+  snapshots for retained batch PNG/manifest data.
+- Extended batch planning to reserve final/shard/PNG buffers, full diagnostics
+  and per-isolate heap overhead before accepting work.
+- Preserved configured remote hostnames for `HttpServer.bind` while keeping
+  loopback and remote-bind safety checks.
+- Separated property registry/binder exports into `avatar_genome_editor.dart` and
+  repaired the advanced entry point after removing the exact-phase shim.
 - Added release-audit source scanning for stale request constructors, old rig
-  generator names, modulo phase truncation and server ownership regressions.
+  generator names, modulo phase truncation, missing exports and server ownership
+  regressions.
+- Added a repository-wide test that validates every local Dart import/export/part
+  target before release.
 - Updated the deterministic generator contract to `4.7.0-dart.2`.
 
 ## 2.0.0-rc.1 — 2026-08-05
