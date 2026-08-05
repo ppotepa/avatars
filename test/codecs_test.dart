@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 
 void main() {
   final result = AvatarGenerator().generate(
-    const AvatarRequest(seed: 'codec-test'),
+    AvatarRequest(seed: 'codec-test'),
   );
 
   test('JSON codec includes the genome and indexed pixels', () {
@@ -36,9 +36,9 @@ void main() {
   test('sprite sheet uses the selected native frame resolution', () {
     final generator = AvatarGenerator();
     final animation = generator.generateAnimation(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'sheet-resolution',
-        rendering: AvatarRenderSettings(size: 96),
+        rendering: const AvatarRenderSettings(size: 96),
       ),
       frameCount: 8,
     );
