@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('overscan and camera support expressive wide motion', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'expressive-wide-stability',
       overrides: <String, Object>{
         'v4.animation': 'idle',
@@ -21,7 +21,7 @@ void main() {
   });
 
   test('canonical rig contains complete articulated arm chains', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'articulated-arm-chain',
       overrides: <String, Object>{'body.armVisibility': 5},
     ));
@@ -35,7 +35,7 @@ void main() {
   });
 
   test('arm segmentation follows a bone axis with seam overlap', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'arm-segmentation-axis',
       guardEnabled: false,
       overrides: <String, Object>{'body.armVisibility': 5},
@@ -47,7 +47,7 @@ void main() {
   });
 
   test('scene and wearable paint groups are semantically separated', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'semantic-paint-groups',
       overrides: <String, Object>{
         'v4.background': 'solid',
@@ -64,7 +64,7 @@ void main() {
   });
 
   test('final scene clarity and clipping are measured after posing', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'post-pose-quality-metadata',
       overrides: <String, Object>{'v4.effect': 'rain'},
     ));
