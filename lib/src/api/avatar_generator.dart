@@ -30,8 +30,9 @@ final class AvatarGenerator {
     List<AvatarPartRenderer>? parts,
     AvatarRequestValidator? requestValidator,
     this.cameraSamplingPolicy = const CameraSamplingPolicy(),
-    this.cacheCapacity = 32,
-  })  : _delegate = RigAvatarGenerator(
+    int cacheCapacity = 32,
+  })  : cacheCapacity = _validateCacheCapacity(cacheCapacity),
+        _delegate = RigAvatarGenerator(
           catalog: catalog,
           genomeService: genomeService,
           layoutResolver: layoutResolver,
@@ -44,14 +45,14 @@ final class AvatarGenerator {
         ),
         requestValidator = requestValidator ??
             AvatarRequestValidator(catalog: catalog ?? ParameterCatalog.current) {
-    if (cacheCapacity < 0) {
-      throw ArgumentError.value(
-        cacheCapacity,
-        'cacheCapacity',
-        'Must not be negative.',
+    if (!identical(this.requestValidator.catalog, _delegate.catalog)) {
+      throw ArgumentError(
+        'requestValidator must use the same ParameterCatalog as the generator.',
       );
     }
   }
+
+  static const int maxAnimationFrames = 1024;
 
   final RigAvatarGenerator _delegate;
   final AvatarRequestValidator requestValidator;
@@ -98,6 +99,20 @@ final class AvatarGenerator {
     Duration frameDuration = const Duration(milliseconds: 120),
     bool loop = true,
   }) {
+    if (frameCount < 1 || frameCount > maxAnimationFrames) {
+      throw ArgumentError.value(
+        frameCount,
+        'frameCount',
+        'Must be between 1 and $maxAnimationFrames.',
+      );
+    }
+    if (frameDuration.inMicroseconds <= 0) {
+      throw ArgumentError.value(
+        frameDuration,
+        'frameDuration',
+        'Must be positive.',
+      );
+    }
     final snapshot = request.frozenCopy();
     requestValidator.validate(snapshot);
     return _delegate.generateAnimation(
@@ -134,5 +149,16 @@ final class AvatarGenerator {
     while (_resultCache.length > cacheCapacity) {
       _resultCache.remove(_resultCache.keys.first);
     }
+  }
+
+  static int _validateCacheCapacity(int value) {
+    if (value < 0) {
+      throw ArgumentError.value(
+        value,
+        'cacheCapacity',
+        'Must not be negative.',
+      );
+    }
+    return value;
   }
 }
