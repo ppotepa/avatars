@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('final quality architecture remains connected', () {
     final result = AvatarGenerator().generate(
-      const AvatarRequest(seed: 'final-quality-architecture'),
+      AvatarRequest(seed: 'final-quality-architecture'),
     );
     final graph = result.layout.graph.nodes;
     expect(result.layers, isNotEmpty);
