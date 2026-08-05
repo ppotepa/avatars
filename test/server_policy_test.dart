@@ -30,6 +30,18 @@ void main() {
     );
   });
 
+  test('origin policy owns an immutable allowlist', () {
+    final configured = <String>{'https://editor.example'};
+    final policy = OriginPolicy(allowedOrigins: configured);
+    configured.clear();
+
+    expect(policy.allowedOrigins, contains('https://editor.example'));
+    expect(
+      () => policy.allowedOrigins.add('https://other.example'),
+      throwsUnsupportedError,
+    );
+  });
+
   test('batch policy limits count and rgba memory', () {
     const policy = BatchResourcePolicy(
       maxAvatarCount: 4,
