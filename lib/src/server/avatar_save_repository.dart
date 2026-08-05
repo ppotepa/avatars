@@ -15,7 +15,11 @@ final class AvatarSaveRepository {
     AvatarEditorResponse response, {
     required int scale,
   }) async {
-    final directory = Directory.fromUri(outputDirectory.uri.resolve('$id/'));
+    if (scale < 1 || scale > 64) {
+      throw ArgumentError.value(scale, 'scale', 'Must be between 1 and 64.');
+    }
+    final safeId = sanitizeId(id);
+    final directory = Directory.fromUri(outputDirectory.uri.resolve('$safeId/'));
     await directory.create(recursive: true);
     final pretty = const JsonEncoder.withIndent('  ');
     final files = <String, List<int>>{
@@ -33,26 +37,43 @@ final class AvatarSaveRepository {
     };
 
     for (final entry in files.entries) {
-      await _atomicWrite(
+      await _replaceFile(
         File.fromUri(directory.uri.resolve(entry.key)),
         entry.value,
       );
     }
 
     return <String, Object>{
-      'id': id,
+      'id': safeId,
       'imageHash': response.result.imageHash,
-      'directory': 'output/avatars/$id',
+      'directory': 'output/avatars/$safeId',
       'files': files.keys.toList(growable: false),
     };
   }
 
-  Future<void> _atomicWrite(File target, List<int> bytes) async {
-    final temporary = File('${target.path}.tmp');
+  String sanitizeId(String value) {
+    final normalized = value
+        .trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9._-]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^[-.]+|[-.]+$'), '');
+    if (normalized.isEmpty) return 'avatar';
+    return normalized.length <= 80 ? normalized : normalized.substring(0, 80);
+  }
+
+  Future<void> _replaceFile(File target, List<int> bytes) async {
+    final nonce = '${pid}-${DateTime.now().microsecondsSinceEpoch}';
+    final temporary = File('${target.path}.$nonce.tmp');
     await temporary.writeAsBytes(bytes, flush: true);
-    if (await target.exists()) {
-      await target.delete();
+    try {
+      if (await target.exists()) {
+        await target.delete();
+      }
+      await temporary.rename(target.path);
+    } finally {
+      if (await temporary.exists()) {
+        await temporary.delete();
+      }
     }
-    await temporary.rename(target.path);
   }
 }
