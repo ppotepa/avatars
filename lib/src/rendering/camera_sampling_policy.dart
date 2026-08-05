@@ -24,11 +24,11 @@ final class CameraSamplingPolicy {
   ];
 
   CameraSamplePlan plan(AvatarRequest request) {
-    if (request.phase == 0 && request.rendering.reducedMotion) {
+    if (request.rendering.reducedMotion) {
       return CameraSamplePlan(
-        phases: const <int>[0],
+        phases: <int>[request.phase],
         policyVersion: version,
-        reason: 'reducedMotionStaticFrame',
+        reason: 'reducedMotionExactFrame',
       );
     }
     if (request.phase >= _animationEnvelope.length) {
