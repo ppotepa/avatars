@@ -78,10 +78,7 @@ final class AvatarEditorService {
       registry: resolvedRegistry,
       binder: binder ?? AvatarRequestBinder(registry: resolvedRegistry),
       requestValidator: requestValidator ??
-          AvatarRequestValidator(
-            catalog: resolvedCatalog,
-            registry: resolvedRegistry,
-          ),
+          AvatarRequestValidator(catalog: resolvedCatalog),
       presetService:
           presetService ?? AvatarPresetService(catalog: resolvedCatalog),
       lockService: lockService ?? AvatarLockService(catalog: resolvedCatalog),
