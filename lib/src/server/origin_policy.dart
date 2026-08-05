@@ -29,18 +29,17 @@ final class OriginPolicy {
     }
   }
 
-  bool _sameOrigin(String origin, String host) {
-    final uri = Uri.tryParse(origin);
-    if (uri == null || uri.host.isEmpty) return false;
-    final originPort = uri.hasPort
-        ? uri.port
-        : uri.scheme == 'https'
+  bool _sameOrigin(String origin, String authority) {
+    final originUri = Uri.tryParse(origin);
+    if (originUri == null || originUri.host.isEmpty) return false;
+    final requestUri = Uri.tryParse('http://$authority');
+    if (requestUri == null || requestUri.host.isEmpty) return false;
+    final originPort = originUri.hasPort
+        ? originUri.port
+        : originUri.scheme == 'https'
             ? 443
             : 80;
-    final requestHost = host.contains(':') ? host.split(':').first : host;
-    final requestPort = host.contains(':')
-        ? int.tryParse(host.split(':').last)
-        : originPort;
-    return uri.host == requestHost && originPort == requestPort;
+    final requestPort = requestUri.hasPort ? requestUri.port : originPort;
+    return originUri.host == requestUri.host && originPort == requestPort;
   }
 }
