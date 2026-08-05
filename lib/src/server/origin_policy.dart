@@ -59,17 +59,11 @@ final class OriginPolicy {
         uri.host.isEmpty ||
         (uri.scheme != 'http' && uri.scheme != 'https') ||
         uri.userInfo.isNotEmpty ||
-        uri.path.isNotEmpty && uri.path != '/' ||
+        (uri.path.isNotEmpty && uri.path != '/') ||
         uri.hasQuery ||
         uri.hasFragment) {
       return null;
     }
-    final port = uri.hasPort
-        ? uri.port
-        : uri.scheme == 'https'
-            ? 443
-            : 80;
-    final host = uri.host.contains(':') ? '[${uri.host}]' : uri.host.toLowerCase();
-    return '${uri.scheme.toLowerCase()}://$host:$port';
+    return uri.origin;
   }
 }
