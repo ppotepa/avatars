@@ -54,7 +54,7 @@ void main() {
 
   test('birds expose independently anchored left and right wings', () {
     final clip = generator.pipeline.renderClip(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'anchored-parrot-wings',
         overrides: <String, Object>{
           'v4.shoulderProp': 'parrot',
@@ -125,7 +125,7 @@ void main() {
 
   test('skeleton and jellyfish expose limb and tentacle anchors', () {
     final skeleton = generator.pipeline.renderClip(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'companion-skeleton-limbs',
         overrides: <String, Object>{
           'v4.shoulderProp': 'miniSkeleton',
@@ -146,7 +146,7 @@ void main() {
     }
 
     final jellyfish = generator.pipeline.renderClip(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'companion-jellyfish-tentacles',
         overrides: <String, Object>{
           'v4.shoulderProp': 'cosmicJellyfish',
@@ -163,7 +163,7 @@ void main() {
 
   test('right-side companion remains parented to the right shoulder', () {
     final frame = generator.pipeline.renderClip(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'companion-right-shoulder',
         overrides: <String, Object>{
           'v4.shoulderProp': 'miniGriffin',
