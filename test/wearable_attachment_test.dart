@@ -30,7 +30,7 @@ void main() {
   }
 
   test('backpack remains a rigid back wearable', () {
-    final frame = generator.generate(const AvatarRequest(
+    final frame = generator.generate(AvatarRequest(
       seed: 'rigid-backpack',
       overrides: <String, Object>{
         'v4.animation': 'idle',
@@ -52,7 +52,7 @@ void main() {
   });
 
   test('cape wing styles use articulated wing nodes', () {
-    final frame = generator.generate(const AvatarRequest(
+    final frame = generator.generate(AvatarRequest(
       seed: 'articulated-cape-wings',
       overrides: <String, Object>{
         'v4.animation': 'idle',
