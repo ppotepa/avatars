@@ -51,8 +51,9 @@ final class AvatarGenerator {
   RigClipPipeline get pipeline => _delegate.pipeline;
 
   AvatarResult generate(AvatarRequest request) {
-    requestValidator.validate(request);
-    return _delegate.generate(request);
+    final snapshot = _snapshot(request);
+    requestValidator.validate(snapshot);
+    return _delegate.generate(snapshot);
   }
 
   AvatarAnimation generateAnimation(
@@ -61,12 +62,16 @@ final class AvatarGenerator {
     Duration frameDuration = const Duration(milliseconds: 120),
     bool loop = true,
   }) {
-    requestValidator.validate(request);
+    final snapshot = _snapshot(request);
+    requestValidator.validate(snapshot);
     return _delegate.generateAnimation(
-      request,
+      snapshot,
       frameCount: frameCount,
       frameDuration: frameDuration,
       loop: loop,
     );
   }
+
+  AvatarRequest _snapshot(AvatarRequest request) =>
+      AvatarRequest.fromJson(request.toJson());
 }
