@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:avatar_genome/avatar_genome_server.dart';
 import 'package:test/test.dart';
 
@@ -7,12 +9,21 @@ void main() {
       () => ServerConfig.fromArguments(<String>['--host', '0.0.0.0']),
       throwsArgumentError,
     );
-    expect(
-      ServerConfig.fromArguments(
-        <String>['--host', '0.0.0.0', '--allow-remote'],
-      ).allowRemote,
-      isTrue,
+    final address = ServerConfig.fromArguments(
+      <String>['--host', '0.0.0.0', '--allow-remote'],
     );
+    expect(address.allowRemote, isTrue);
+    expect(address.address, isA<InternetAddress>());
+  });
+
+  test('remote hostnames remain hostnames for HttpServer.bind', () {
+    final config = ServerConfig.fromArguments(<String>[
+      '--host',
+      'avatar.internal',
+      '--allow-remote',
+    ]);
+
+    expect(config.address, 'avatar.internal');
   });
 
   test('disk writes require a strong token', () {
@@ -30,12 +41,18 @@ void main() {
     );
   });
 
-  test('origin policy owns an immutable allowlist', () {
+  test('server config and origin policy own immutable allowlists', () {
     final configured = <String>{'https://editor.example'};
+    final config = ServerConfig(allowedOrigins: configured);
     final policy = OriginPolicy(allowedOrigins: configured);
     configured.clear();
 
+    expect(config.allowedOrigins, contains('https://editor.example'));
     expect(policy.allowedOrigins, contains('https://editor.example'));
+    expect(
+      () => config.allowedOrigins.add('https://other.example'),
+      throwsUnsupportedError,
+    );
     expect(
       () => policy.allowedOrigins.add('https://other.example'),
       throwsUnsupportedError,
