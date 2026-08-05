@@ -7,8 +7,6 @@ import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../geometry/cached_layout_resolver.dart';
 import '../palette/avatar_palette.dart';
-import '../rendering/parts/atmosphere/extended_atmosphere_renderer.dart';
-import '../rendering/parts/v42_features_renderer.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
@@ -88,15 +86,8 @@ final class GeneratorDependencies {
     final resolvedValidator = validator ?? const V41AvatarValidator();
     final resolvedResolution =
         resolutionRenderer ?? const ResolutionAwareRenderer();
-    final defaults = <AvatarPartRenderer>[
-      for (final part in RigClipPipeline.defaultParts)
-        if (part is ExtendedAtmosphereRenderer)
-          const SplitExtendedAtmosphereRenderer()
-        else
-          part,
-    ];
     final resolvedParts = List<AvatarPartRenderer>.unmodifiable(
-      parts ?? defaults,
+      parts ?? RigClipPipeline.defaultParts,
     );
     final resolvedPipeline = RigClipPipeline(
       genomeGenerator: resolvedGenome,
