@@ -7,6 +7,7 @@ export 'src/api/avatar_request.dart';
 export 'src/api/avatar_result.dart';
 export 'src/api/avatar_version.dart';
 export 'src/catalog/parameter_catalog.dart';
+export 'src/constraints/avatar_request_validator.dart';
 export 'src/constraints/avatar_validator.dart';
 export 'src/constraints/validation.dart';
 export 'src/genome/avatar_genome_model.dart';

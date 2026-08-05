@@ -1,0 +1,20 @@
+library avatar_genome_advanced;
+
+export 'avatar_genome.dart';
+export 'src/geometry/pixel_rect.dart';
+export 'src/geometry/point.dart';
+export 'src/graph/avatar_graph.dart';
+export 'src/palette/avatar_palette.dart';
+export 'src/pixels/indexed_image.dart';
+export 'src/pixels/pixel_mask.dart';
+export 'src/random/random_stream.dart';
+export 'src/rendering/animation_controller.dart';
+export 'src/rendering/canonical_rig.dart';
+export 'src/rendering/clip_camera.dart';
+export 'src/rendering/native_geometry_renderer.dart';
+export 'src/rendering/render_model.dart';
+export 'src/rendering/resolution_profile.dart';
+export 'src/rendering/resolution_renderer.dart';
+export 'src/rendering/rig_anchor_resolver.dart';
+export 'src/rendering/rig_clip_pipeline.dart';
+export 'src/rendering/rig_model.dart';
