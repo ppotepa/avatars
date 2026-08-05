@@ -1,3 +1,5 @@
+import '../util/deep_freeze.dart';
+
 final class GraphNode {
   GraphNode({
     required this.id,
@@ -8,17 +10,19 @@ final class GraphNode {
     Map<String, Object?> meta = const <String, Object?>{},
   })  : _value = value,
         dependencies = List<String>.unmodifiable(dependencies),
-        meta = Map<String, Object?>.unmodifiable(meta);
+        _meta = Map<String, Object?>.of(meta);
 
   final String id;
   final String type;
   Object? _value;
   final List<String> dependencies;
   final Object? Function(Map<String, Object?> values)? compute;
-  final Map<String, Object?> meta;
+  Map<String, Object?> _meta;
   bool _frozen = false;
 
   Object? get value => _value;
+  Map<String, Object?> get meta => Map<String, Object?>.unmodifiable(_meta);
+  bool get isFrozen => _frozen;
 
   set value(Object? next) {
     if (_frozen) {
@@ -28,6 +32,9 @@ final class GraphNode {
   }
 
   GraphNode freeze() {
+    if (_frozen) return this;
+    _value = deepFreezeValue(_value);
+    _meta = deepFreezeStringMap(_meta);
     _frozen = true;
     return this;
   }
@@ -36,7 +43,7 @@ final class GraphNode {
         'id': id,
         'type': type,
         'value': _value,
-        'meta': meta,
+        'meta': _meta,
       };
 }
 
