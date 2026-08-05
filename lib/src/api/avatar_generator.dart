@@ -25,6 +25,7 @@ final class AvatarGenerator {
     ResolutionAwareRenderer? resolutionRenderer,
     AvatarValidator? validator,
     RigClipPipeline? pipeline,
+    List<AvatarPartRenderer>? parts,
     AvatarRequestValidator? requestValidator,
     this.cacheCapacity = 32,
   })  : assert(cacheCapacity >= 0),
@@ -37,6 +38,7 @@ final class AvatarGenerator {
           resolutionRenderer: resolutionRenderer,
           validator: validator,
           pipeline: pipeline,
+          parts: parts,
         ),
         requestValidator = requestValidator ??
             AvatarRequestValidator(catalog: catalog ?? ParameterCatalog.current);
