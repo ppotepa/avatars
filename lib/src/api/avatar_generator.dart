@@ -1,4 +1,5 @@
 import '../catalog/parameter_catalog.dart';
+import '../constraints/avatar_request_validator.dart';
 import '../constraints/avatar_validator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
@@ -21,8 +22,9 @@ final class AvatarGenerator {
     ResolutionAwareRenderer? resolutionRenderer,
     AvatarValidator? validator,
     RigClipPipeline? pipeline,
+    AvatarRequestValidator? requestValidator,
     Object? renderer,
-  }) : _delegate = rig.AvatarGenerator(
+  })  : _delegate = rig.AvatarGenerator(
           catalog: catalog,
           genomeService: genomeService,
           layoutResolver: layoutResolver,
@@ -31,9 +33,12 @@ final class AvatarGenerator {
           resolutionRenderer: resolutionRenderer,
           validator: validator,
           pipeline: pipeline,
-        );
+        ),
+        requestValidator = requestValidator ??
+            AvatarRequestValidator(catalog: catalog ?? ParameterCatalog.current);
 
   final rig.AvatarGenerator _delegate;
+  final AvatarRequestValidator requestValidator;
 
   ParameterCatalog get catalog => _delegate.catalog;
   GenomeGenerator get genomeService => _delegate.genomeService;
@@ -45,18 +50,23 @@ final class AvatarGenerator {
   AvatarValidator get validator => _delegate.validator;
   RigClipPipeline get pipeline => _delegate.pipeline;
 
-  AvatarResult generate(AvatarRequest request) => _delegate.generate(request);
+  AvatarResult generate(AvatarRequest request) {
+    requestValidator.validate(request);
+    return _delegate.generate(request);
+  }
 
   AvatarAnimation generateAnimation(
     AvatarRequest request, {
     int frameCount = 8,
     Duration frameDuration = const Duration(milliseconds: 120),
     bool loop = true,
-  }) =>
-      _delegate.generateAnimation(
-        request,
-        frameCount: frameCount,
-        frameDuration: frameDuration,
-        loop: loop,
-      );
+  }) {
+    requestValidator.validate(request);
+    return _delegate.generateAnimation(
+      request,
+      frameCount: frameCount,
+      frameDuration: frameDuration,
+      loop: loop,
+    );
+  }
 }
