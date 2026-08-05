@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('scene and companion conflicts are returned as adjustments', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'effective-adjustments',
       overrides: <String, Object>{
         'v4.shoulderProp': 'parrot',
