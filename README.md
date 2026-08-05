@@ -4,8 +4,8 @@ Deterministic, reusable Dart library for generating layered pixel-art avatars fr
 
 Current release candidate:
 
-- package: `2.0.0-rc.1`;
-- generator: `4.7.0-dart.1`;
+- package: `2.0.0-rc.2`;
+- generator: `4.7.0-dart.2`;
 - catalog: `4.4`;
 - request/result schemas: `1` / `2`;
 - catalog size: 30 categories and 275 fields.
@@ -18,7 +18,7 @@ The generator core has no Flutter, DOM, `dart:ui` or platform-channel dependency
 import 'package:avatar_genome/avatar_genome.dart';
 ```
 
-Core generator, request/result models, catalog, validation and platform-independent codecs.
+Core generator, immutable request/result models, catalog, validation and platform-independent codecs.
 
 ```dart
 import 'package:avatar_genome/avatar_genome_advanced.dart';
@@ -30,7 +30,7 @@ Advanced rendering, masks, rig, camera and custom renderer contracts.
 import 'package:avatar_genome/avatar_genome_editor.dart';
 ```
 
-Metadata-driven editor bindings and editor service.
+Metadata-driven property registry, binder and editor service.
 
 ```dart
 import 'package:avatar_genome/avatar_genome_io.dart';
@@ -42,19 +42,19 @@ PNG and sprite-sheet encoding through `dart:io`.
 import 'package:avatar_genome/avatar_genome_server.dart';
 ```
 
-Local-server configuration, origin policy and bounded batch controller.
+Reusable HTTP application, request handler, origin policy, atomic save repository and bounded batch controller.
 
 ## Generate an avatar
 
 ```dart
 final generator = AvatarGenerator();
 final result = generator.generate(
-  const AvatarRequest(
+  AvatarRequest(
     seed: 'player-42',
-    settings: GenomeSettings(
+    settings: const GenomeSettings(
       fantasy: FantasyLevel.moderate,
     ),
-    rendering: AvatarRenderSettings(
+    rendering: const AvatarRenderSettings(
       size: 96,
       detailLevel: AvatarDetailLevel.rich,
       shadingStrength: 3,
@@ -68,26 +68,28 @@ print(result.validation.isValid);
 
 The same request and generator version produce the same genome and indexed image on every supported Dart platform.
 
-## Runtime-owned maps
+## Immutable requests
 
-Use `AvatarRequest.frozen` when request maps come from mutable application state:
+Every `AvatarRequest` constructor owns deeply frozen copies of overrides, locks, category snapshots, nonces and nested collection values:
 
 ```dart
-final request = AvatarRequest.frozen(
+final formValues = <String, Object>{'eyes.width': 5};
+final request = AvatarRequest(
   seed: 'custom-user',
   overrides: formValues,
-  lockedParameters: lockedValues,
-  lockedCategories: categorySnapshots,
-  categoryNonces: rerollCounters,
 );
+formValues['eyes.width'] = 7;
+
+// Still 5. Caller-owned state cannot mutate the request.
+print(request.overrides['eyes.width']);
 ```
 
-`AvatarRequest.fromJson`, `copyWith` and all public generator boundaries also create deeply frozen snapshots. Constant requests remain convenient when all collection arguments are constant literals.
+`AvatarRequest.frozen` remains a compatibility alias. `fromJson`, `copyWith` and `frozenCopy` preserve the same immutable contract.
 
 ## Overrides, locks and rerolls
 
 ```dart
-var request = const AvatarRequest(seed: 'first-seed');
+var request = AvatarRequest(seed: 'first-seed');
 final generator = AvatarGenerator();
 final locks = AvatarLockService();
 final presets = AvatarPresetService();
@@ -106,7 +108,7 @@ Unknown field IDs, categories, nonce keys and invalid values fail at the public 
 
 ```dart
 final animation = AvatarGenerator().generateAnimation(
-  const AvatarRequest(
+  AvatarRequest(
     seed: 'storm-mage',
     overrides: <String, Object>{
       'v4.faceAnimation': 'laugh',
@@ -119,11 +121,13 @@ final animation = AvatarGenerator().generateAnimation(
 );
 ```
 
-Direct requests for phases above 15 resolve to the matching animation frame. Reduced-motion phase zero uses a single-frame camera sampling path.
+`RigClipPipeline.renderSingle` renders the exact requested phase. Normal requests fit the camera from phases 0–15 plus the requested phase; reduced-motion requests use only the requested phase.
 
 ## Custom renderers
 
 ```dart
+import 'package:avatar_genome/avatar_genome_advanced.dart';
+
 final generator = AvatarGenerator(
   parts: <AvatarPartRenderer>[
     ...RigClipPipeline.defaultParts,
@@ -138,7 +142,17 @@ Passing a complete `RigClipPipeline` together with pipeline-owned dependencies o
 
 `AvatarResult` contains the resolved genome, layout and graph snapshot, palette, indexed image, frozen render layers, validation report, quality metrics, effective adjustments and a deterministic 48-bit image hash.
 
-Generated images, masks, palettes, metadata and animation frame lists are exposed as independent snapshots. Caller mutations cannot invalidate an existing result hash.
+Generated images, masks, palettes, layout maps, graph collections, validation entries, metadata and animation frame lists are immutable. Caller mutations cannot invalidate an existing result hash.
+
+## Cache contract
+
+Result, genome, layout and camera caches are bounded LRU caches with canonical map-order-independent keys. Runtime counters expose hits and misses. Clear every generator-owned cache with:
+
+```dart
+generator.clearCache();
+```
+
+Set `cacheCapacity: 0` to disable final-result caching in tests or benchmarks.
 
 ## Local web editor
 
@@ -157,7 +171,10 @@ Security defaults:
 - no wildcard CORS;
 - cross-origin requests require an explicit `--allow-origin`;
 - `/api/save` is disabled unless `--enable-save` and a minimum 16-character `--save-token` are supplied;
-- batch rendering is limited by avatar count, RGBA memory and worker budgets.
+- save bundles are written atomically;
+- concurrent requests are bounded;
+- batch rendering is limited by avatar count, RGBA memory and worker budgets;
+- internal exceptions and stack traces are not returned to clients.
 
 Example:
 
@@ -180,7 +197,7 @@ CachedLayoutResolver → LayoutResolver
     ↓
 AvatarPartRenderer composition
     ↓
-RigClipPipeline / camera
+RigClipPipeline / exact phase camera
     ↓
 AvatarResultAssembler
     ├─ RigLayoutSnapshotBuilder
@@ -189,7 +206,7 @@ AvatarResultAssembler
 immutable AvatarResult snapshot
 ```
 
-The V4.2 atmosphere is split into scenic, cosmic, ambient, flame, weather and event renderers. Result assembly, metrics and rig graph snapshots are separate services. Caches are bounded and can be disabled for tests with `cacheCapacity: 0`.
+The V4.2 atmosphere is split into scenic, cosmic, ambient, flame, weather and event renderers. Result assembly, metrics, rig graph snapshots, server dispatch, batch rendering and disk writes have separate owners.
 
 ## Local release verification
 
@@ -197,14 +214,15 @@ No CI pipeline is required for the release process. Run locally:
 
 ```bash
 dart pub get
-dart format --output=none --set-exit-if-changed lib test bin tool benchmark
+dart format --output=none --set-exit-if-changed lib test bin tool example benchmark
 dart analyze --fatal-infos
 dart test --reporter expanded
+dart run tool/update_contract_vectors.dart --approve
 dart run tool/release_audit.dart
 dart run benchmark/avatar_benchmark.dart
 ```
 
-See `docs/RELEASE_CHECKLIST.md`, `PROJECT_MANIFEST.md` and `CHANGELOG.md`.
+Golden approval must follow visual review. See `docs/RELEASE_CHECKLIST.md`, `PROJECT_MANIFEST.md` and `CHANGELOG.md`.
 
 ## Compatibility
 
@@ -214,7 +232,7 @@ Persist the request JSON together with these identifiers:
 {
   "requestSchema": 1,
   "resultSchema": 2,
-  "generatorVersion": "4.7.0-dart.1",
+  "generatorVersion": "4.7.0-dart.2",
   "catalogVersion": "4.4",
   "seed": "player-42"
 }
