@@ -25,11 +25,25 @@ final class AvatarSlot {
 
 final class AvatarLayout {
   AvatarLayout({
-    required this.values,
-    required this.landmarks,
-    required this.slots,
-    required this.graph,
-  });
+    required Map<String, Object> values,
+    required Map<String, PixelPoint> landmarks,
+    required Map<String, AvatarSlot> slots,
+    required AvatarGraph graph,
+  })  : values = Map<String, Object>.unmodifiable(<String, Object>{
+          for (final entry in values.entries)
+            entry.key: _freezeValue(entry.value) as Object,
+        }),
+        landmarks = Map<String, PixelPoint>.unmodifiable(landmarks),
+        slots = Map<String, AvatarSlot>.unmodifiable(<String, AvatarSlot>{
+          for (final entry in slots.entries)
+            entry.key: AvatarSlot(
+              anchor: entry.value.anchor,
+              bounds: entry.value.bounds,
+              acceptedCategories:
+                  List<String>.unmodifiable(entry.value.acceptedCategories),
+            ),
+        }),
+        graph = graph.freeze();
 
   final Map<String, Object> values;
   final Map<String, PixelPoint> landmarks;
@@ -72,7 +86,11 @@ final class V41LayoutResolver implements LayoutResolver {
       ..addDerived(
         'body.shoulderY',
         'landmark',
-        const <String>['body.verticalPosition', 'body.heightBias', 'shoulders.height'],
+        const <String>[
+          'body.verticalPosition',
+          'body.heightBias',
+          'shoulders.height',
+        ],
         (v) => clampInt(
           35 +
               (v['body.verticalPosition']! as int) +
@@ -125,7 +143,9 @@ final class V41LayoutResolver implements LayoutResolver {
         'head.topY',
         'landmark',
         const <String>['head.bottomY', 'head.actualHeight'],
-        (v) => (v['head.bottomY']! as int) - (v['head.actualHeight']! as int) + 1,
+        (v) => (v['head.bottomY']! as int) -
+            (v['head.actualHeight']! as int) +
+            1,
       )
       ..addDerived(
         'head.leftX',
@@ -146,7 +166,10 @@ final class V41LayoutResolver implements LayoutResolver {
         'face.eyeY',
         'landmark',
         const <String>[
-          'head.topY', 'forehead.height', 'eyes.positionY', 'head.actualHeight',
+          'head.topY',
+          'forehead.height',
+          'eyes.positionY',
+          'head.actualHeight',
         ],
         (v) => clampInt(
           (v['head.topY']! as int) +
@@ -177,10 +200,17 @@ final class V41LayoutResolver implements LayoutResolver {
       ..addDerived(
         'face.noseTipY',
         'landmark',
-        const <String>['face.eyeY', 'nose.length', 'nose.positionY', 'head.bottomY'],
+        const <String>[
+          'face.eyeY',
+          'nose.length',
+          'nose.positionY',
+          'head.bottomY',
+        ],
         (v) => clampInt(
           (v['face.eyeY']! as int) +
-              ((v['nose.length']! as int) < 2 ? 2 : (v['nose.length']! as int)) +
+              ((v['nose.length']! as int) < 2
+                  ? 2
+                  : (v['nose.length']! as int)) +
               (v['nose.positionY']! as int),
           (v['face.eyeY']! as int) + 2,
           (v['head.bottomY']! as int) - 7,
@@ -191,7 +221,9 @@ final class V41LayoutResolver implements LayoutResolver {
         'landmark',
         const <String>['face.noseTipY', 'mouth.positionY', 'head.bottomY'],
         (v) => clampInt(
-          (v['face.noseTipY']! as int) + 3 + (v['mouth.positionY']! as int),
+          (v['face.noseTipY']! as int) +
+              3 +
+              (v['mouth.positionY']! as int),
           (v['face.noseTipY']! as int) + 2,
           (v['head.bottomY']! as int) - 3,
         ),
@@ -200,7 +232,9 @@ final class V41LayoutResolver implements LayoutResolver {
         'ears.centerY',
         'landmark',
         const <String>['face.eyeY', 'face.noseTipY', 'ears.positionY'],
-        (v) => (((v['face.eyeY']! as int) + (v['face.noseTipY']! as int)) / 2 +
+        (v) => (((v['face.eyeY']! as int) +
+                        (v['face.noseTipY']! as int)) /
+                    2 +
                 (v['ears.positionY']! as int))
             .round(),
       )
@@ -229,7 +263,11 @@ final class V41LayoutResolver implements LayoutResolver {
         'hair.topY',
         'landmark',
         const <String>['head.topY', 'hair.actualTopVolume'],
-        (v) => clampInt((v['head.topY']! as int) - (v['hair.actualTopVolume']! as int), 0, 47),
+        (v) => clampInt(
+          (v['head.topY']! as int) - (v['hair.actualTopVolume']! as int),
+          0,
+          47,
+        ),
       )
       ..addDerived(
         'torso.topY',
@@ -325,10 +363,26 @@ final class V41LayoutResolver implements LayoutResolver {
       ),
     };
     return AvatarLayout(
-      values: Map.unmodifiable(values),
-      landmarks: Map.unmodifiable(landmarks),
-      slots: Map.unmodifiable(slots),
+      values: values,
+      landmarks: landmarks,
+      slots: slots,
       graph: graph,
     );
   }
+}
+
+Object? _freezeValue(Object? value) {
+  if (value is Map) {
+    return Map<String, Object?>.unmodifiable(<String, Object?>{
+      for (final entry in value.entries)
+        entry.key.toString(): _freezeValue(entry.value),
+    });
+  }
+  if (value is List) {
+    return List<Object?>.unmodifiable(value.map(_freezeValue));
+  }
+  if (value is Set) {
+    return Set<Object?>.unmodifiable(value.map(_freezeValue));
+  }
+  return value;
 }
