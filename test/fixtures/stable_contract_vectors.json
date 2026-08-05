@@ -1,0 +1,24 @@
+{
+  "packageVersion": "2.0.0-rc.1",
+  "generatorVersion": "4.7.0-dart.1",
+  "catalogVersion": "4.4",
+  "requestSchema": 1,
+  "resultSchema": 2,
+  "vectors": [
+    {"name":"basic-48-a","request":{"schemaVersion":1,"seed":"contract-basic-a","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"basic-48-b","request":{"schemaVersion":1,"seed":"contract-basic-b","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"basic-64","request":{"schemaVersion":1,"seed":"contract-resolution","settings":{},"rendering":{"size":64,"detailLevel":"enhanced"},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"rich-80","request":{"schemaVersion":1,"seed":"contract-resolution","settings":{},"rendering":{"size":80,"detailLevel":"rich","shadingStrength":3},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"rich-96","request":{"schemaVersion":1,"seed":"contract-resolution","settings":{},"rendering":{"size":96,"detailLevel":"rich","lightingDirection":"upperRight","shadingStrength":3},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"manual-overrides","request":{"schemaVersion":1,"seed":"contract-overrides","settings":{},"rendering":{"size":48},"overrides":{"eyes.width":5,"eyes.height":3,"eyes.shape":"round"},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"locked-parameter","request":{"schemaVersion":1,"seed":"contract-lock","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{"hair.length":8},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"locked-category","request":{"schemaVersion":1,"seed":"contract-category","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{"hair":{"hair.length":7}},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"category-nonce","request":{"schemaVersion":1,"seed":"contract-nonce","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{"hair":2},"phase":0,"guardEnabled":true}},
+    {"name":"fantasy-strong","request":{"schemaVersion":1,"seed":"contract-fantasy","settings":{"fantasy":"strong","age":42,"bias":15},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"reduced-motion","request":{"schemaVersion":1,"seed":"contract-motion","settings":{},"rendering":{"size":48,"reducedMotion":true,"animateBackground":false},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":0,"guardEnabled":true}},
+    {"name":"phase-1","request":{"schemaVersion":1,"seed":"contract-phase","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":1,"guardEnabled":true}},
+    {"name":"phase-15","request":{"schemaVersion":1,"seed":"contract-phase","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":15,"guardEnabled":true}},
+    {"name":"phase-16","request":{"schemaVersion":1,"seed":"contract-phase","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":16,"guardEnabled":true}},
+    {"name":"phase-19","request":{"schemaVersion":1,"seed":"contract-phase","settings":{},"rendering":{"size":48},"overrides":{},"lockedParameters":{},"lockedCategories":{},"categoryNonces":{},"phase":19,"guardEnabled":true}}
+  ]
+}
