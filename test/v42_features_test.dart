@@ -22,9 +22,9 @@ void main() {
   });
 
   test('adornments are attached to semantic rig nodes', () {
-    final result = generator.generate(const AvatarRequest(
+    final result = generator.generate(AvatarRequest(
       seed: 'v42-rig-adornments',
-      settings: GenomeSettings(fantasy: FantasyLevel.strong),
+      settings: const GenomeSettings(fantasy: FantasyLevel.strong),
       overrides: <String, Object>{
         'v4.halo': 'runicHalo',
         'v4.headAdornment': 'foreheadGem',
@@ -45,7 +45,7 @@ void main() {
   });
 
   test('storm fire and cosmic effects animate deterministically', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'v42-atmosphere',
       overrides: <String, Object>{
         'v4.background': 'bloodMoon',
@@ -72,7 +72,7 @@ void main() {
 
   test('expressions coordinate face and body rig motion', () {
     final animation = generator.generateAnimation(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'v42-expression-rig',
         overrides: <String, Object>{
           'v4.expression': 'laugh',
