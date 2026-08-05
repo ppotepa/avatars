@@ -5,7 +5,7 @@ void main() {
   test('result owns independent frozen image and layer snapshots', () {
     final generator = AvatarGenerator();
     final result = generator.generate(
-      const AvatarRequest(seed: 'result-snapshot'),
+      AvatarRequest(seed: 'result-snapshot'),
     );
     final originalHash = result.imageHash;
     final originalPixel = result.image.get(0, 0);
@@ -31,7 +31,7 @@ void main() {
 
   test('palette layout graph and validation cannot mutate the result', () {
     final result = AvatarGenerator().generate(
-      const AvatarRequest(seed: 'result-model-snapshot'),
+      AvatarRequest(seed: 'result-model-snapshot'),
     );
     final originalHash = result.imageHash;
     final originalJson = result.toJson(includePixels: false);
@@ -59,7 +59,7 @@ void main() {
 
   test('animation frames are exposed through an immutable list', () {
     final animation = AvatarGenerator().generateAnimation(
-      const AvatarRequest(seed: 'animation-snapshot'),
+      AvatarRequest(seed: 'animation-snapshot'),
       frameCount: 2,
     );
 
