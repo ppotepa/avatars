@@ -20,6 +20,11 @@ void main() {
   final ioEntryPoint = File('lib/avatar_genome_io.dart').readAsStringSync();
   final serverApplication =
       File('lib/src/server/legacy_http_application.dart').readAsStringSync();
+  final vectors = Map<String, Object?>.from(
+    jsonDecode(
+      File('test/fixtures/stable_contract_vectors.json').readAsStringSync(),
+    ) as Map,
+  );
   final packageVersion = RegExp(r'^version:\s*(\S+)', multiLine: true)
       .firstMatch(pubspec)
       ?.group(1);
@@ -74,6 +79,33 @@ void main() {
     failures.add('PROJECT_MANIFEST.md catalog counts are stale.');
   }
 
+  if (vectors['approved'] != true) {
+    failures.add(
+      'Golden vectors are not approved. Run '
+      'dart run tool/update_contract_vectors.dart --approve after visual review.',
+    );
+  }
+  for (final raw in vectors['vectors']! as List<Object?>) {
+    final vector = Map<String, Object?>.from(raw! as Map);
+    final expected = vector['expected'];
+    if (expected is! Map) {
+      failures.add('Golden vector ${vector['name']} has no expected output.');
+      continue;
+    }
+    for (final field in const <String>[
+      'imageHash',
+      'genomeFingerprint',
+      'usedColorCount',
+      'layerCount',
+      'correctionCount',
+      'hardViolationCount',
+    ]) {
+      if (!expected.containsKey(field)) {
+        failures.add('Golden vector ${vector['name']} misses $field.');
+      }
+    }
+  }
+
   if (coreEntryPoint.contains('dart:io')) {
     failures.add('Core entry point must not import dart:io.');
   }
@@ -88,6 +120,7 @@ void main() {
     'docs/RELEASE_CHECKLIST.md',
     'lib/src/server/server_request_handler.dart',
     'lib/src/server/avatar_save_repository.dart',
+    'tool/update_contract_vectors.dart',
   ]) {
     if (!File(path).existsSync()) failures.add('$path is missing.');
   }
@@ -118,6 +151,7 @@ void main() {
     'paletteVersion': AvatarGenomeVersion.palette,
     'categoryCount': catalog.categoryCount,
     'fieldCount': catalog.fieldCount,
+    'goldenApproved': vectors['approved'],
     'sourceViolations': sourceViolations,
     'failures': failures,
   };
