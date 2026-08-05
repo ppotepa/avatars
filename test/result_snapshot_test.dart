@@ -37,7 +37,8 @@ void main() {
     final originalJson = result.toJson(includePixels: false);
 
     final palette = result.palette;
-    palette.colors[0] = 0;
+    expect(() => palette.colors[0] = 0, throwsUnsupportedError);
+    expect(() => palette.roles['bg'] = 0, throwsUnsupportedError);
 
     final layout = result.layout;
     expect(
