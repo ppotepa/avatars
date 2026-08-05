@@ -151,11 +151,11 @@ final class AvatarResult {
     required List<RenderLayer> layers,
     required ValidationReport validation,
     required AvatarMetrics metrics,
-    required String imageHash,
+    String? imageHash,
     List<EffectiveAdjustment> effectiveAdjustments =
         const <EffectiveAdjustment>[],
   }) {
-    final imageSnapshot = image.clone();
+    final imageSnapshot = image.clone()..freeze();
     final paletteSnapshot = AvatarPalette(
       id: palette.id,
       colors: Uint32List.fromList(palette.colors),
@@ -166,7 +166,7 @@ final class AvatarResult {
         RenderLayer(
           id: layer.id,
           z: layer.z,
-          mask: layer.mask.clone(),
+          mask: layer.mask.clone()..freeze(),
           colorIndex: layer.colorIndex,
           nodeId: layer.nodeId,
           slot: layer.slot,
@@ -176,7 +176,7 @@ final class AvatarResult {
     ]);
     final calculatedHash =
         imageSnapshot.hashWithPalette(paletteSnapshot.colors);
-    if (imageHash != calculatedHash) {
+    if (imageHash != null && imageHash != calculatedHash) {
       throw ArgumentError.value(
         imageHash,
         'imageHash',
