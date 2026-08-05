@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('weather and effect particles use separate rendered namespaces', () {
     final weather = AvatarGenerator().generate(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'pipeline-weather',
         overrides: <String, Object>{
           'v4.weather': 'heavyRain',
@@ -24,7 +24,7 @@ void main() {
 
   test('final scene diagnostics are produced after posing and composition', () {
     final result = AvatarGenerator().generate(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'pipeline-order',
         overrides: <String, Object>{
           'v4.effect': 'glitch',
