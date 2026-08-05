@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:avatar_genome/avatar_genome.dart';
+import 'package:avatar_genome/src/util/math_utils.dart';
+import 'package:avatar_genome/src/util/stable_fingerprint.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -10,8 +12,10 @@ void main() {
       File('test/fixtures/stable_contract_vectors.json').readAsStringSync(),
     ) as Map,
   );
+  final approved = fixture['approved'] == true;
 
   test('contract metadata matches the runtime', () {
+    expect(fixture['packageVersion'], '2.0.0-rc.2');
     expect(fixture['generatorVersion'], AvatarGenomeVersion.generator);
     expect(fixture['catalogVersion'], AvatarGenomeVersion.catalog);
     expect(fixture['requestSchema'], AvatarGenomeVersion.requestSchema);
@@ -38,6 +42,22 @@ void main() {
       expect(first.image.width, request.rendering.size);
       expect(first.image.height, request.rendering.size);
       expect(first.imageHash, hasLength(12));
+
+      if (approved) {
+        final expected = Map<String, Object?>.from(vector['expected']! as Map);
+        expect(first.imageHash, expected['imageHash']);
+        expect(
+          hash48(utf8.encode(stableFingerprint(first.genome.toJson()))),
+          expected['genomeFingerprint'],
+        );
+        expect(first.image.usedColorCount, expected['usedColorCount']);
+        expect(first.layers.length, expected['layerCount']);
+        expect(first.validation.correctionCount, expected['correctionCount']);
+        expect(
+          first.validation.hardViolationCount,
+          expected['hardViolationCount'],
+        );
+      }
     });
   }
 
