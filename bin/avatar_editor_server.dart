@@ -29,10 +29,12 @@ Options:
 
   final config = ServerConfig.fromArguments(arguments);
   final root = _projectRoot(arguments);
+  final service = AvatarEditorService();
   final app = application.AvatarEditorHttpApplication(
     projectRoot: root,
-    service: AvatarEditorService(),
+    service: service,
   );
+  final batches = BatchHttpController(service: service);
   final origins = OriginPolicy(allowedOrigins: config.allowedOrigins);
   final server = await HttpServer.bind(config.address, config.port);
 
@@ -41,13 +43,14 @@ Options:
   stdout.writeln('Open http://${config.host}:${server.port}');
 
   await for (final request in server) {
-    unawaited(_handle(request, app, config, origins));
+    unawaited(_handle(request, app, batches, config, origins));
   }
 }
 
 Future<void> _handle(
   HttpRequest request,
   application.AvatarEditorHttpApplication app,
+  BatchHttpController batches,
   ServerConfig config,
   OriginPolicy origins,
 ) async {
@@ -71,6 +74,10 @@ Future<void> _handle(
     return;
   }
 
+  if (batches.handles(request)) {
+    await batches.handle(request);
+    return;
+  }
   await app.handle(request);
 }
 
