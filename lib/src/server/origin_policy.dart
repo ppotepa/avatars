@@ -6,7 +6,7 @@ final class OriginPolicy {
   final Set<String> allowedOrigins;
 
   bool allows(HttpRequest request) {
-    final origin = request.headers.value(HttpHeaders.originHeader);
+    final origin = request.headers.value('origin');
     if (origin == null || origin.isEmpty) return true;
     final host = request.headers.value(HttpHeaders.hostHeader);
     if (host != null && _sameOrigin(origin, host)) return true;
@@ -17,7 +17,7 @@ final class OriginPolicy {
     if (origin != null && allowedOrigins.contains(origin)) {
       response.headers
         ..set(HttpHeaders.accessControlAllowOriginHeader, origin)
-        ..set(HttpHeaders.varyHeader, HttpHeaders.originHeader)
+        ..set(HttpHeaders.varyHeader, 'origin')
         ..set(
           HttpHeaders.accessControlAllowMethodsHeader,
           'GET, POST, OPTIONS',
