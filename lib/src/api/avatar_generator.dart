@@ -52,7 +52,17 @@ final class AvatarGenerator {
   AvatarResult generate(AvatarRequest request) {
     final snapshot = _snapshot(request);
     requestValidator.validate(snapshot);
-    return _delegate.generate(snapshot);
+    if (snapshot.phase < 16) {
+      return _delegate.generate(snapshot);
+    }
+    return _delegate
+        .generateAnimation(
+          snapshot,
+          frameCount: snapshot.phase + 1,
+          frameDuration: Duration.zero,
+          loop: false,
+        )
+        .frames[snapshot.phase];
   }
 
   AvatarAnimation generateAnimation(
