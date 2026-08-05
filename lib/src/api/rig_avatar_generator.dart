@@ -12,8 +12,8 @@ import 'avatar_result_assembler.dart';
 import 'generator_dependencies.dart';
 
 /// Internal generator backed exclusively by the hierarchical rig clip pipeline.
-final class AvatarGenerator {
-  factory AvatarGenerator({
+final class RigAvatarGenerator {
+  factory RigAvatarGenerator({
     ParameterCatalog? catalog,
     GenomeGenerator? genomeService,
     LayoutResolver? layoutResolver,
@@ -35,10 +35,10 @@ final class AvatarGenerator {
       pipeline: pipeline,
       parts: parts,
     );
-    return AvatarGenerator._(dependencies);
+    return RigAvatarGenerator._(dependencies);
   }
 
-  AvatarGenerator._(GeneratorDependencies dependencies)
+  RigAvatarGenerator._(GeneratorDependencies dependencies)
       : catalog = dependencies.catalog,
         genomeService = dependencies.genomeService,
         layoutResolver = dependencies.layoutResolver,
