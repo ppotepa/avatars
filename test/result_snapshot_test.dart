@@ -45,8 +45,12 @@ void main() {
       () => layout.values['external.mutation'] = 1,
       throwsUnsupportedError,
     );
-    layout.graph.nodes.clear();
-    layout.graph.edges.clear();
+    expect(() => layout.graph.nodes.clear(), throwsUnsupportedError);
+    expect(() => layout.graph.edges.clear(), throwsUnsupportedError);
+    expect(
+      () => layout.graph.nodes.values.first.value = 0,
+      throwsStateError,
+    );
 
     expect(() => result.validation.entries.clear(), throwsUnsupportedError);
     expect(result.imageHash, originalHash);
