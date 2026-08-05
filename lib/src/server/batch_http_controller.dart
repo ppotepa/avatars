@@ -8,24 +8,36 @@ import '../api/avatar_version.dart';
 import '../editor/avatar_editor_service.dart';
 import '../serialization/avatar_codec.dart';
 import '../serialization/avatar_png_codec.dart';
+import 'batch_artifact_store.dart';
 import 'batch_resource_policy.dart';
+import 'stored_zip_encoder.dart';
 
 final class BatchHttpController {
   BatchHttpController({
     required this.service,
     this.policy = const BatchResourcePolicy(),
     this.maxBodyBytes = 2 * 1024 * 1024,
-    this.artifactTtl = const Duration(minutes: 10),
-    this.maxArtifacts = 2,
-  });
+    Duration artifactTtl = const Duration(minutes: 10),
+    int maxArtifacts = 2,
+    BatchArtifactStore? artifactStore,
+  }) : artifactStore = artifactStore ??
+            BatchArtifactStore(ttl: artifactTtl, capacity: maxArtifacts) {
+    if (maxBodyBytes < 1) {
+      throw ArgumentError.value(
+        maxBodyBytes,
+        'maxBodyBytes',
+        'Must be positive.',
+      );
+    }
+  }
 
   final AvatarEditorService service;
   final BatchResourcePolicy policy;
   final int maxBodyBytes;
-  final Duration artifactTtl;
-  final int maxArtifacts;
-  final Map<String, _StoredBatch> _artifacts = <String, _StoredBatch>{};
+  final BatchArtifactStore artifactStore;
   bool _active = false;
+
+  bool get isActive => _active;
 
   bool handles(HttpRequest request) {
     final path = request.uri.path;
@@ -36,7 +48,6 @@ final class BatchHttpController {
   }
 
   Future<void> handle(HttpRequest request) async {
-    _purgeExpired();
     if (request.method == 'GET') {
       await _handleArtifactRead(request);
       return;
@@ -57,8 +68,20 @@ final class BatchHttpController {
 
     try {
       final payload = await _readJson(request);
-      final columns = _integer(payload, 'columns', fallback: 16, min: 1, max: 256);
-      final rows = _integer(payload, 'rows', fallback: 16, min: 1, max: 256);
+      final columns = _integer(
+        payload,
+        'columns',
+        fallback: 16,
+        min: 1,
+        max: 256,
+      );
+      final rows = _integer(
+        payload,
+        'rows',
+        fallback: 16,
+        min: 1,
+        max: 256,
+      );
       final plan = policy.plan(
         columns: columns,
         rows: rows,
@@ -81,16 +104,10 @@ final class BatchHttpController {
         _active = false;
       }
 
-      final id = '${DateTime.now().microsecondsSinceEpoch}-${columns}x$rows';
-      _artifacts[id] = _StoredBatch(
+      final id = artifactStore.put(
         png: batch.png,
         manifest: batch.manifest,
-        createdAt: DateTime.now().toUtc(),
       );
-      while (_artifacts.length > maxArtifacts) {
-        _artifacts.remove(_artifacts.keys.first);
-      }
-
       request.response
         ..statusCode = HttpStatus.ok
         ..headers.contentType = ContentType('image', 'png')
@@ -108,7 +125,7 @@ final class BatchHttpController {
         request,
         HttpStatus.badRequest,
         'Invalid batch request',
-        error.message?.toString() ?? error.toString(),
+        error.message?.toString() ?? 'The batch request is invalid.',
       );
     } catch (error, stackTrace) {
       _active = false;
@@ -124,7 +141,7 @@ final class BatchHttpController {
 
   Future<void> _handleArtifactRead(HttpRequest request) async {
     final id = request.uri.queryParameters['id'];
-    final artifact = id == null ? null : _artifacts[id];
+    final artifact = id == null ? null : artifactStore.get(id);
     if (id == null || artifact == null) {
       await _error(
         request,
@@ -147,11 +164,11 @@ final class BatchHttpController {
     final columns = artifact.manifest['columns'] as int;
     final rows = artifact.manifest['rows'] as int;
     final baseName = 'avatar-batch-${columns}x$rows';
-    final zip = _StoredZipEncoder.encode(<String, Uint8List>{
+    final zip = StoredZipEncoder.encode(<String, Uint8List>{
       '$baseName.png': artifact.png,
       '$baseName.json': Uint8List.fromList(
         utf8.encode(
-          const JsonEncoder.withIndent(' ').convert(artifact.manifest),
+          const JsonEncoder.withIndent('  ').convert(artifact.manifest),
         ),
       ),
     });
@@ -165,17 +182,6 @@ final class BatchHttpController {
       ..contentLength = zip.length
       ..add(zip);
     await request.response.close();
-  }
-
-  void _purgeExpired() {
-    final now = DateTime.now().toUtc();
-    final expired = <String>[
-      for (final entry in _artifacts.entries)
-        if (now.difference(entry.value.createdAt) > artifactTtl) entry.key,
-    ];
-    for (final id in expired) {
-      _artifacts.remove(id);
-    }
   }
 
   Future<_BatchResponse> _render(
@@ -317,18 +323,6 @@ final class _BatchResponse {
   final Map<String, Object?> manifest;
 }
 
-final class _StoredBatch {
-  const _StoredBatch({
-    required this.png,
-    required this.manifest,
-    required this.createdAt,
-  });
-
-  final Uint8List png;
-  final Map<String, Object?> manifest;
-  final DateTime createdAt;
-}
-
 final class _BatchShard {
   const _BatchShard({
     required this.start,
@@ -388,89 +382,4 @@ _BatchShard _renderShard(Map<String, Object?> job) {
     pixels: TransferableTypedData.fromList(<Uint8List>[output]),
     metadata: metadata,
   );
-}
-
-final class _StoredZipEncoder {
-  static Uint8List encode(Map<String, Uint8List> files) {
-    final output = BytesBuilder(copy: false);
-    final central = BytesBuilder(copy: false);
-    var offset = 0;
-    for (final entry in files.entries) {
-      final name = Uint8List.fromList(utf8.encode(entry.key));
-      final data = entry.value;
-      final crc = _crc32(data);
-      final local = BytesBuilder(copy: false)
-        ..add(_u32(0x04034b50))
-        ..add(_u16(20))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u32(crc))
-        ..add(_u32(data.length))
-        ..add(_u32(data.length))
-        ..add(_u16(name.length))
-        ..add(_u16(0))
-        ..add(name)
-        ..add(data);
-      final localBytes = local.takeBytes();
-      output.add(localBytes);
-
-      central
-        ..add(_u32(0x02014b50))
-        ..add(_u16(20))
-        ..add(_u16(20))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u32(crc))
-        ..add(_u32(data.length))
-        ..add(_u32(data.length))
-        ..add(_u16(name.length))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u16(0))
-        ..add(_u32(0))
-        ..add(_u32(offset))
-        ..add(name);
-      offset += localBytes.length;
-    }
-    final centralBytes = central.takeBytes();
-    output
-      ..add(centralBytes)
-      ..add(_u32(0x06054b50))
-      ..add(_u16(0))
-      ..add(_u16(0))
-      ..add(_u16(files.length))
-      ..add(_u16(files.length))
-      ..add(_u32(centralBytes.length))
-      ..add(_u32(offset))
-      ..add(_u16(0));
-    return output.takeBytes();
-  }
-
-  static Uint8List _u16(int value) {
-    final bytes = Uint8List(2);
-    ByteData.sublistView(bytes).setUint16(0, value, Endian.little);
-    return bytes;
-  }
-
-  static Uint8List _u32(int value) {
-    final bytes = Uint8List(4);
-    ByteData.sublistView(bytes).setUint32(0, value, Endian.little);
-    return bytes;
-  }
-
-  static int _crc32(Uint8List bytes) {
-    var crc = 0xffffffff;
-    for (final byte in bytes) {
-      crc ^= byte;
-      for (var bit = 0; bit < 8; bit++) {
-        crc = (crc & 1) == 0 ? crc >>> 1 : (crc >>> 1) ^ 0xedb88320;
-      }
-    }
-    return (crc ^ 0xffffffff) & 0xffffffff;
-  }
 }
