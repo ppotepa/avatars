@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:avatar_genome/avatar_genome_editor.dart';
 import 'package:avatar_genome/avatar_genome_io.dart';
 import 'package:avatar_genome/avatar_genome_server.dart';
 
