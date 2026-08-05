@@ -13,7 +13,8 @@ void main() {
 
     final copiedImage = result.image.clone();
     copiedImage.setPixel(0, 0, 0);
-    final copiedMask = result.layers.first.mask.clone()..clear();
+    final copiedMask = result.layers.first.mask.clone();
+    copiedMask.data.fillRange(0, copiedMask.data.length, 0);
 
     expect(result.imageHash, originalHash);
     expect(result.image.get(0, 0), originalPixel);
