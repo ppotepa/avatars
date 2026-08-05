@@ -49,9 +49,9 @@ void main() {
   });
 
   test('animated extended aura remains deterministic per phase', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'v42-aura-animation',
-      settings: GenomeSettings(fantasy: FantasyLevel.strong),
+      settings: const GenomeSettings(fantasy: FantasyLevel.strong),
       overrides: <String, Object>{
         'v4.aura': 'storm',
         'v4.motionSpeed': 5,
