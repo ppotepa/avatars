@@ -7,7 +7,7 @@ void main() {
   final generator = AvatarGenerator();
 
   test('image hash uses a deterministic 48-bit hexadecimal contract', () {
-    const request = AvatarRequest(seed: 'hash-48-contract');
+    final request = AvatarRequest(seed: 'hash-48-contract');
     final first = generator.generate(request);
     final second = generator.generate(request);
 
