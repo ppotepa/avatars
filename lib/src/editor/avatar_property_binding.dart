@@ -126,7 +126,9 @@ final class RequestPropertyBinding extends AvatarPropertyBinding {
     return switch (kind) {
       EditorFieldKind.text => value is String && value.trim().isNotEmpty,
       EditorFieldKind.integer || EditorFieldKind.range =>
-        value is int && (min == null || value >= min!) && (max == null || value <= max!),
+        value is int &&
+            (min == null || value >= min!) &&
+            (max == null || value <= max!),
       EditorFieldKind.select => options.any((option) => option.value == value),
       EditorFieldKind.boolean => value is bool,
     };
@@ -267,9 +269,14 @@ final class CatalogPropertyBinding extends AvatarPropertyBinding {
   @override
   int get step => definition.step;
   @override
-  List<EditorFieldOption> get options => definition.options
-      .map((option) => EditorFieldOption(value: option.value, label: option.label))
-      .toList(growable: false);
+  List<EditorFieldOption> get options => List<EditorFieldOption>.unmodifiable(
+        definition.options.map(
+          (option) => EditorFieldOption(
+            value: option.value,
+            label: option.label,
+          ),
+        ),
+      );
 
   @override
   Object? read(AvatarRequest request) => request.overrides[id];
@@ -304,18 +311,25 @@ final class CatalogPropertyBinding extends AvatarPropertyBinding {
 final class AvatarPropertyRegistry {
   AvatarPropertyRegistry({ParameterCatalog? catalog})
       : catalog = catalog ?? ParameterCatalog.v41,
-        requestBindings = _requestBindings(),
-        catalogBindings = (catalog ?? ParameterCatalog.v41)
-            .fields
-            .map(CatalogPropertyBinding.new)
-            .toList(growable: false) {
-    bindings = <AvatarPropertyBinding>[
-      ...requestBindings,
-      ...catalogBindings,
-    ];
-    bindingById = <String, AvatarPropertyBinding>{
-      for (final binding in bindings) binding.id: binding,
-    };
+        requestBindings = List<RequestPropertyBinding>.unmodifiable(
+          _requestBindings(),
+        ),
+        catalogBindings = List<CatalogPropertyBinding>.unmodifiable(
+          (catalog ?? ParameterCatalog.v41)
+              .fields
+              .map(CatalogPropertyBinding.new),
+        ) {
+    bindings = List<AvatarPropertyBinding>.unmodifiable(
+      <AvatarPropertyBinding>[
+        ...requestBindings,
+        ...catalogBindings,
+      ],
+    );
+    bindingById = Map<String, AvatarPropertyBinding>.unmodifiable(
+      <String, AvatarPropertyBinding>{
+        for (final binding in bindings) binding.id: binding,
+      },
+    );
   }
 
   final ParameterCatalog catalog;
