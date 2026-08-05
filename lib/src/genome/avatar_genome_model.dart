@@ -1,3 +1,5 @@
+import '../util/deep_freeze.dart';
+
 final class GenomeValueSource {
   const GenomeValueSource({
     required this.source,
@@ -31,8 +33,10 @@ final class AvatarGenome {
     required this.profile,
     required Map<String, Object> values,
     required Map<String, GenomeValueSource> sources,
-  })  : values = Map.unmodifiable(values),
-        sources = Map.unmodifiable(sources);
+  })  : values = deepFreezeObjectMap(values),
+        sources = Map<String, GenomeValueSource>.unmodifiable(
+          Map<String, GenomeValueSource>.of(sources),
+        );
 
   factory AvatarGenome.fromJson(Map<String, Object?> json) {
     final rawSources = json['sources'] as Map? ?? const <String, Object?>{};
