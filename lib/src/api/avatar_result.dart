@@ -5,8 +5,8 @@ import '../palette/avatar_palette.dart';
 import '../pixels/indexed_image.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
+import '../util/deep_freeze.dart';
 import 'avatar_version.dart';
-import 'result_snapshots.dart';
 
 final class AvatarMetrics {
   const AvatarMetrics({
@@ -155,9 +155,6 @@ final class AvatarResult {
         const <EffectiveAdjustment>[],
   }) {
     final imageSnapshot = image.clone()..freeze();
-    final layoutSnapshot = snapshotLayout(layout);
-    final paletteSnapshot = snapshotPalette(palette);
-    final validationSnapshot = snapshotValidation(validation);
     final layerSnapshots = List<RenderLayer>.unmodifiable(<RenderLayer>[
       for (final layer in layers)
         RenderLayer(
@@ -168,11 +165,32 @@ final class AvatarResult {
           nodeId: layer.nodeId,
           slot: layer.slot,
           localOrder: layer.localOrder,
-          meta: Map<String, Object?>.unmodifiable(layer.meta),
+          meta: deepFreezeStringMap(layer.meta),
         ),
     ]);
-    final calculatedHash =
-        imageSnapshot.hashWithPalette(paletteSnapshot.colors);
+    final validationSnapshot = ValidationReport(<ValidationEntry>[
+      for (final entry in validation.entries)
+        ValidationEntry(
+          id: entry.id,
+          status: entry.status,
+          severity: entry.severity,
+          reason: entry.reason,
+          before: deepFreezeValue(entry.before),
+          after: deepFreezeValue(entry.after),
+        ),
+    ]);
+    final adjustmentSnapshots = List<EffectiveAdjustment>.unmodifiable(
+      <EffectiveAdjustment>[
+        for (final adjustment in effectiveAdjustments)
+          EffectiveAdjustment(
+            field: adjustment.field,
+            requested: deepFreezeValue(adjustment.requested) as Object,
+            effective: deepFreezeValue(adjustment.effective) as Object,
+            reason: adjustment.reason,
+          ),
+      ],
+    );
+    final calculatedHash = imageSnapshot.hashWithPalette(palette.colors);
     if (imageHash != null && imageHash != calculatedHash) {
       throw ArgumentError.value(
         imageHash,
@@ -182,50 +200,42 @@ final class AvatarResult {
     }
     return AvatarResult._(
       genome: genome,
-      layout: layoutSnapshot,
-      palette: paletteSnapshot,
+      layout: layout,
+      palette: palette,
       image: imageSnapshot,
       layers: layerSnapshots,
       validation: validationSnapshot,
       metrics: metrics,
       imageHash: calculatedHash,
-      effectiveAdjustments:
-          List<EffectiveAdjustment>.unmodifiable(effectiveAdjustments),
+      effectiveAdjustments: adjustmentSnapshots,
     );
   }
 
   AvatarResult._({
     required this.genome,
-    required AvatarLayout layout,
-    required AvatarPalette palette,
+    required this.layout,
+    required this.palette,
     required this.image,
     required this.layers,
-    required ValidationReport validation,
+    required this.validation,
     required AvatarMetrics metrics,
     required this.imageHash,
     required this.effectiveAdjustments,
-  })  : _layout = layout,
-        _palette = palette,
-        _validation = validation,
-        _metrics = metrics,
-        _nativeGeometryDiagnostics = Map<String, Object>.unmodifiable(
+  })  : _metrics = metrics,
+        _nativeGeometryDiagnostics = deepFreezeObjectMap(
           ResolutionAwareRenderer.diagnosticsFor(image, palette),
         );
 
   final AvatarGenome genome;
-  final AvatarLayout _layout;
-  final AvatarPalette _palette;
+  final AvatarLayout layout;
+  final AvatarPalette palette;
   final IndexedImage image;
   final List<RenderLayer> layers;
-  final ValidationReport _validation;
+  final ValidationReport validation;
   final AvatarMetrics _metrics;
   final Map<String, Object> _nativeGeometryDiagnostics;
   final String imageHash;
   final List<EffectiveAdjustment> effectiveAdjustments;
-
-  AvatarLayout get layout => snapshotLayout(_layout);
-  AvatarPalette get palette => snapshotPalette(_palette);
-  ValidationReport get validation => _validation;
 
   Map<String, Object> get nativeGeometryDiagnostics =>
       _nativeGeometryDiagnostics;
@@ -243,17 +253,17 @@ final class AvatarResult {
             .map((adjustment) => adjustment.toJson())
             .toList(growable: false),
         'landmarks': <String, Object?>{
-          for (final entry in _layout.landmarks.entries)
+          for (final entry in layout.landmarks.entries)
             entry.key: entry.value.toJson(),
         },
         'slots': <String, Object?>{
-          for (final entry in _layout.slots.entries)
+          for (final entry in layout.slots.entries)
             entry.key: entry.value.toJson(),
         },
-        'graph': _layout.graph.snapshot(),
-        'palette': _palette.toJson(),
+        'graph': layout.graph.snapshot(),
+        'palette': palette.toJson(),
         'layers': layers.map((layer) => layer.toJson()).toList(growable: false),
-        'validation': _validation.toJson(),
+        'validation': validation.toJson(),
         'metrics': metrics.toJson(),
         if (includePixels) 'image': image.toJson(),
       };
