@@ -2,12 +2,12 @@ import 'package:avatar_genome/avatar_genome.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('frozen request owns deeply copied collections', () {
+  test('default request constructor owns deeply copied collections', () {
     final overrides = <String, Object>{'eyes.width': 4};
     final hair = <String, Object>{'hair.length': 5};
     final categories = <String, Map<String, Object>>{'hair': hair};
     final nonces = <String, int>{'hair': 1};
-    final request = AvatarRequest.frozen(
+    final request = AvatarRequest(
       seed: 'immutable-request',
       overrides: overrides,
       lockedCategories: categories,
@@ -27,16 +27,30 @@ void main() {
     expect(() => frozenHair['hair.length'] = 8, throwsUnsupportedError);
   });
 
-  test('generator freezes legacy const-compatible requests at its boundary', () {
-    final overrides = <String, Object>{'eyes.width': 4};
-    final request = AvatarRequest(seed: 'boundary-freeze', overrides: overrides);
-    final generator = AvatarGenerator();
-    final first = generator.generate(request);
-    overrides['eyes.width'] = 7;
-    final frozen = request.frozenCopy();
+  test('nested collection values are deeply frozen', () {
+    final nested = <String, Object>{
+      'custom': <String, Object>{
+        'values': <Object>[1, 2, 3],
+      },
+    };
+    final request = AvatarRequest(
+      seed: 'nested-freeze',
+      overrides: nested,
+    );
 
-    expect(first.genome.values['eyes.width'], 4);
-    expect(frozen.overrides['eyes.width'], 7);
-    expect(() => frozen.overrides.clear(), throwsUnsupportedError);
+    final custom = request.overrides['custom']! as Map;
+    final values = custom['values']! as List;
+    expect(() => custom['other'] = 1, throwsUnsupportedError);
+    expect(() => values.add(4), throwsUnsupportedError);
+  });
+
+  test('frozen compatibility factory and frozenCopy preserve identity', () {
+    final request = AvatarRequest.frozen(
+      seed: 'frozen-alias',
+      overrides: <String, Object>{'eyes.width': 4},
+    );
+
+    expect(request.frozenCopy(), same(request));
+    expect(() => request.overrides.clear(), throwsUnsupportedError);
   });
 }
