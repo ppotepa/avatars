@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import '../constraints/validation.dart';
 import '../genome/avatar_genome_model.dart';
 import '../geometry/avatar_layout.dart';
@@ -8,6 +6,7 @@ import '../pixels/indexed_image.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import 'avatar_version.dart';
+import 'result_snapshots.dart';
 
 final class AvatarMetrics {
   const AvatarMetrics({
@@ -156,11 +155,9 @@ final class AvatarResult {
         const <EffectiveAdjustment>[],
   }) {
     final imageSnapshot = image.clone()..freeze();
-    final paletteSnapshot = AvatarPalette(
-      id: palette.id,
-      colors: Uint32List.fromList(palette.colors),
-      roles: Map<String, int>.unmodifiable(palette.roles),
-    );
+    final layoutSnapshot = snapshotLayout(layout);
+    final paletteSnapshot = snapshotPalette(palette);
+    final validationSnapshot = snapshotValidation(validation);
     final layerSnapshots = List<RenderLayer>.unmodifiable(<RenderLayer>[
       for (final layer in layers)
         RenderLayer(
@@ -185,11 +182,11 @@ final class AvatarResult {
     }
     return AvatarResult._(
       genome: genome,
-      layout: layout,
+      layout: layoutSnapshot,
       palette: paletteSnapshot,
       image: imageSnapshot,
       layers: layerSnapshots,
-      validation: validation,
+      validation: validationSnapshot,
       metrics: metrics,
       imageHash: calculatedHash,
       effectiveAdjustments:
@@ -199,29 +196,36 @@ final class AvatarResult {
 
   AvatarResult._({
     required this.genome,
-    required this.layout,
-    required this.palette,
+    required AvatarLayout layout,
+    required AvatarPalette palette,
     required this.image,
     required this.layers,
-    required this.validation,
+    required ValidationReport validation,
     required AvatarMetrics metrics,
     required this.imageHash,
     required this.effectiveAdjustments,
-  })  : _metrics = metrics,
+  })  : _layout = layout,
+        _palette = palette,
+        _validation = validation,
+        _metrics = metrics,
         _nativeGeometryDiagnostics = Map<String, Object>.unmodifiable(
           ResolutionAwareRenderer.diagnosticsFor(image, palette),
         );
 
   final AvatarGenome genome;
-  final AvatarLayout layout;
-  final AvatarPalette palette;
+  final AvatarLayout _layout;
+  final AvatarPalette _palette;
   final IndexedImage image;
   final List<RenderLayer> layers;
-  final ValidationReport validation;
+  final ValidationReport _validation;
   final AvatarMetrics _metrics;
   final Map<String, Object> _nativeGeometryDiagnostics;
   final String imageHash;
   final List<EffectiveAdjustment> effectiveAdjustments;
+
+  AvatarLayout get layout => snapshotLayout(_layout);
+  AvatarPalette get palette => snapshotPalette(_palette);
+  ValidationReport get validation => _validation;
 
   Map<String, Object> get nativeGeometryDiagnostics =>
       _nativeGeometryDiagnostics;
@@ -239,17 +243,17 @@ final class AvatarResult {
             .map((adjustment) => adjustment.toJson())
             .toList(growable: false),
         'landmarks': <String, Object?>{
-          for (final entry in layout.landmarks.entries)
+          for (final entry in _layout.landmarks.entries)
             entry.key: entry.value.toJson(),
         },
         'slots': <String, Object?>{
-          for (final entry in layout.slots.entries)
+          for (final entry in _layout.slots.entries)
             entry.key: entry.value.toJson(),
         },
-        'graph': layout.graph.snapshot(),
-        'palette': palette.toJson(),
+        'graph': _layout.graph.snapshot(),
+        'palette': _palette.toJson(),
         'layers': layers.map((layer) => layer.toJson()).toList(growable: false),
-        'validation': validation.toJson(),
+        'validation': _validation.toJson(),
         'metrics': metrics.toJson(),
         if (includePixels) 'image': image.toJson(),
       };
