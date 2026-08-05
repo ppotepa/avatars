@@ -24,7 +24,7 @@ final class ParameterOption {
 }
 
 final class ParameterDefinition {
-  const ParameterDefinition({
+  ParameterDefinition({
     required this.id,
     required this.label,
     required this.kind,
@@ -35,8 +35,26 @@ final class ParameterDefinition {
     this.step = 1,
     this.autoMin,
     this.autoMax,
-    this.options = const <ParameterOption>[],
-  });
+    List<ParameterOption> options = const <ParameterOption>[],
+  }) : options = List<ParameterOption>.unmodifiable(options) {
+    if (kind == ParameterKind.range) {
+      if (min == null || max == null || autoMin == null || autoMax == null) {
+        throw ArgumentError('Range parameter $id requires complete bounds.');
+      }
+      if (step <= 0 || min! > max! || autoMin! > autoMax! ||
+          autoMin! < min! || autoMax! > max!) {
+        throw ArgumentError('Range parameter $id has invalid bounds.');
+      }
+    } else {
+      if (this.options.isEmpty) {
+        throw ArgumentError('Select parameter $id requires options.');
+      }
+      final values = this.options.map((option) => option.value).toSet();
+      if (values.length != this.options.length) {
+        throw ArgumentError('Select parameter $id contains duplicate options.');
+      }
+    }
+  }
 
   factory ParameterDefinition.fromJson(
     Map<String, Object?> json, {
@@ -108,13 +126,19 @@ final class ParameterDefinition {
 }
 
 final class ParameterCategory {
-  const ParameterCategory({
+  ParameterCategory({
     required this.id,
     required this.label,
     required this.group,
-    required this.fields,
-    required this.presets,
-  });
+    required List<ParameterDefinition> fields,
+    required Map<String, Map<String, Object>> presets,
+  })  : fields = List<ParameterDefinition>.unmodifiable(fields),
+        presets = Map<String, Map<String, Object>>.unmodifiable(
+          <String, Map<String, Object>>{
+            for (final entry in presets.entries)
+              entry.key: Map<String, Object>.unmodifiable(entry.value),
+          },
+        );
 
   final String id;
   final String label;
@@ -134,12 +158,13 @@ final class ParameterCategory {
 }
 
 final class WholeAvatarPreset {
-  const WholeAvatarPreset({
+  WholeAvatarPreset({
     required this.id,
     required this.label,
-    required this.global,
-    required this.values,
-  });
+    required Map<String, Object> global,
+    required Map<String, Object> values,
+  })  : global = Map<String, Object>.unmodifiable(global),
+        values = Map<String, Object>.unmodifiable(values);
 
   final String id;
   final String label;
@@ -156,24 +181,29 @@ final class WholeAvatarPreset {
 
 final class ParameterCatalog {
   ParameterCatalog._({
-    required this.categories,
-    required this.wholePresets,
-  })  : fields = <ParameterDefinition>[
+    required List<ParameterCategory> categories,
+    required Map<String, WholeAvatarPreset> wholePresets,
+  })  : categories = List<ParameterCategory>.unmodifiable(categories),
+        wholePresets = Map<String, WholeAvatarPreset>.unmodifiable(wholePresets),
+        fields = List<ParameterDefinition>.unmodifiable(<ParameterDefinition>[
           for (final category in categories) ...category.fields,
-        ],
-        categoryById = <String, ParameterCategory>{
-          for (final category in categories) category.id: category,
-        } {
-    fieldById = <String, ParameterDefinition>{
-      for (final field in fields) field.id: field,
-    };
+        ]),
+        categoryById = Map<String, ParameterCategory>.unmodifiable(
+          <String, ParameterCategory>{
+            for (final category in categories) category.id: category,
+          },
+        ) {
+    fieldById = Map<String, ParameterDefinition>.unmodifiable(
+      <String, ParameterDefinition>{
+        for (final field in fields) field.id: field,
+      },
+    );
   }
 
-  /// Preserves the historical name while exposing additive extensions.
-  static final ParameterCatalog v41 = _decodeV41();
+  static final ParameterCatalog current = _decodeCurrent();
 
-  /// Current merged catalog. New code should prefer this neutral alias.
-  static final ParameterCatalog current = v41;
+  /// Historical compatibility alias. New code should use [current].
+  static final ParameterCatalog v41 = current;
 
   final List<ParameterCategory> categories;
   final Map<String, WholeAvatarPreset> wholePresets;
@@ -194,7 +224,7 @@ final class ParameterCatalog {
         },
       };
 
-  static ParameterCatalog _decodeV41() {
+  static ParameterCatalog _decodeCurrent() {
     final root = jsonDecode(kV41CatalogJson) as Map<String, Object?>;
     final extension =
         jsonDecode(kV42CatalogExtensionJson) as Map<String, Object?>;
@@ -255,8 +285,8 @@ final class ParameterCatalog {
       );
     }
     return ParameterCatalog._(
-      categories: List.unmodifiable(categories),
-      wholePresets: Map.unmodifiable(wholePresets),
+      categories: categories,
+      wholePresets: wholePresets,
     );
   }
 
@@ -284,7 +314,7 @@ final class ParameterCatalog {
       label: json['label']! as String,
       group: group,
       fields: fields,
-      presets: Map.unmodifiable(presets),
+      presets: presets,
     );
   }
 }
