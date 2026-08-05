@@ -4,9 +4,9 @@ import 'package:avatar_genome/avatar_genome_io.dart';
 
 Future<void> main() async {
   final generator = AvatarGenerator();
-  const request = AvatarRequest(
+  final request = AvatarRequest(
     seed: 'player-42',
-    settings: GenomeSettings(
+    settings: const GenomeSettings(
       presentation: AvatarPresentation.neutral,
       fantasy: FantasyLevel.moderate,
     ),
