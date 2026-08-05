@@ -1,22 +1,17 @@
 import '../catalog/parameter_catalog.dart';
 import '../constraints/avatar_validator.dart';
-import '../constraints/validation.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
-import '../graph/avatar_graph.dart';
 import '../palette/avatar_palette.dart';
-import '../pixels/indexed_image.dart';
-import '../pixels/pixel_mask.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
-import '../rendering/rig_model.dart';
-import '../util/math_utils.dart';
 import 'avatar_request.dart';
 import 'avatar_result.dart';
+import 'avatar_result_assembler.dart';
 import 'generator_dependencies.dart';
 
-/// Public generator backed exclusively by the hierarchical rig clip pipeline.
+/// Internal generator backed exclusively by the hierarchical rig clip pipeline.
 final class AvatarGenerator {
   factory AvatarGenerator({
     ParameterCatalog? catalog,
@@ -27,6 +22,7 @@ final class AvatarGenerator {
     ResolutionAwareRenderer? resolutionRenderer,
     AvatarValidator? validator,
     RigClipPipeline? pipeline,
+    List<AvatarPartRenderer>? parts,
   }) {
     final dependencies = GeneratorDependencies.resolve(
       catalog: catalog,
@@ -37,6 +33,7 @@ final class AvatarGenerator {
       resolutionRenderer: resolutionRenderer,
       validator: validator,
       pipeline: pipeline,
+      parts: parts,
     );
     return AvatarGenerator._(dependencies);
   }
@@ -49,7 +46,10 @@ final class AvatarGenerator {
         compositor = dependencies.compositor,
         resolutionRenderer = dependencies.resolutionRenderer,
         validator = dependencies.validator,
-        pipeline = dependencies.pipeline;
+        pipeline = dependencies.pipeline,
+        resultAssembler = AvatarResultAssembler(
+          resolutionRenderer: dependencies.resolutionRenderer,
+        );
 
   final ParameterCatalog catalog;
   final GenomeGenerator genomeService;
@@ -59,12 +59,16 @@ final class AvatarGenerator {
   final ResolutionAwareRenderer resolutionRenderer;
   final AvatarValidator validator;
   final RigClipPipeline pipeline;
+  final AvatarResultAssembler resultAssembler;
 
   AvatarResult generate(AvatarRequest request) {
     _validate(request);
     final clip = pipeline.renderSingle(request);
-    return _result(
-        clip.prepared, clip.frames.single, request.rendering, request);
+    return resultAssembler.assemble(
+      prepared: clip.prepared,
+      frame: clip.frames.single,
+      request: request,
+    );
   }
 
   AvatarAnimation generateAnimation(
@@ -76,231 +80,26 @@ final class AvatarGenerator {
     _validate(request);
     final clip = pipeline.renderClip(request, frameCount: frameCount);
     return AvatarAnimation(
-      frames: List.unmodifiable(<AvatarResult>[
+      frames: <AvatarResult>[
         for (final frame in clip.frames)
-          _result(clip.prepared, frame, request.rendering, request),
-      ]),
+          resultAssembler.assemble(
+            prepared: clip.prepared,
+            frame: frame,
+            request: request,
+          ),
+      ],
       frameDuration: frameDuration,
       loop: loop,
-    );
-  }
-
-  AvatarResult _result(
-    RigPreparedAvatar prepared,
-    RigPipelineFrame frame,
-    AvatarRenderSettings rendering,
-    AvatarRequest request,
-  ) {
-    final image = resolutionRenderer.render(
-      source: frame.image,
-      layers: frame.state.layers,
-      palette: prepared.palette,
-      settings: rendering,
-      phase: frame.phase,
-    );
-    final layout = _layoutWithRig(prepared.layout, frame);
-    final result = AvatarResult(
-      genome: prepared.genome,
-      layout: layout,
-      palette: prepared.palette,
-      image: image,
-      layers: List.unmodifiable(frame.state.layers),
-      validation: frame.validation,
-      metrics: _metrics(image, frame.state, prepared.palette, rendering),
-      imageHash: image.hashWithPalette(prepared.palette.colors),
-      effectiveAdjustments: _effectiveAdjustments(request, prepared),
-    );
-    if (request.guardEnabled) {
-      final hardIds = result.validation.entries
-          .where((entry) =>
-              entry.status == ValidationStatus.violation &&
-              entry.severity == ValidationSeverity.hard)
-          .map((entry) => entry.id)
-          .toList();
-      if (hardIds.isNotEmpty) {
-        throw StateError(
-          'Avatar quality gate rejected result: ${hardIds.join(', ')}',
-        );
-      }
-    }
-    return result;
-  }
-
-  List<EffectiveAdjustment> _effectiveAdjustments(
-    AvatarRequest request,
-    RigPreparedAvatar prepared,
-  ) {
-    final requested = <String, Object>{...request.overrides};
-    for (final values in request.lockedCategories.values) {
-      requested.addAll(values);
-    }
-    requested.addAll(request.lockedParameters);
-
-    final output = <EffectiveAdjustment>[];
-    for (final entry in requested.entries) {
-      final effective = prepared.genome.values[entry.key];
-      if (effective == null || effective == entry.value) continue;
-      output.add(EffectiveAdjustment(
-        field: entry.key,
-        requested: entry.value,
-        effective: effective,
-        reason: prepared.genome.sources[entry.key]?.source ?? 'effectiveGenome',
-      ));
-    }
-    output.sort((a, b) => a.field.compareTo(b.field));
-    return List.unmodifiable(output);
-  }
-
-  AvatarLayout _layoutWithRig(AvatarLayout source, RigPipelineFrame frame) {
-    final graph = AvatarGraph();
-    for (final entry in source.graph.nodes.entries) {
-      graph.addValue(
-        entry.key,
-        entry.value.type,
-        entry.value.value,
-        meta: entry.value.meta,
-      );
-    }
-    for (final edge in source.graph.edges) {
-      graph.addEdge(edge.from, edge.to, edge.relation);
-    }
-    final rig = frame.state.buildRigGraph();
-    for (final node in rig.nodes) {
-      graph.addValue(
-        'rig.${node.id}',
-        'rigNode',
-        <String, Object?>{
-          ...node.toJson(),
-          'transform': frame.state.nodeTransforms[node.id]?.toJson(),
-        },
-      );
-      if (node.parentId != null) {
-        graph.addEdge(
-          'rig.${node.parentId}',
-          'rig.${node.id}',
-          'parentOf',
-        );
-      }
-    }
-
-    final unparented = <String>[
-      for (final node in rig.nodes)
-        if (node.id != 'scene' &&
-            node.id != 'background' &&
-            node.parentId == null)
-          node.id,
-    ]..sort();
-    final wearableNodes = frame.state.layers
-        .where((layer) =>
-            layer.meta.containsKey('wearableOwner') ||
-            layer.meta.containsKey('attachmentKind'))
-        .map((layer) => layer.nodeId)
-        .toSet()
-        .toList(growable: false)
-      ..sort();
-    final constraintQuality = frame.state.metadata['rigConstraintQuality'] ??
-        const <String, Object>{};
-    final visualNoise =
-        frame.state.metadata['visualNoise'] ?? const <String, Object>{};
-
-    graph
-      ..addValue('rig.camera', 'clipCamera', frame.camera.toJson())
-      ..addValue(
-        'rig.preCameraClipping',
-        'preCameraClipping',
-        frame.state.metadata['preCameraClipping'],
-      )
-      ..addValue(
-        'rig.motion',
-        'motionSample',
-        frame.state.metadata['motionSample'],
-      )
-      ..addValue(
-        'rig.overscan',
-        'overscan',
-        frame.state.metadata['overscan'],
-      )
-      ..addValue(
-        'rig.anchors',
-        'rigAnchors',
-        frame.state.metadata['rigAnchors'],
-      )
-      ..addValue(
-        'rig.constraints',
-        'rigConstraints',
-        frame.state.metadata['rigConstraints'],
-      )
-      ..addValue(
-        'rig.constraintQuality',
-        'rigConstraintQuality',
-        constraintQuality,
-      )
-      ..addValue(
-        'rig.worldTransforms',
-        'rigWorldTransforms',
-        frame.state.metadata['rigWorldTransforms'],
-      )
-      ..addValue(
-        'rig.visualNoise',
-        'sceneVisualNoise',
-        visualNoise,
-      )
-      ..addValue('rig.hair', 'secondaryRig', frame.state.metadata['hairRig'])
-      ..addValue(
-        'rig.jewelry',
-        'constraintRig',
-        frame.state.metadata['jewelryRig'],
-      )
-      ..addValue(
-        'rig.companion',
-        'articulatedRig',
-        frame.state.metadata['companionRig'],
-      )
-      ..addValue(
-        'rig.shoulderObject',
-        'rigidAttachment',
-        frame.state.metadata['shoulderObjectRig'],
-      )
-      ..addValue('rig.back', 'secondaryRig', frame.state.metadata['backRig'])
-      ..addValue('rig.seams', 'rigSeams', frame.state.metadata['rigSeams'])
-      ..addValue('rig.arms', 'articulatedRig', frame.state.metadata['armRig'])
-      ..addValue('rig.rain', 'weatherField', frame.state.metadata['rainField'])
-      ..addValue(
-        'rig.worldSmoke',
-        'worldEmitter',
-        frame.state.metadata['worldSmokeEmitter'],
-      )
-      ..addValue(
-        'rig.cameraCache',
-        'cacheDiagnostic',
-        frame.state.metadata['cameraCache'],
-      )
-      ..addValue(
-        'rig.quality',
-        'rigQuality',
-        <String, Object>{
-          'unparentedNodes': unparented,
-          'wearableNodes': wearableNodes,
-          'actorOccupancy': frame.camera.actorOccupancy,
-          'safetyCoverage': frame.camera.safetyCoverage,
-          'cameraScale': frame.camera.scale,
-          'layerCount': frame.state.layers.length,
-          'constraintQuality': constraintQuality,
-          'visualNoise': visualNoise,
-        },
-      );
-    return AvatarLayout(
-      values: source.values,
-      landmarks: source.landmarks,
-      slots: source.slots,
-      graph: graph,
     );
   }
 
   void _validate(AvatarRequest request) {
     if (request.seed.isEmpty) {
       throw ArgumentError.value(
-          request.seed, 'seed', 'Seed must not be empty.');
+        request.seed,
+        'seed',
+        'Seed must not be empty.',
+      );
     }
     if (!AvatarRenderSettings.supportedSizes.contains(request.rendering.size)) {
       throw ArgumentError.value(
@@ -317,266 +116,5 @@ final class AvatarGenerator {
         'Must be between 0 and 3.',
       );
     }
-  }
-
-  AvatarMetrics _metrics(
-    IndexedImage image,
-    AvatarRenderState state,
-    AvatarPalette palette,
-    AvatarRenderSettings rendering,
-  ) {
-    final metricLayers = state.layers
-        .map((layer) =>
-            layer.copyWith(mask: _scaleMask(layer.mask, image.width)))
-        .toList(growable: false);
-    final scene = PixelMask(width: image.width, height: image.height);
-    for (var y = 0; y < image.height; y++) {
-      for (var x = 0; x < image.width; x++) {
-        if (image.get(x, y) != image.transparentIndex) scene.set(x, y);
-      }
-    }
-    final sceneComponents = scene.connectedComponents();
-    final sceneIsolated =
-        sceneComponents.where((component) => component.length == 1).length;
-
-    final actor = _unionLayers(metricLayers.where(_isActorLayer));
-    final effects = _unionLayers(metricLayers.where(_isSceneEffectLayer));
-    final face = _unionLayers(metricLayers.where(_isFaceLayer));
-    final actorComponents = actor.connectedComponents();
-    final actorIsolated =
-        actorComponents.where((component) => component.length == 1).length;
-    final actorBounds = actor.bounds;
-    final faceBounds = face.bounds;
-    final actorCanvasArea = actor.width * actor.height;
-
-    final visibility = analyzeRenderVisibility(metricLayers);
-    final eyeRatio = visibility.visibleRatio('eyes');
-    final mouthRatio = visibility.visibleRatio('mouth');
-    final eyeContrast = _contrastScore(
-      palette.colors[palette.role('skinBase')],
-      palette.colors[palette.role('irisBase')],
-    );
-    final scleraContrast = _contrastScore(
-      palette.colors[palette.role('skinBase')],
-      palette.colors[palette.role('sclera')],
-    );
-    final eyeScore =
-        eyeContrast > scleraContrast ? eyeContrast : scleraContrast;
-    final eyePixelContrast = _maskPixelContrast(
-      image,
-      _unionLayers(metricLayers.where((layer) => layer.nodeId == 'eyes')),
-      palette,
-    );
-    final mouthPixelContrast = _maskPixelContrast(
-      image,
-      _unionLayers(metricLayers.where((layer) => layer.nodeId == 'mouth')),
-      palette,
-    );
-    final finalEyeScore = ((eyeScore + eyePixelContrast) / 2).round();
-    final silhouetteScore = _contrastScore(
-      palette.colors[palette.role('outline')],
-      palette.colors[palette.role('bg')],
-    );
-    final densityScore =
-        _visualDensityScore(image, actor, actorComponents.length);
-    final faceScore = clampInt(
-      (((eyeRatio * .7 + mouthRatio * .3) * 100) * .65 +
-              finalEyeScore * .2 +
-              mouthPixelContrast * .15)
-          .round(),
-      0,
-      100,
-    );
-    return AvatarMetrics(
-      usedColorCount: _usedRenderedColorCount(image, palette),
-      occupiedPixelCount: scene.count,
-      isolatedPixelCount: sceneIsolated,
-      connectedComponentCount: sceneComponents.length,
-      actorOccupiedPixelCount: actor.count,
-      actorIsolatedPixelCount: actorIsolated,
-      actorConnectedComponentCount: actorComponents.length,
-      actorWidthOccupancy:
-          actorBounds == null ? 0 : actorBounds.width / actor.width,
-      actorHeightOccupancy:
-          actorBounds == null ? 0 : actorBounds.height / actor.height,
-      actorAreaOccupancy:
-          actorCanvasArea == 0 ? 0 : actor.count / actorCanvasArea,
-      faceHeightOccupancy:
-          faceBounds == null ? 0 : faceBounds.height / face.height,
-      sceneEffectPixelRatio:
-          actorCanvasArea == 0 ? 0 : effects.count / actorCanvasArea,
-      layerCount: state.layers.length,
-      visibility: visibility,
-      faceReadabilityScore: faceScore,
-      canvasWidth: image.width,
-      canvasHeight: image.height,
-      detailLevel: rendering.detailLevel.name,
-      eyeContrastScore: finalEyeScore,
-      silhouetteContrastScore: silhouetteScore,
-      visualDensityScore: densityScore,
-    );
-  }
-
-  PixelMask _unionLayers(Iterable<RenderLayer> layers) {
-    PixelMask? result;
-    for (final layer in layers) {
-      result = result == null ? layer.mask.clone() : result.union(layer.mask);
-    }
-    return result ?? PixelMask();
-  }
-
-  int _usedRenderedColorCount(IndexedImage image, AvatarPalette palette) {
-    final colors = <int>{};
-    for (final index in image.indices) {
-      if (index == image.transparentIndex || index >= palette.colors.length) {
-        continue;
-      }
-      colors.add(palette.colors[index]);
-    }
-    return colors.length;
-  }
-
-  PixelMask _scaleMask(PixelMask source, int size) {
-    if (source.width == size && source.height == size) return source.clone();
-    final output = PixelMask(width: size, height: size);
-    for (var y = 0; y < size; y++) {
-      final sy = ((y + .5) * source.height / size - .5).round().clamp(
-            0,
-            source.height - 1,
-          );
-      for (var x = 0; x < size; x++) {
-        final sx = ((x + .5) * source.width / size - .5).round().clamp(
-              0,
-              source.width - 1,
-            );
-        if (source.get(sx, sy) != 0) output.set(x, y);
-      }
-    }
-    return output;
-  }
-
-  int _visualDensityScore(
-    IndexedImage image,
-    PixelMask actor,
-    int componentCount,
-  ) {
-    if (actor.count == 0) return 0;
-    var transitions = 0;
-    for (var y = 0; y < actor.height; y++) {
-      for (var x = 0; x < actor.width; x++) {
-        if (actor.get(x, y) == 0) continue;
-        final color = image.get(x, y);
-        if (x + 1 < actor.width &&
-            actor.get(x + 1, y) != 0 &&
-            image.get(x + 1, y) != color) {
-          transitions++;
-        }
-        if (y + 1 < actor.height &&
-            actor.get(x, y + 1) != 0 &&
-            image.get(x, y + 1) != color) {
-          transitions++;
-        }
-      }
-    }
-    final transitionPressure = transitions * 100 ~/ (actor.count * 2);
-    return clampInt(
-      transitionPressure * 2 + (componentCount - 1) * 4,
-      0,
-      100,
-    );
-  }
-
-  bool _isActorLayer(RenderLayer layer) =>
-      !<RenderSlot>{
-        RenderSlot.background,
-        RenderSlot.auraBack,
-        RenderSlot.emotionEffects,
-        RenderSlot.foreground,
-      }.contains(layer.slot) &&
-      layer.nodeId != 'atmosphere' &&
-      layer.nodeId != 'foreground' &&
-      layer.nodeId != 'sceneSymbols';
-
-  bool _isSceneEffectLayer(RenderLayer layer) =>
-      <RenderSlot>{
-        RenderSlot.auraBack,
-        RenderSlot.emotionEffects,
-        RenderSlot.foreground,
-      }.contains(layer.slot) ||
-      layer.nodeId == 'atmosphere' ||
-      layer.nodeId == 'foreground' ||
-      layer.nodeId == 'sceneSymbols';
-
-  bool _isFaceLayer(RenderLayer layer) => <String>{
-        'head',
-        'face',
-        'eyes',
-        'brows',
-        'mouth',
-        'leftEar',
-        'rightEar',
-        'facialHair',
-        'hairFront',
-        'eyewear',
-        'faceMask',
-      }.contains(layer.nodeId);
-
-  int _contrastScore(int first, int second) {
-    double luma(int rgba) {
-      final red = (rgba >> 24) & 0xff;
-      final green = (rgba >> 16) & 0xff;
-      final blue = (rgba >> 8) & 0xff;
-      return red * .2126 + green * .7152 + blue * .0722;
-    }
-
-    return clampInt(
-      ((luma(first) - luma(second)).abs() / 1.8).round(),
-      0,
-      100,
-    );
-  }
-
-  int _maskPixelContrast(
-    IndexedImage image,
-    PixelMask mask,
-    AvatarPalette palette,
-  ) {
-    if (mask.count == 0) return 0;
-    double luma(int rgba) {
-      final red = (rgba >> 24) & 0xff;
-      final green = (rgba >> 16) & 0xff;
-      final blue = (rgba >> 8) & 0xff;
-      return red * .2126 + green * .7152 + blue * .0722;
-    }
-
-    var total = 0.0;
-    var samples = 0;
-    for (var y = 0; y < mask.height; y++) {
-      for (var x = 0; x < mask.width; x++) {
-        if (mask.get(x, y) == 0) continue;
-        final source = palette.colors[image.get(x, y)];
-        for (final (dx, dy) in const <(int, int)>[
-          (-1, 0),
-          (1, 0),
-          (0, -1),
-          (0, 1),
-        ]) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= mask.width || ny >= mask.height) {
-            continue;
-          }
-          if (mask.get(nx, ny) != 0) continue;
-          total +=
-              (luma(source) - luma(palette.colors[image.get(nx, ny)])).abs();
-          samples++;
-        }
-      }
-    }
-    return clampInt(
-      samples == 0 ? 0 : (total / samples / 1.8).round(),
-      0,
-      100,
-    );
   }
 }
