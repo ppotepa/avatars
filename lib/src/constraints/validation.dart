@@ -65,9 +65,16 @@ final class ConstraintEngine {
 
   List<ValidationEntry> get entries => List.unmodifiable(_entries);
 
+  void record(ValidationEntry entry) {
+    if (enabled) _entries.add(entry);
+  }
+
+  void recordAll(Iterable<ValidationEntry> entries) {
+    if (enabled) _entries.addAll(entries);
+  }
+
   void info(String id, String reason) {
-    if (!enabled) return;
-    _entries.add(ValidationEntry(
+    record(ValidationEntry(
       id: id,
       status: ValidationStatus.ok,
       severity: ValidationSeverity.info,
@@ -80,8 +87,7 @@ final class ConstraintEngine {
     String reason, {
     ValidationSeverity severity = ValidationSeverity.hard,
   }) {
-    if (!enabled) return;
-    _entries.add(ValidationEntry(
+    record(ValidationEntry(
       id: id,
       status: ValidationStatus.violation,
       severity: severity,
@@ -96,8 +102,8 @@ final class ConstraintEngine {
     String reason, {
     ValidationSeverity severity = ValidationSeverity.soft,
   }) {
-    if (enabled && before != after) {
-      _entries.add(ValidationEntry(
+    if (before != after) {
+      record(ValidationEntry(
         id: id,
         status: ValidationStatus.corrected,
         severity: severity,
