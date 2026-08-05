@@ -24,6 +24,7 @@ final class ClipCameraCache {
     required AvatarGenome genome,
     required AvatarRenderSettings rendering,
     required int sampleCount,
+    Iterable<int>? phases,
   }) =>
       stableFingerprint(<String, Object>{
         'generator': AvatarGenomeVersion.generator,
@@ -36,6 +37,7 @@ final class ClipCameraCache {
         'animateBackground': rendering.animateBackground,
         'reducedMotion': rendering.reducedMotion,
         'sampleCount': sampleCount,
+        if (phases != null) 'phases': phases.toList(growable: false),
       });
 
   ClipCamera? get(String key) {
