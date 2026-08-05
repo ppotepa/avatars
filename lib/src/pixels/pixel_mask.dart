@@ -5,56 +5,90 @@ import '../util/math_utils.dart';
 
 final class PixelMask {
   PixelMask({this.width = 48, this.height = 48, Uint8List? data})
-      : data = data == null ? Uint8List(width * height) : Uint8List.fromList(data) {
-    if (this.data.length != width * height) {
-      throw ArgumentError.value(this.data.length, 'data.length');
+      : _data =
+            data == null ? Uint8List(width * height) : Uint8List.fromList(data) {
+    if (_data.length != width * height) {
+      throw ArgumentError.value(_data.length, 'data.length');
     }
   }
 
   factory PixelMask.filled({int width = 48, int height = 48}) {
     final mask = PixelMask(width: width, height: height);
-    mask.data.fillRange(0, mask.data.length, 1);
+    mask._data.fillRange(0, mask._data.length, 1);
     return mask;
   }
 
   final int width;
   final int height;
-  final Uint8List data;
+  final Uint8List _data;
+  bool _frozen = false;
 
-  PixelMask clone() => PixelMask(width: width, height: height, data: data);
+  /// Mutable access is retained for working masks. Frozen snapshots expose a
+  /// defensive copy so public result layers cannot be modified through it.
+  Uint8List get data => _frozen ? Uint8List.fromList(_data) : _data;
+  bool get isFrozen => _frozen;
+
+  PixelMask freeze() {
+    _frozen = true;
+    return this;
+  }
+
+  Uint8List copyData() => Uint8List.fromList(_data);
+
+  PixelMask replaceData(Iterable<int> values) {
+    _ensureMutable();
+    final replacement = Uint8List.fromList(values.toList(growable: false));
+    if (replacement.length != _data.length) {
+      throw ArgumentError.value(replacement.length, 'values.length');
+    }
+    _data.setAll(0, replacement);
+    return this;
+  }
+
+  PixelMask clear() {
+    _ensureMutable();
+    _data.fillRange(0, _data.length, 0);
+    return this;
+  }
+
+  PixelMask clone() => PixelMask(width: width, height: height, data: _data);
 
   int index(int x, int y) => y * width + x;
   bool inBounds(int x, int y) => x >= 0 && x < width && y >= 0 && y < height;
-  int get(int x, int y) => inBounds(x, y) ? data[index(x, y)] : 0;
+  int get(int x, int y) => inBounds(x, y) ? _data[index(x, y)] : 0;
 
   PixelMask set(int x, int y, [bool value = true]) {
+    _ensureMutable();
     if (inBounds(x, y)) {
-      data[index(x, y)] = value ? 1 : 0;
+      _data[index(x, y)] = value ? 1 : 0;
     }
     return this;
   }
 
   PixelMask hLine(int x1, int x2, int y, [bool value = true]) {
+    _ensureMutable();
     if (y < 0 || y >= height) return this;
     final a = clampInt(x1 < x2 ? x1 : x2, 0, width - 1);
     final b = clampInt(x1 > x2 ? x1 : x2, 0, width - 1);
     for (var x = a; x <= b; x++) {
-      set(x, y, value);
+      _data[index(x, y)] = value ? 1 : 0;
     }
     return this;
   }
 
   PixelMask vLine(int x, int y1, int y2, [bool value = true]) {
+    _ensureMutable();
     final a = clampInt(y1 < y2 ? y1 : y2, 0, height - 1);
     final b = clampInt(y1 > y2 ? y1 : y2, 0, height - 1);
     for (var y = a; y <= b; y++) {
-      set(x, y, value);
+      if (inBounds(x, y)) _data[index(x, y)] = value ? 1 : 0;
     }
     return this;
   }
 
   PixelMask fillRect(int x, int y, int rectWidth, int rectHeight,
       [bool value = true]) {
+    _ensureMutable();
     for (var yy = y; yy < y + rectHeight; yy++) {
       hLine(x, x + rectWidth - 1, yy, value);
     }
@@ -63,6 +97,7 @@ final class PixelMask {
 
   PixelMask fillEllipse(num cx, num cy, num rx, num ry,
       [bool value = true]) {
+    _ensureMutable();
     final radiusX = rx < 0 ? 0.0 : rx.toDouble();
     final radiusY = ry < 0 ? 0.0 : ry.toDouble();
     if (radiusX == 0 && radiusY == 0) {
@@ -86,6 +121,7 @@ final class PixelMask {
     ({num x, num y}) c, [
     bool value = true,
   ]) {
+    _ensureMutable();
     final minY = [a.y, b.y, c.y].reduce((x, y) => x < y ? x : y).floor();
     final maxY = [a.y, b.y, c.y].reduce((x, y) => x > y ? x : y).ceil();
     final minX = [a.x, b.x, c.x].reduce((x, y) => x < y ? x : y).floor();
@@ -114,6 +150,7 @@ final class PixelMask {
 
   PixelMask line(int x0, int y0, int x1, int y1,
       {bool value = true, int thickness = 1}) {
+    _ensureMutable();
     var x = x0;
     var y = y0;
     final dx = (x1 - x).abs();
@@ -144,8 +181,8 @@ final class PixelMask {
   PixelMask union(PixelMask other) {
     _requireSameSize(other);
     final output = clone();
-    for (var i = 0; i < data.length; i++) {
-      output.data[i] = data[i] != 0 || other.data[i] != 0 ? 1 : 0;
+    for (var i = 0; i < _data.length; i++) {
+      output._data[i] = _data[i] != 0 || other._data[i] != 0 ? 1 : 0;
     }
     return output;
   }
@@ -153,8 +190,8 @@ final class PixelMask {
   PixelMask intersect(PixelMask other) {
     _requireSameSize(other);
     final output = clone();
-    for (var i = 0; i < data.length; i++) {
-      output.data[i] = data[i] != 0 && other.data[i] != 0 ? 1 : 0;
+    for (var i = 0; i < _data.length; i++) {
+      output._data[i] = _data[i] != 0 && other._data[i] != 0 ? 1 : 0;
     }
     return output;
   }
@@ -162,8 +199,8 @@ final class PixelMask {
   PixelMask subtract(PixelMask other) {
     _requireSameSize(other);
     final output = clone();
-    for (var i = 0; i < data.length; i++) {
-      output.data[i] = data[i] != 0 && other.data[i] == 0 ? 1 : 0;
+    for (var i = 0; i < _data.length; i++) {
+      output._data[i] = _data[i] != 0 && other._data[i] == 0 ? 1 : 0;
     }
     return output;
   }
@@ -236,7 +273,7 @@ final class PixelMask {
 
   int get count {
     var total = 0;
-    for (final value in data) {
+    for (final value in _data) {
       total += value;
     }
     return total;
@@ -261,13 +298,13 @@ final class PixelMask {
   }
 
   List<List<(int, int)>> connectedComponents() {
-    final seen = Uint8List(data.length);
+    final seen = Uint8List(_data.length);
     final output = <List<(int, int)>>[];
     const directions = <(int, int)>[(1, 0), (-1, 0), (0, 1), (0, -1)];
     for (var y = 0; y < height; y++) {
       for (var x = 0; x < width; x++) {
         final start = index(x, y);
-        if (data[start] == 0 || seen[start] != 0) continue;
+        if (_data[start] == 0 || seen[start] != 0) continue;
         final queue = <(int, int)>[(x, y)];
         final pixels = <(int, int)>[];
         seen[start] = 1;
@@ -279,7 +316,7 @@ final class PixelMask {
             final ny = cy + dy;
             if (!inBounds(nx, ny)) continue;
             final next = index(nx, ny);
-            if (data[next] != 0 && seen[next] == 0) {
+            if (_data[next] != 0 && seen[next] == 0) {
               seen[next] = 1;
               queue.add((nx, ny));
             }
@@ -309,6 +346,12 @@ final class PixelMask {
   void _requireSameSize(PixelMask other) {
     if (other.width != width || other.height != height) {
       throw ArgumentError('Mask dimensions differ.');
+    }
+  }
+
+  void _ensureMutable() {
+    if (_frozen) {
+      throw StateError('PixelMask is frozen. Clone it before modification.');
     }
   }
 }
