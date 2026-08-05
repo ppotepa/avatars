@@ -41,7 +41,7 @@ void main() {
         ),
       ),
       config: const ServerConfig(),
-      origins: const OriginPolicy(),
+      origins: OriginPolicy(),
     );
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     subscription = server.listen((request) {
