@@ -43,15 +43,28 @@ final class GeneratorDependencies {
   }) {
     final resolvedCatalog = catalog ?? ParameterCatalog.current;
     if (pipeline != null) {
+      final conflicting = <String>[
+        if (genomeService != null) 'genomeService',
+        if (layoutResolver != null) 'layoutResolver',
+        if (paletteFactory != null) 'paletteFactory',
+        if (compositor != null) 'compositor',
+        if (validator != null) 'validator',
+      ];
+      if (conflicting.isNotEmpty) {
+        throw ArgumentError(
+          'A complete pipeline cannot be combined with pipeline-owned '
+          'dependencies: ${conflicting.join(', ')}.',
+        );
+      }
       return GeneratorDependencies._(
         catalog: resolvedCatalog,
-        genomeService: genomeService ?? pipeline.genomeGenerator,
-        layoutResolver: layoutResolver ?? pipeline.layoutResolver,
-        paletteFactory: paletteFactory ?? pipeline.paletteFactory,
-        compositor: compositor ?? pipeline.compositor,
+        genomeService: pipeline.genomeGenerator,
+        layoutResolver: pipeline.layoutResolver,
+        paletteFactory: pipeline.paletteFactory,
+        compositor: pipeline.compositor,
         resolutionRenderer:
             resolutionRenderer ?? const ResolutionAwareRenderer(),
-        validator: validator ?? pipeline.validator,
+        validator: pipeline.validator,
         pipeline: pipeline,
       );
     }
