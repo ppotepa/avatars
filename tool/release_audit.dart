@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:avatar_genome/avatar_genome.dart';
 
-const _expectedPackageVersion = '2.0.0-rc.1';
-const _expectedGeneratorVersion = '4.7.0-dart.1';
+const _expectedPackageVersion = '2.0.0-rc.2';
+const _expectedGeneratorVersion = '4.7.0-dart.2';
 const _expectedCatalogVersion = '4.4';
 const _expectedRequestSchema = 1;
 const _expectedResultSchema = 2;
