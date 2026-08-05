@@ -46,8 +46,8 @@ void main() {
         AvatarRequest(seed: 'save-scale'),
       );
       final repository = AvatarSaveRepository(outputDirectory: root);
-      expect(
-        () => repository.save('avatar', response, scale: 0),
+      await expectLater(
+        repository.save('avatar', response, scale: 0),
         throwsArgumentError,
       );
     } finally {
