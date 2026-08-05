@@ -1,366 +1,223 @@
 # Avatar Genome
 
-A deterministic, reusable Dart library for generating layered pixel-art avatars
-at native 48×48, 64×64, 80×80 or 96×96 resolution from a textual **genome seed**.
+Deterministic, reusable Dart library for generating layered pixel-art avatars from a textual seed. Native output sizes are 48×48, 64×64, 80×80 and 96×96.
 
-The package preserves the complete Avatar Graph V4.1 catalog and adds an
-expressive V4.2 extension. The merged generator exposes **30 categories and 274
-fields** covering anatomy, hair, facial hair, clothing, armor, headwear,
-eyewear, masks, jewelry, props, cybernetics, expressions, halos, extended horns,
-creature traits, weather, cosmic layers, cinematic background events and
-stable deterministic animation.
+Current release candidate:
+
+- package: `2.0.0-rc.1`;
+- generator: `4.7.0-dart.1`;
+- catalog: `4.4`;
+- request/result schemas: `1` / `2`;
+- catalog size: 30 categories and 275 fields.
 
 The generator core has no Flutter, DOM, `dart:ui` or platform-channel dependency.
 
-## Local web editor
-
-This repository includes a dependency-free Dart HTTP server and a
-metadata-driven browser editor. Run:
-
-```powershell
-scripts/run_server.ps1
-```
-
-Then open `http://127.0.0.1:8080`. Linux/macOS users can run
-`./scripts/run_server.sh`.
-
-The frontend does not contain a handwritten list of avatar properties.
-`AvatarPropertyRegistry` exposes the fixed request/settings/rendering bindings
-and creates a generic binding for every one of the 274 merged catalog fields.
-The server publishes the grouped schema through `GET /api/catalog`, and the UI
-creates controls, presets, locks, automatic values and source labels from that
-schema. Expression, halo, weather, cosmic, flame and motion controls therefore
-appear in the server application automatically.
-
-Dart runtime mirrors are deliberately not used because they are unavailable in
-Flutter AOT. The metadata registry preserves reflection-like automatic discovery
-while remaining compatible with Android, iOS and desktop builds.
-
-The editor persists `AvatarRequest`, not only the resolved genome. It supports
-live SVG preview, request/result JSON, PNG/SVG downloads, category rerolls,
-parameter/category locks, whole/category presets, resolution-aware rendering,
-animation sprite-sheet export and optional server-side save packages under
-`output/avatars`.
-
-See:
-
-- [Editor server](docs/EDITOR_SERVER.md)
-- [Binding architecture](docs/BINDING_ARCHITECTURE.md)
-- [Expressive V4.2 features](docs/V42_FEATURES.md)
-
-## Package entry points
+## Entry points
 
 ```dart
 import 'package:avatar_genome/avatar_genome.dart';
 ```
 
-Use this entry point for the platform-independent generator, indexed image
-buffers, JSON, SVG and RGBA output.
+Core generator, request/result models, catalog, validation and platform-independent codecs.
+
+```dart
+import 'package:avatar_genome/avatar_genome_advanced.dart';
+```
+
+Advanced rendering, masks, rig, camera and custom renderer contracts.
+
+```dart
+import 'package:avatar_genome/avatar_genome_editor.dart';
+```
+
+Metadata-driven editor bindings and editor service.
 
 ```dart
 import 'package:avatar_genome/avatar_genome_io.dart';
 ```
 
-Use this entry point on Android, iOS and desktop when PNG and sprite-sheet
-encoding are required. It adds the small `dart:io` adapter without coupling the
-generator core to it.
+PNG and sprite-sheet encoding through `dart:io`.
+
+```dart
+import 'package:avatar_genome/avatar_genome_server.dart';
+```
+
+Local-server configuration, origin policy and bounded batch controller.
 
 ## Generate an avatar
 
 ```dart
 final generator = AvatarGenerator();
-
 final result = generator.generate(
   const AvatarRequest(
     seed: 'player-42',
     settings: GenomeSettings(
-      presentation: AvatarPresentation.neutral,
       fantasy: FantasyLevel.moderate,
     ),
     rendering: AvatarRenderSettings(
       size: 96,
       detailLevel: AvatarDetailLevel.rich,
-      lightingDirection: AvatarLightingDirection.upperLeft,
       shadingStrength: 3,
     ),
   ),
 );
 
 print(result.imageHash);
-print(result.genome.values['v4.expression']);
 print(result.validation.isValid);
 ```
 
-The same request produces the same genome and indexed pixel buffer on every
-supported Dart platform.
+The same request and generator version produce the same genome and indexed image on every supported Dart platform.
 
-## Expressive V4.2 example
+## Runtime-owned maps
+
+Use `AvatarRequest.frozen` when request maps come from mutable application state:
 
 ```dart
-const request = AvatarRequest(
-  seed: 'storm-laughing-mage',
-  settings: GenomeSettings(
-    fantasy: FantasyLevel.strong,
-    symmetry: false,
-  ),
-  overrides: <String, Object>{
-    'v4.expression': 'laugh',
-    'v4.faceAnimation': 'laugh',
-    'v4.mouthMotionStyle': 'laughLoop',
-    'v4.halo': 'runicHalo',
-    'fantasy.hornStyle': 'crystalHorns',
-    'v4.weather': 'heavyRain',
-    'v4.backgroundEvent': 'lightningBranch',
-    'v4.cosmicLayer': 'starsDense',
-    'v4.backFlames': 'blueFire',
-  },
+final request = AvatarRequest.frozen(
+  seed: 'custom-user',
+  overrides: formValues,
+  lockedParameters: lockedValues,
+  lockedCategories: categorySnapshots,
+  categoryNonces: rerollCounters,
 );
+```
 
+`AvatarRequest.fromJson`, `copyWith` and all public generator boundaries also create deeply frozen snapshots. Constant requests remain convenient when all collection arguments are constant literals.
+
+## Overrides, locks and rerolls
+
+```dart
+var request = const AvatarRequest(seed: 'first-seed');
+final generator = AvatarGenerator();
+final locks = AvatarLockService();
+final presets = AvatarPresetService();
+
+final original = generator.generate(request);
+request = locks.lockCategory(request, original.genome, 'hair');
+request = request.copyWith(seed: 'second-seed');
+request = presets.rerollCategory(request, 'atmosphereV42');
+
+final changed = generator.generate(request);
+```
+
+Unknown field IDs, categories, nonce keys and invalid values fail at the public API boundary.
+
+## Animation
+
+```dart
 final animation = AvatarGenerator().generateAnimation(
-  request,
+  const AvatarRequest(
+    seed: 'storm-mage',
+    overrides: <String, Object>{
+      'v4.faceAnimation': 'laugh',
+      'v4.weather': 'heavyRain',
+      'v4.backgroundEvent': 'lightningBranch',
+    },
+  ),
   frameCount: 24,
   frameDuration: const Duration(milliseconds: 100),
 );
 ```
 
-The face, weather and event layers animate while the anatomical sprite remains
-anchored inside a stable frame.
+Direct requests for phases above 15 resolve to the matching animation frame. Reduced-motion phase zero uses a single-frame camera sampling path.
+
+## Custom renderers
+
+```dart
+final generator = AvatarGenerator(
+  parts: <AvatarPartRenderer>[
+    ...RigClipPipeline.defaultParts,
+    const MyBadgeRenderer(),
+  ],
+);
+```
+
+Passing a complete `RigClipPipeline` together with pipeline-owned dependencies or `parts` is rejected instead of silently creating an inconsistent dependency graph.
 
 ## Result contract
 
-`AvatarResult` contains:
+`AvatarResult` contains the resolved genome, layout and graph snapshot, palette, indexed image, frozen render layers, validation report, quality metrics, effective adjustments and a deterministic 48-bit image hash.
 
-- `AvatarGenome` — all resolved parameter values and their sources;
-- `AvatarLayout` — derived landmarks, attachment slots and graph snapshot;
-- `AvatarPalette` — a semantic 32-color palette;
-- `IndexedImage` — a compact 48×48, 64×64, 80×80 or 96×96 buffer of palette indices;
-- render layers and masks metadata;
-- guard corrections and violations;
-- quality metrics;
-- a deterministic 48-bit image hash represented by 12 hexadecimal characters.
+Generated images, masks, palettes, metadata and animation frame lists are exposed as independent snapshots. Caller mutations cannot invalidate an existing result hash.
 
-The result-level hash covers canvas dimensions, transparency, the complete RGBA
-palette and every indexed pixel. It therefore distinguishes color-only variants
-as well as geometry and resolution changes. Expanding the hash from 32 to 48
-bits increases the identifier space and reduces collision risk; it does not
-change how genomes or avatar variations are generated.
+## Local web editor
 
-The classic indexed image stores 2304 bytes plus the palette. Larger render
-profiles retain the same genome and 32-color semantic palette while adding
-resolution-aware edge lighting, material highlights and ordered dithering.
-
-## Manual parameters
-
-```dart
-const request = AvatarRequest(
-  seed: 'customized-user',
-  overrides: <String, Object>{
-    'eyes.shape': 'almond',
-    'eyes.width': 4,
-    'ears.shape': 'elfMedium',
-    'hair.preset': 'undercut',
-    'v4.eyewear': 'roundGlasses',
-    'v4.armor': 'leatherArmor',
-    'v4.expression': 'confident',
-    'v4.halo': 'thinHalo',
-  },
-);
-```
-
-Values are checked against `ParameterCatalog.v41`, which now represents the
-merged V4.1 + V4.2 catalog. Invalid values fail immediately instead of silently
-producing an undefined avatar.
-
-## Presets
-
-```dart
-final presets = AvatarPresetService();
-var request = const AvatarRequest(seed: 'preset-user');
-
-request = presets.applyWholePreset(request, 'cyberpunk');
-request = presets.applyCategoryPreset(request, 'eyes', 'robotic');
-request = presets.applyCategoryPreset(request, 'expressionV42', 'happy');
-request = presets.applyCategoryPreset(request, 'atmosphereV42', 'storm');
-
-final result = AvatarGenerator().generate(request);
-```
-
-The preset service only modifies immutable requests. It does not know about
-Flutter widgets or editor state.
-
-## Locks and category rerolls
-
-```dart
-final generator = AvatarGenerator();
-final locks = AvatarLockService();
-final presets = AvatarPresetService();
-
-var request = const AvatarRequest(seed: 'first-seed');
-final original = generator.generate(request);
-
-request = locks.lockCategory(request, original.genome, 'hair');
-request = request.copyWith(seed: 'second-seed');
-
-// Hair stays fixed while all unlocked parameters use the new seed.
-final changed = generator.generate(request);
-
-// Reroll only the atmosphere without replacing the global seed.
-request = presets.rerollCategory(request, 'atmosphereV42');
-```
-
-Each field uses a namespaced random stream derived from the root seed, category
-nonce and field identifier. Adding a new parameter does not shift every later
-random choice.
-
-## Animation
-
-Animation is represented as deterministic render phases, not as GIF data inside
-the core. V4.1 channels include blinking, eye movement, idle motion, smoke, hair
-wind, jewelry swing, glow/aura pulses and particles. V4.2 adds talking and
-laughing mouths, coordinated expressions, gaze and brow motion, breathing,
-halos, weather, flames, cosmic motion and occasional cinematic events.
-
-```dart
-final animation = AvatarGenerator().generateAnimation(
-  const AvatarRequest(
-    seed: 'smoker',
-    overrides: <String, Object>{
-      'v4.mouthProp': 'cigarette',
-      'v4.effect': 'smoke',
-      'v4.animation': 'smoke',
-      'v4.expression': 'smirkLeft',
-    },
-  ),
-  frameCount: 8,
-  frameDuration: const Duration(milliseconds: 120),
-);
-```
-
-For runtime playback, convert frames to Flutter images or a texture atlas. For
-export, `AvatarSpriteSheetCodec` produces a PNG sprite sheet and metadata.
-Whole-sprite vertical translation is deliberately disabled, so animated frames
-retain stable bounds.
-
-## Flutter integration
-
-Keep Flutter code outside the generator package. One possible adapter:
-
-```dart
-import 'dart:ui' as ui;
-import 'package:avatar_genome/avatar_genome.dart';
-
-Future<ui.Image> toFlutterImage(AvatarResult result) async {
-  final rgba = const AvatarRgbaCodec().encode(result);
-  final descriptor = ui.ImageDescriptor.raw(
-    await ui.ImmutableBuffer.fromUint8List(rgba),
-    width: result.image.width,
-    height: result.image.height,
-    pixelFormat: ui.PixelFormat.rgba8888,
-  );
-  final codec = await descriptor.instantiateCodec();
-  return (await codec.getNextFrame()).image;
-}
-```
-
-Display it through `RawImage` with `FilterQuality.none`. Do not create one widget
-per pixel.
-
-## Export
-
-```dart
-import 'dart:io';
-import 'package:avatar_genome/avatar_genome_io.dart';
-
-final result = AvatarGenerator().generate(
-  const AvatarRequest(seed: 'export-user'),
-);
-
-await File('avatar.png').writeAsBytes(
-  const AvatarPngCodec(scale: 8).encode(result),
-);
-await File('avatar.svg').writeAsString(
-  const AvatarSvgCodec(scale: 8).encode(result),
-);
-await File('avatar.json').writeAsString(
-  const AvatarJsonCodec().encode(result),
-);
-```
-
-Run the included command-line tool:
+Start the server:
 
 ```bash
-dart run tool/generate.dart --seed player-42 --render-size 96 --detail rich --scale 1 --frames 16
+dart run bin/avatar_editor_server.dart
+```
+
+Then open `http://127.0.0.1:8080`.
+
+Security defaults:
+
+- loopback bind only;
+- remote bind requires `--allow-remote`;
+- no wildcard CORS;
+- cross-origin requests require an explicit `--allow-origin`;
+- `/api/save` is disabled unless `--enable-save` and a minimum 16-character `--save-token` are supplied;
+- batch rendering is limited by avatar count, RGBA memory and worker budgets.
+
+Example:
+
+```bash
+dart run bin/avatar_editor_server.dart \
+  --enable-save \
+  --save-token local-development-token
 ```
 
 ## Architecture
 
-The dependency direction is deliberately one-way:
-
 ```text
 AvatarRequest
     ↓
-GenomeGenerator
+AvatarRequestValidator
     ↓
-AvatarGenome
+CachedGenomeGenerator → GenomeGenerator
     ↓
-LayoutResolver / dependency graph
+CachedLayoutResolver → LayoutResolver
     ↓
-AvatarPartRenderer implementations
+AvatarPartRenderer composition
     ↓
-AvatarCompositor
+RigClipPipeline / camera
     ↓
-ResolutionAwareRenderer
+AvatarResultAssembler
+    ├─ RigLayoutSnapshotBuilder
+    └─ AvatarMetricsAnalyzer
     ↓
-IndexedImage
-    ↓
-Validator and optional codecs
+immutable AvatarResult snapshot
 ```
 
-SOLID boundaries:
+The V4.2 atmosphere is split into scenic, cosmic, ambient, flame, weather and event renderers. Result assembly, metrics and rig graph snapshots are separate services. Caches are bounded and can be disabled for tests with `cacheCapacity: 0`.
 
-- **Single responsibility:** randomization, catalog, layout, individual part renderers, composition, validation and encoding are separate modules.
-- **Open/closed:** add an `AvatarPartRenderer`, `AvatarCodec`, `PaletteFactory`, `GenomeGenerator` or `AvatarValidator` without changing the public request/result contract.
-- **Liskov substitution:** the generator depends on interfaces, not concrete renderers.
-- **Interface segregation:** small interfaces expose only one operation.
-- **Dependency inversion:** `AvatarGenerator` receives all major strategies through constructor injection.
+## Local release verification
 
-See [architecture](docs/ARCHITECTURE.md),
-[migration](docs/MIGRATION_FROM_HTML.md), [validation](docs/VALIDATION.md) and
-[V4.2 features](docs/V42_FEATURES.md).
-
-## Tests and benchmarks
+No CI pipeline is required for the release process. Run locally:
 
 ```bash
 dart pub get
-python3 tool/static_audit.py
-dart analyze
-dart test
+dart format --output=none --set-exit-if-changed lib test bin tool benchmark
+dart analyze --fatal-infos
+dart test --reporter expanded
+dart run tool/release_audit.dart
 dart run benchmark/avatar_benchmark.dart
 ```
 
-The test suite covers catalog completeness, all selectable options and numeric
-endpoints, deterministic output, locks, presets, server bindings, JSON
-round-trips, codecs, expressions, weather, cinematic events, stable animation
-framing and a 256-seed invariant sample. GitHub Actions runs the structural
-audit, formatter, analyzer and tests for every push to `main`.
+See `docs/RELEASE_CHECKLIST.md`, `PROJECT_MANIFEST.md` and `CHANGELOG.md`.
 
-## Compatibility promise
+## Compatibility
 
-Persist all of these values:
+Persist the request JSON together with these identifiers:
 
 ```json
 {
-  "schemaVersion": 1,
-  "generatorVersion": "4.2.0-dart.2",
-  "seed": "player-42",
-  "settings": {},
-  "overrides": {},
-  "lockedParameters": {},
-  "lockedCategories": {},
-  "categoryNonces": {}
+  "requestSchema": 1,
+  "resultSchema": 2,
+  "generatorVersion": "4.7.0-dart.1",
+  "catalogVersion": "4.4",
+  "seed": "player-42"
 }
 ```
 
-A future generator version may intentionally produce different pixels. Keep
-`generatorVersion` alongside the genome when long-term visual identity is
-required.
+A future generator version may intentionally produce different pixels. Keep the generator version alongside persisted identities that require long-term visual stability.
