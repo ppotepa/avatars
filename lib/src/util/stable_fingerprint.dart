@@ -4,9 +4,12 @@ String stableFingerprint(Object? value) => jsonEncode(_canonicalize(value));
 
 Object? _canonicalize(Object? value) {
   if (value is Map) {
-    final keys = value.keys.map((key) => key.toString()).toList()..sort();
+    final entries = <MapEntry<String, Object?>>[
+      for (final entry in value.entries)
+        MapEntry(entry.key.toString(), entry.value),
+    ]..sort((left, right) => left.key.compareTo(right.key));
     return <String, Object?>{
-      for (final key in keys) key: _canonicalize(value[key]),
+      for (final entry in entries) entry.key: _canonicalize(entry.value),
     };
   }
   if (value is Iterable && value is! String) {
