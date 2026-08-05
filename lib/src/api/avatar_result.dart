@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../constraints/validation.dart';
 import '../genome/avatar_genome_model.dart';
 import '../geometry/avatar_layout.dart';
@@ -141,7 +143,61 @@ final class EffectiveAdjustment {
 }
 
 final class AvatarResult {
-  AvatarResult({
+  factory AvatarResult({
+    required AvatarGenome genome,
+    required AvatarLayout layout,
+    required AvatarPalette palette,
+    required IndexedImage image,
+    required List<RenderLayer> layers,
+    required ValidationReport validation,
+    required AvatarMetrics metrics,
+    required String imageHash,
+    List<EffectiveAdjustment> effectiveAdjustments =
+        const <EffectiveAdjustment>[],
+  }) {
+    final imageSnapshot = image.clone();
+    final paletteSnapshot = AvatarPalette(
+      id: palette.id,
+      colors: Uint32List.fromList(palette.colors),
+      roles: Map<String, int>.unmodifiable(palette.roles),
+    );
+    final layerSnapshots = List<RenderLayer>.unmodifiable(<RenderLayer>[
+      for (final layer in layers)
+        RenderLayer(
+          id: layer.id,
+          z: layer.z,
+          mask: layer.mask.clone(),
+          colorIndex: layer.colorIndex,
+          nodeId: layer.nodeId,
+          slot: layer.slot,
+          localOrder: layer.localOrder,
+          meta: Map<String, Object?>.unmodifiable(layer.meta),
+        ),
+    ]);
+    final calculatedHash =
+        imageSnapshot.hashWithPalette(paletteSnapshot.colors);
+    if (imageHash != calculatedHash) {
+      throw ArgumentError.value(
+        imageHash,
+        'imageHash',
+        'Image hash does not match the supplied image and palette.',
+      );
+    }
+    return AvatarResult._(
+      genome: genome,
+      layout: layout,
+      palette: paletteSnapshot,
+      image: imageSnapshot,
+      layers: layerSnapshots,
+      validation: validation,
+      metrics: metrics,
+      imageHash: calculatedHash,
+      effectiveAdjustments:
+          List<EffectiveAdjustment>.unmodifiable(effectiveAdjustments),
+    );
+  }
+
+  AvatarResult._({
     required this.genome,
     required this.layout,
     required this.palette,
@@ -150,10 +206,11 @@ final class AvatarResult {
     required this.validation,
     required AvatarMetrics metrics,
     required this.imageHash,
-    this.effectiveAdjustments = const <EffectiveAdjustment>[],
+    required this.effectiveAdjustments,
   })  : _metrics = metrics,
-        _nativeGeometryDiagnostics =
-            ResolutionAwareRenderer.diagnosticsFor(image, palette);
+        _nativeGeometryDiagnostics = Map<String, Object>.unmodifiable(
+          ResolutionAwareRenderer.diagnosticsFor(image, palette),
+        );
 
   final AvatarGenome genome;
   final AvatarLayout layout;
@@ -199,11 +256,11 @@ final class AvatarResult {
 }
 
 final class AvatarAnimation {
-  const AvatarAnimation({
-    required this.frames,
+  AvatarAnimation({
+    required List<AvatarResult> frames,
     required this.frameDuration,
     this.loop = true,
-  });
+  }) : frames = List<AvatarResult>.unmodifiable(frames);
 
   final List<AvatarResult> frames;
   final Duration frameDuration;
