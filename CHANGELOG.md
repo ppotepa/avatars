@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.0.0-rc.2 — 2026-08-05
+
+### Release hardening
+
+- Made every `AvatarRequest` constructor deeply immutable and removed constant
+  request construction from executable sources.
+- Made palettes, layouts, graphs and validation reports own immutable data.
+- Made `AvatarResult` isolate every mutable dependency from callers.
+- Added canonical fingerprints and hit/miss metrics to result, genome, layout and
+  camera caches, plus one public cache-clearing operation.
+- Moved exact phase handling into `RigClipPipeline.renderSingle`; high phases no
+  longer allocate every preceding animation frame or use modulo 16.
+- Removed the duplicate visual-correction pass and its obsolete exact-phase
+  extension.
+- Replaced the legacy HTTP monolith with a focused editor application, reusable
+  request handler, bounded batch controller and atomic save repository.
+- Removed wildcard CORS and internal exception text from HTTP responses.
+- Added bounded concurrent request handling, allowed-origin tests, token-gated
+  save tests and real HTTP integration coverage on an ephemeral port.
+- Separated property registry/binder exports into `avatar_genome_editor.dart`.
+- Added release-audit source scanning for stale request constructors, old rig
+  generator names, modulo phase truncation and server ownership regressions.
+- Updated the deterministic generator contract to `4.7.0-dart.2`.
+
 ## 2.0.0-rc.1 — 2026-08-05
 
 ### Correctness and API contracts
@@ -46,7 +70,7 @@
   30 categories and 275 fields.
 - Added release-contract tests, benchmark scenarios and a local release audit.
 
-The detailed development history before this release candidate remains available
+The detailed development history before these release candidates remains available
 in [`docs/CHANGELOG_PRE_2_0.md`](docs/CHANGELOG_PRE_2_0.md).
 
 ## 1.1.0
