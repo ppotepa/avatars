@@ -29,7 +29,8 @@ final class ValidationEntry {
 }
 
 final class ValidationReport {
-  const ValidationReport(this.entries);
+  ValidationReport(Iterable<ValidationEntry> entries)
+      : entries = List<ValidationEntry>.unmodifiable(entries);
 
   final List<ValidationEntry> entries;
 
@@ -115,5 +116,5 @@ final class ConstraintEngine {
     return after;
   }
 
-  ValidationReport report() => ValidationReport(List.unmodifiable(_entries));
+  ValidationReport report() => ValidationReport(_entries);
 }
