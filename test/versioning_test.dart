@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('request and result expose independent schema versions', () {
-    const request = AvatarRequest(seed: 'version-contract');
+    final request = AvatarRequest(seed: 'version-contract');
     final result = AvatarGenerator().generate(request);
 
     expect(request.toJson()['schemaVersion'], AvatarGenomeVersion.requestSchema);
@@ -23,9 +23,9 @@ void main() {
   });
 
   test('render settings round-trip without changing the request schema', () {
-    const request = AvatarRequest(
+    final request = AvatarRequest(
       seed: 'render-settings',
-      rendering: AvatarRenderSettings(
+      rendering: const AvatarRenderSettings(
         size: 80,
         detailLevel: AvatarDetailLevel.rich,
         lightingDirection: AvatarLightingDirection.upperRight,
