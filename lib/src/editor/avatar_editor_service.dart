@@ -6,6 +6,7 @@ import '../api/avatar_result.dart';
 import '../api/avatar_version.dart';
 import '../catalog/parameter_catalog.dart';
 import '../serialization/avatar_codec.dart';
+import '../util/deep_freeze.dart';
 import 'avatar_property_binding.dart';
 import 'avatar_request_validation.dart';
 
@@ -35,12 +36,12 @@ final class AvatarEditorAction {
 }
 
 final class AvatarEditorResponse {
-  const AvatarEditorResponse({
+  AvatarEditorResponse({
     required this.request,
     required this.result,
     required this.svg,
-    required this.propertyState,
-  });
+    required Map<String, Object?> propertyState,
+  }) : propertyState = deepFreezeStringMap(propertyState);
 
   final AvatarRequest request;
   final AvatarResult result;
@@ -69,9 +70,38 @@ final class AvatarEditorService {
     AvatarPresetService? presetService,
     AvatarLockService? lockService,
   }) {
-    final resolvedCatalog = catalog ?? ParameterCatalog.current;
+    final resolvedCatalog = catalog ??
+        generator?.catalog ??
+        registry?.catalog ??
+        binder?.registry.catalog ??
+        requestValidator?.catalog ??
+        presetService?.catalog ??
+        lockService?.catalog ??
+        ParameterCatalog.current;
+
+    void requireCatalog(ParameterCatalog? candidate, String name) {
+      if (candidate != null && !identical(candidate, resolvedCatalog)) {
+        throw ArgumentError(
+          '$name uses a different ParameterCatalog than the editor service.',
+        );
+      }
+    }
+
+    requireCatalog(generator?.catalog, 'generator');
+    requireCatalog(registry?.catalog, 'registry');
+    requireCatalog(binder?.registry.catalog, 'binder');
+    requireCatalog(requestValidator?.catalog, 'requestValidator');
+    requireCatalog(presetService?.catalog, 'presetService');
+    requireCatalog(lockService?.catalog, 'lockService');
+
     final resolvedRegistry =
-        registry ?? AvatarPropertyRegistry(catalog: resolvedCatalog);
+        registry ?? binder?.registry ?? AvatarPropertyRegistry(catalog: resolvedCatalog);
+    if (binder != null && !identical(binder.registry, resolvedRegistry)) {
+      throw ArgumentError(
+        'binder and registry must reference the same AvatarPropertyRegistry.',
+      );
+    }
+
     return AvatarEditorService._(
       catalog: resolvedCatalog,
       generator: generator ?? AvatarGenerator(catalog: resolvedCatalog),
@@ -124,6 +154,9 @@ final class AvatarEditorService {
     List<AvatarEditorAction> actions = const <AvatarEditorAction>[],
     int svgScale = 8,
   }) {
+    if (svgScale < 1 || svgScale > 64) {
+      throw ArgumentError.value(svgScale, 'svgScale', 'Must be between 1 and 64.');
+    }
     final resolved = _applyActions(initialRequest, actions);
     final result = resolved.current ?? generator.generate(resolved.request);
     final svg = AvatarSvgCodec(scale: svgScale).encode(result);
