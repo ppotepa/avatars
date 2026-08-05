@@ -6,6 +6,7 @@ import '../constraints/avatar_validator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
+import '../rendering/camera_sampling_policy.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
@@ -27,6 +28,7 @@ final class AvatarGenerator {
     RigClipPipeline? pipeline,
     List<AvatarPartRenderer>? parts,
     AvatarRequestValidator? requestValidator,
+    this.cameraSamplingPolicy = const CameraSamplingPolicy(),
     this.cacheCapacity = 32,
   })  : assert(cacheCapacity >= 0),
         _delegate = rig.AvatarGenerator(
@@ -45,6 +47,7 @@ final class AvatarGenerator {
 
   final rig.AvatarGenerator _delegate;
   final AvatarRequestValidator requestValidator;
+  final CameraSamplingPolicy cameraSamplingPolicy;
   final int cacheCapacity;
   final Map<String, AvatarResult> _resultCache = <String, AvatarResult>{};
 
@@ -62,23 +65,36 @@ final class AvatarGenerator {
   AvatarResult generate(AvatarRequest request) {
     final snapshot = _snapshot(request);
     requestValidator.validate(snapshot);
-    final key = _cacheKey(snapshot);
+    final plan = cameraSamplingPolicy.plan(snapshot);
+    final key = _cacheKey(snapshot, plan);
     final cached = _resultCache.remove(key);
     if (cached != null) {
       _resultCache[key] = cached;
       return cached;
     }
 
-    final result = snapshot.phase < 16
-        ? _delegate.generate(snapshot)
-        : _delegate
-            .generateAnimation(
-              snapshot,
-              frameCount: snapshot.phase + 1,
-              frameDuration: Duration.zero,
-              loop: false,
-            )
-            .frames[snapshot.phase];
+    late final AvatarResult result;
+    if (plan.isSingleFrame && snapshot.phase == 0) {
+      result = _delegate
+          .generateAnimation(
+            snapshot,
+            frameCount: 1,
+            frameDuration: Duration.zero,
+            loop: false,
+          )
+          .frames.single;
+    } else if (snapshot.phase >= 16) {
+      result = _delegate
+          .generateAnimation(
+            snapshot,
+            frameCount: snapshot.phase + 1,
+            frameDuration: Duration.zero,
+            loop: false,
+          )
+          .frames[snapshot.phase];
+    } else {
+      result = _delegate.generate(snapshot);
+    }
     _store(key, result);
     return result;
   }
@@ -104,8 +120,11 @@ final class AvatarGenerator {
   AvatarRequest _snapshot(AvatarRequest request) =>
       AvatarRequest.fromJson(request.toJson());
 
-  String _cacheKey(AvatarRequest request) => jsonEncode(<String, Object?>{
+  String _cacheKey(AvatarRequest request, CameraSamplePlan plan) =>
+      jsonEncode(<String, Object?>{
         'generatorVersion': AvatarGenomeVersion.generator,
+        'cameraPolicyVersion': plan.policyVersion,
+        'cameraPhases': plan.phases,
         'request': request.toJson(),
       });
 
