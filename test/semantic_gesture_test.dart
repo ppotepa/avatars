@@ -5,7 +5,7 @@ void main() {
   final generator = AvatarGenerator();
 
   test('laugh creates articulated forearms and a semantic hand shape', () {
-    final result = generator.generate(const AvatarRequest(
+    final result = generator.generate(AvatarRequest(
       seed: 'gesture-laugh',
       overrides: <String, Object>{
         'v4.faceAnimation': 'laugh',
@@ -29,7 +29,7 @@ void main() {
 
   test('angry animation records boxer or fist gesture events', () {
     final animation = generator.generateAnimation(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'gesture-angry',
         overrides: <String, Object>{
           'v4.faceAnimation': 'angry',
