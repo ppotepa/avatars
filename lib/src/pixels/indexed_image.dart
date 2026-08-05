@@ -5,8 +5,8 @@ import 'pixel_mask.dart';
 
 final class IndexedImage {
   IndexedImage({this.width = 48, this.height = 48, this.transparentIndex = 255})
-      : indices = Uint8List(width * height) {
-    indices.fillRange(0, indices.length, transparentIndex);
+      : _indices = Uint8List(width * height) {
+    _indices.fillRange(0, _indices.length, transparentIndex);
   }
 
   IndexedImage.fromIndices({
@@ -14,39 +14,42 @@ final class IndexedImage {
     required this.height,
     required Uint8List indices,
     this.transparentIndex = 255,
-  }) : indices = Uint8List.fromList(indices) {
-    if (this.indices.length != width * height) {
-      throw ArgumentError.value(this.indices.length, 'indices.length');
+  }) : _indices = Uint8List.fromList(indices) {
+    if (_indices.length != width * height) {
+      throw ArgumentError.value(_indices.length, 'indices.length');
     }
   }
 
   final int width;
   final int height;
   final int transparentIndex;
-  final Uint8List indices;
+  final Uint8List _indices;
+
+  /// Returns an independent copy so callers cannot mutate image storage.
+  Uint8List get indices => Uint8List.fromList(_indices);
 
   IndexedImage clone() => IndexedImage.fromIndices(
         width: width,
         height: height,
-        indices: indices,
+        indices: _indices,
         transparentIndex: transparentIndex,
       );
 
   int get(int x, int y) =>
       x >= 0 && x < width && y >= 0 && y < height
-          ? indices[y * width + x]
+          ? _indices[y * width + x]
           : transparentIndex;
 
   Map<String, Object> toJson() => <String, Object>{
         'width': width,
         'height': height,
         'transparentIndex': transparentIndex,
-        'indices': indices.toList(growable: false),
+        'indices': _indices.toList(growable: false),
       };
 
   void setPixel(int x, int y, int paletteIndex) {
     if (x >= 0 && x < width && y >= 0 && y < height) {
-      indices[y * width + x] = paletteIndex;
+      _indices[y * width + x] = paletteIndex;
     }
   }
 
@@ -54,13 +57,13 @@ final class IndexedImage {
     if (mask.width != width || mask.height != height) {
       throw ArgumentError('Mask dimensions differ from image dimensions.');
     }
-    for (var i = 0; i < indices.length; i++) {
-      if (mask.data[i] != 0) indices[i] = paletteIndex;
+    for (var i = 0; i < _indices.length; i++) {
+      if (mask.data[i] != 0) _indices[i] = paletteIndex;
     }
   }
 
   /// A deterministic 48-bit hash of the indexed buffer and its dimensions.
-  String get hash => hash48(indices, prefix: _hashPrefix());
+  String get hash => hash48(_indices, prefix: _hashPrefix());
 
   /// A deterministic 48-bit hash of the complete rendered appearance.
   ///
@@ -68,7 +71,7 @@ final class IndexedImage {
   /// be rendered through different palettes. The result-level image hash uses
   /// this method so color-only avatar variants receive distinct identifiers.
   String hashWithPalette(Iterable<int> rgbaColors) =>
-      hash48(indices, prefix: _hashPrefix(rgbaColors));
+      hash48(_indices, prefix: _hashPrefix(rgbaColors));
 
   List<int> _hashPrefix([Iterable<int> rgbaColors = const <int>[]]) {
     final bytes = <int>[
@@ -90,7 +93,7 @@ final class IndexedImage {
 
   int get usedColorCount {
     final values = <int>{};
-    for (final index in indices) {
+    for (final index in _indices) {
       if (index != transparentIndex) values.add(index);
     }
     return values.length;
