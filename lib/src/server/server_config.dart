@@ -44,8 +44,12 @@ final class ServerConfig {
   final Set<String> allowedOrigins;
   final String? saveToken;
 
-  InternetAddress get address =>
-      InternetAddress.tryParse(host) ?? InternetAddress.loopbackIPv4;
+  /// `HttpServer.bind` accepts an IP address object or a hostname string.
+  Object get address => switch (host) {
+        'localhost' => InternetAddress.loopbackIPv4,
+        '::1' => InternetAddress.loopbackIPv6,
+        _ => InternetAddress.tryParse(host) ?? host,
+      };
 
   bool get isLoopbackHost => <String>{
         '127.0.0.1',
@@ -54,6 +58,9 @@ final class ServerConfig {
       }.contains(host);
 
   void validate() {
+    if (host.trim().isEmpty) {
+      throw ArgumentError.value(host, 'host', 'Must not be empty.');
+    }
     if (port < 0 || port > 65535) {
       throw ArgumentError.value(port, 'port', 'Must be between 0 and 65535.');
     }
