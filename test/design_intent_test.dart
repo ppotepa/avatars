@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('design intent is deterministic for automatic values', () {
     final generator = AvatarGenerator();
-    const request = AvatarRequest(seed: 'design-intent-deterministic');
+    final request = AvatarRequest(seed: 'design-intent-deterministic');
 
     final first = generator.generate(request).genome;
     final second = generator.generate(request).genome;
@@ -18,7 +18,7 @@ void main() {
   });
 
   test('design intent never overwrites manual proportions', () {
-    final result = AvatarGenerator().generate(const AvatarRequest(
+    final result = AvatarGenerator().generate(AvatarRequest(
       seed: 'design-intent-manual',
       overrides: <String, Object>{
         'head.width': 23,
