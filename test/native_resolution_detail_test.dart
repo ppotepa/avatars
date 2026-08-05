@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('larger rich renders add semantic palette detail', () {
     final generator = AvatarGenerator();
-    const base = AvatarRequest(
+    final base = AvatarRequest(
       seed: 'native-resolution-detail',
       overrides: <String, Object>{
         'v4.background': 'solid',
