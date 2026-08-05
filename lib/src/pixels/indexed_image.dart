@@ -24,9 +24,15 @@ final class IndexedImage {
   final int height;
   final int transparentIndex;
   final Uint8List _indices;
+  bool _frozen = false;
 
-  /// Returns an independent copy so callers cannot mutate image storage.
   Uint8List get indices => Uint8List.fromList(_indices);
+  bool get isFrozen => _frozen;
+
+  IndexedImage freeze() {
+    _frozen = true;
+    return this;
+  }
 
   IndexedImage clone() => IndexedImage.fromIndices(
         width: width,
@@ -48,28 +54,25 @@ final class IndexedImage {
       };
 
   void setPixel(int x, int y, int paletteIndex) {
+    _ensureMutable();
     if (x >= 0 && x < width && y >= 0 && y < height) {
       _indices[y * width + x] = paletteIndex;
     }
   }
 
   void applyMask(PixelMask mask, int paletteIndex) {
+    _ensureMutable();
     if (mask.width != width || mask.height != height) {
       throw ArgumentError('Mask dimensions differ from image dimensions.');
     }
+    final maskData = mask.data;
     for (var i = 0; i < _indices.length; i++) {
-      if (mask.data[i] != 0) _indices[i] = paletteIndex;
+      if (maskData[i] != 0) _indices[i] = paletteIndex;
     }
   }
 
-  /// A deterministic 48-bit hash of the indexed buffer and its dimensions.
   String get hash => hash48(_indices, prefix: _hashPrefix());
 
-  /// A deterministic 48-bit hash of the complete rendered appearance.
-  ///
-  /// Indexed pixels alone do not identify an image because the same indices can
-  /// be rendered through different palettes. The result-level image hash uses
-  /// this method so color-only avatar variants receive distinct identifiers.
   String hashWithPalette(Iterable<int> rgbaColors) =>
       hash48(_indices, prefix: _hashPrefix(rgbaColors));
 
@@ -97,5 +100,11 @@ final class IndexedImage {
       if (index != transparentIndex) values.add(index);
     }
     return values.length;
+  }
+
+  void _ensureMutable() {
+    if (_frozen) {
+      throw StateError('IndexedImage is frozen. Clone it before modification.');
+    }
   }
 }
