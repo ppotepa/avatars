@@ -3,11 +3,11 @@ import 'package:avatar_genome/src/api/rig_avatar_generator.dart' as rig;
 import 'package:test/test.dart';
 
 void main() {
-  final generator = rig.AvatarGenerator();
+  final generator = rig.RigAvatarGenerator();
 
   test('rig animation keeps one camera and owned layers', () {
     final animation = generator.generateAnimation(
-      const AvatarRequest(
+      AvatarRequest(
         seed: 'rig-invariants',
         overrides: <String, Object>{
           'v4.animation': 'idle',
@@ -37,7 +37,7 @@ void main() {
   });
 
   test('secondary rigs expose articulated nodes', () {
-    final frame = generator.generate(const AvatarRequest(
+    final frame = generator.generate(AvatarRequest(
       seed: 'rig-secondary',
       overrides: <String, Object>{
         'v4.animation': 'hairWind',
