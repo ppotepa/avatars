@@ -6,6 +6,8 @@ final class BatchResourcePolicy {
     this.maxWorkers = 8,
   });
 
+  static const int estimatedDiagnosticsBytesPerAvatar = 16 * 1024;
+
   final int maxAvatarCount;
   final int maxSheetBytes;
   final int maxWorkingBytes;
@@ -16,7 +18,6 @@ final class BatchResourcePolicy {
     required int rows,
     required int tileSize,
     required int availableProcessors,
-    bool includeDiagnostics = false,
   }) {
     if (maxAvatarCount < 1 ||
         maxSheetBytes < 1 ||
@@ -47,9 +48,9 @@ final class BatchResourcePolicy {
     }
 
     // During assembly the process can hold the final RGBA sheet, all shard
-    // outputs and PNG compression buffers at the same time. Diagnostics add a
-    // bounded per-avatar estimate for request/genome/validation metadata.
-    final metadataBytes = count * (includeDiagnostics ? 16 * 1024 : 512);
+    // outputs and PNG compression buffers at the same time. Always reserve the
+    // full diagnostics allowance so enabling metadata cannot invalidate a plan.
+    final metadataBytes = count * estimatedDiagnosticsBytesPerAvatar;
     final estimatedWorkingBytes = rgbaBytes * 3 + metadataBytes;
     if (estimatedWorkingBytes > maxWorkingBytes) {
       throw ArgumentError.value(
