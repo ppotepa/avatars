@@ -1,14 +1,14 @@
 import 'dart:io';
 
 final class ServerConfig {
-  const ServerConfig({
+  ServerConfig({
     this.host = '127.0.0.1',
     this.port = 8080,
     this.allowRemote = false,
     this.enableSave = false,
-    this.allowedOrigins = const <String>{},
+    Set<String> allowedOrigins = const <String>{},
     this.saveToken,
-  });
+  }) : allowedOrigins = Set<String>.unmodifiable(allowedOrigins);
 
   factory ServerConfig.fromArguments(List<String> arguments) {
     String? value(String flag) {
@@ -30,7 +30,7 @@ final class ServerConfig {
       port: port,
       allowRemote: arguments.contains('--allow-remote'),
       enableSave: arguments.contains('--enable-save'),
-      allowedOrigins: Set<String>.unmodifiable(origins),
+      allowedOrigins: origins,
       saveToken: value('--save-token'),
     );
     config.validate();
@@ -44,12 +44,8 @@ final class ServerConfig {
   final Set<String> allowedOrigins;
   final String? saveToken;
 
-  /// `HttpServer.bind` accepts either an address object or a hostname string.
-  Object get address => switch (host) {
-        'localhost' => InternetAddress.loopbackIPv4,
-        '::1' => InternetAddress.loopbackIPv6,
-        _ => host,
-      };
+  InternetAddress get address =>
+      InternetAddress.tryParse(host) ?? InternetAddress.loopbackIPv4;
 
   bool get isLoopbackHost => <String>{
         '127.0.0.1',
