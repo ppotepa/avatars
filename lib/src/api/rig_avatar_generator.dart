@@ -3,7 +3,6 @@ import '../constraints/avatar_validator.dart';
 import '../genome/genome_generator.dart';
 import '../geometry/avatar_layout.dart';
 import '../palette/avatar_palette.dart';
-import '../rendering/exact_phase_pipeline.dart';
 import '../rendering/render_model.dart';
 import '../rendering/resolution_renderer.dart';
 import '../rendering/rig_clip_pipeline.dart';
@@ -64,7 +63,7 @@ final class RigAvatarGenerator {
 
   AvatarResult generate(AvatarRequest request) {
     _validate(request);
-    final clip = pipeline.renderExactSingle(request);
+    final clip = pipeline.renderSingle(request);
     return resultAssembler.assemble(
       prepared: clip.prepared,
       frame: clip.frames.single,
